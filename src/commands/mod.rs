@@ -1,0 +1,13 @@
+pub mod init;
+pub mod doctor;
+pub mod search;
+pub mod topics;
+pub mod group;
+pub mod get;
+pub mod cluster;
+pub mod path;
+pub mod validate_cmd;
+pub mod watch_cmd;
+pub mod completions;
+pub mod output;
+pub mod graph;

@@ -1,0 +1,68 @@
+# Repo-local ADR CLI config (adr-rag)
+
+# One or more directories to scan or read an index from.
+bases = [
+  "docs/masterplan",
+  # "docs/notes",
+]
+
+# Where to read/write the index and semantic groups (paths are relative to each base).
+index_relative = "index/adr-index.json"
+groups_relative = "index/semantic-groups.json"
+
+# Discovery and semantics
+file_patterns = ["ADR-*.md", "ADR-DB-*.md", "IMP-*.md"]
+ignore_globs  = ["**/node_modules/**", "**/.obsidian/**"]
+allowed_statuses = [
+  "draft", "incomplete", "proposed", "accepted",
+  "complete", "design", "legacy-reference", "superseded"
+]
+
+[defaults]
+depth = 2
+include_bidirectional = true
+include_content = true
+
+[output]
+format = "plain" # plain | json
+
+# Note Types (Schema) — Optional, per-type rules and validation
+#
+# Define one or more [[schema]] blocks to validate different note types
+# (e.g., ADR vs IMP). Matching is by file_patterns; first match wins.
+# Unknown keys policy lets you treat unexpected front-matter as ignore|warn|error.
+#
+# [[schema]]
+# name = "ADR"
+# file_patterns = ["ADR-*.md", "ADR-DB-*.md"]
+# required = ["id", "tags", "status", "depends_on"]
+# unknown_policy = "ignore"   # ignore | warn | error (default: ignore)
+# allowed_keys = ["produces", "files_touched"]  # optional pass-through keys
+#
+# [schema.rules.status]
+# allowed = [
+#   "draft", "incomplete", "proposed", "accepted",
+#   "complete", "design", "legacy-reference", "superseded"
+# ]
+# severity = "error"          # error | warn
+#
+# [schema.rules.depends_on]
+# type = "array"
+# items = { type = "string", regex = "^(ADR|IMP)-\\d+" }
+# refers_to_types = ["ADR", "IMP"]
+# severity = "error"
+#
+# [[schema]]
+# name = "IMP"
+# file_patterns = ["IMP-*.md"]
+# required = ["id","tags","depends_on","status","completion_date"]
+# unknown_policy = "warn"
+#
+# [schema.rules.status]
+# allowed = ["in-progress","blocked","on-hold","cancelled","done"]
+# severity = "error"
+#
+# [schema.rules.completion_date]
+# type = "date"
+# format = "%Y-%m-%d"
+# severity = "warn"

@@ -1,0 +1,42 @@
+# Repo-local ADR CLI config (adr-rag)
+
+# One or more directories to scan or read an index from.
+bases = [
+  "docs/masterplan-v2",
+  "docs/development-log",
+]
+
+# Where to read/write the index and semantic groups (paths are relative to each base).
+index_relative = ".obsidian/bases/graphiac-index.json"
+groups_relative = "semantic-groups.config.json"
+
+# Discovery and semantics
+ignore_globs  = ["**/node_modules/**", "**/lib/**"]
+
+
+[Group 1]
+file_patterns = ["ADR-*.md", "ADR-DB-*.md"]
+required_frontmatter = ["id", "tags", "depends_on", "produces", "status"]
+allowed_statuses = [
+  "draft", "incomplete", "proposed", "accepted",
+  "complete", "design", "legacy-reference", "superseded"
+]
+
+[Group 2]
+file_patterns = ["IMP-*.md"]
+required_frontmatter = ["id", "tags", "depends_on", "status", "produces", "files_touched", "completion_date"] 
+allowed_status = ["in-progress", "blocked", "on-hold", "cancelled"] 
+allowed_tags = ["infrastructure"]
+
+# The pattern idea being you define the front matter and then it only does a check if each is either 
+#
+#  1. Present and Non-Zero (default behavior) 
+#  2. Restricted to legal status if `allowed_xyz` is present. 
+
+[defaults]
+depth = 2
+include_bidirectional = true
+include_content = true
+
+[output]
+format = "plain" # plain | json
