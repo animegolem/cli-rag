@@ -68,10 +68,10 @@ pub fn load_docs_from_index(base: &Path, cfg: &Config) -> Result<Vec<AdrDoc>> {
             let file = base.join(file_rel);
             let id = item.get("id").and_then(|v| v.as_str()).map(|s| s.to_string());
             let title = item.get("title").and_then(|v| v.as_str()).unwrap_or("").to_string();
-            let tags = item.get("tags").and_then(|v| v.as_array()).map(|a| a.iter().filter_map(|x| x.as_str().map(|s| s.to_string())).collect()).unwrap_or_else(|| Vec::new());
+            let tags = item.get("tags").and_then(|v| v.as_array()).map(|a| a.iter().filter_map(|x| x.as_str().map(|s| s.to_string())).collect()).unwrap_or_else(Vec::new);
             let status = item.get("status").and_then(|v| v.as_str()).map(|s| s.to_string());
-            let groups = item.get("groups").and_then(|v| v.as_array()).map(|a| a.iter().filter_map(|x| x.as_str().map(|s| s.to_string())).collect()).unwrap_or_else(|| Vec::new());
-            let depends_on = item.get("depends_on").and_then(|v| v.as_array()).map(|a| a.iter().filter_map(|x| x.as_str().map(|s| s.to_string())).collect()).unwrap_or_else(|| Vec::new());
+            let groups = item.get("groups").and_then(|v| v.as_array()).map(|a| a.iter().filter_map(|x| x.as_str().map(|s| s.to_string())).collect()).unwrap_or_else(Vec::new);
+            let depends_on = item.get("depends_on").and_then(|v| v.as_array()).map(|a| a.iter().filter_map(|x| x.as_str().map(|s| s.to_string())).collect()).unwrap_or_else(Vec::new);
             let supersedes = match item.get("supersedes") {
                 Some(Value::Array(a)) => a.iter().filter_map(|x| x.as_str().map(|s| s.to_string())).collect(),
                 Some(Value::String(s)) => vec![s.to_string()],
@@ -136,12 +136,10 @@ pub fn incremental_collect_docs(cfg: &Config, full_rescan: bool) -> Result<Vec<A
                     doc.mtime = Some(cur_mtime);
                     doc.size = Some(cur_size);
                     combined.push(doc);
-                } else {
-                    if let Some(mut d_old) = prior.get(&rel).cloned() {
-                        d_old.mtime = Some(cur_mtime);
-                        d_old.size = Some(cur_size);
-                        combined.push(d_old);
-                    }
+                } else if let Some(mut d_old) = prior.get(&rel).cloned() {
+                    d_old.mtime = Some(cur_mtime);
+                    d_old.size = Some(cur_size);
+                    combined.push(d_old);
                 }
             }
         }

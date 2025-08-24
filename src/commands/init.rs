@@ -12,7 +12,7 @@ pub fn run(path: Option<PathBuf>, force: bool, print_template: bool, silent: boo
         eprintln!("Config exists: {} (not overwriting; use --force to rewrite)", target.display());
     }
     if let Some(parent_cfg) = find_config_upwards(&None) {
-        if let Some(cur) = std::env::current_dir().ok() {
+        if let Ok(cur) = std::env::current_dir() {
             if parent_cfg != target && parent_cfg.parent() != Some(cur.as_path()) {
                 eprintln!("Warning: a parent config exists at {} and may be shadowed by creating one here", parent_cfg.display());
             }

@@ -3,21 +3,38 @@ use anyhow::Result;
 use crate::config::Config;
 use crate::discovery::incremental_collect_docs;
 use crate::index::{write_indexes, write_groups_config};
-use crate::commands::output::{print_json, print_ndjson_value};
+use crate::commands::output::{print_json, print_ndjson_iter, print_ndjson_value};
+use crate::protocol::{ValidateHeader, ValidateIssue};
 use crate::validate::validate_docs;
 
 pub fn run(cfg: &Config, format: &str, write_groups: bool, dry_run: bool, full_rescan: bool) -> Result<()> {
     let docs = incremental_collect_docs(cfg, full_rescan)?;
     let report = validate_docs(cfg, &docs);
     if format == "json" {
-        let obj = serde_json::json!({ "ok": report.ok, "errors": report.errors, "warnings": report.warnings });
+        let errors: Vec<ValidateIssue> = report
+            .errors
+            .iter()
+            .map(|m| ValidateIssue { kind: "error".into(), file: None, message: m.clone(), code: None })
+            .collect();
+        let warnings: Vec<ValidateIssue> = report
+            .warnings
+            .iter()
+            .map(|m| ValidateIssue { kind: "warning".into(), file: None, message: m.clone(), code: None })
+            .collect();
+        let obj = serde_json::json!({
+            "ok": report.ok,
+            "doc_count": docs.len(),
+            "errors": errors,
+            "warnings": warnings,
+        });
         print_json(&obj)?;
     } else if format == "ndjson" {
-        // Emit a header then each error and warning as individual records
-        let header = serde_json::json!({ "ok": report.ok, "doc_count": docs.len() });
-        print_ndjson_value(&header)?;
-        for e in &report.errors { print_ndjson_value(&serde_json::json!({"type":"error","message": e}))?; }
-        for w in &report.warnings { print_ndjson_value(&serde_json::json!({"type":"warning","message": w}))?; }
+        // Emit a header then each error and warning as individual typed records
+        let header = ValidateHeader { ok: report.ok, doc_count: docs.len() };
+        print_ndjson_value(&serde_json::to_value(&header)?)?;
+        let errs = report.errors.iter().map(|m| ValidateIssue { kind: "error".into(), file: None, message: m.clone(), code: None });
+        let warns = report.warnings.iter().map(|m| ValidateIssue { kind: "warning".into(), file: None, message: m.clone(), code: None });
+        print_ndjson_iter(errs.chain(warns))?;
     } else {
         if report.ok { println!("Validation OK ({} docs)", docs.len()); } else {
             eprintln!("Validation failed:");

@@ -32,12 +32,12 @@ pub fn run(cfg: &Config, format: &str, id: String, include_dependents: bool) -> 
         if !primary.depends_on.is_empty() {
             println!("## Depends On");
             for d in &deps { println!("- {}: {}", d.id.clone().unwrap_or_default(), d.title); }
-            println!("");
+            println!();
         }
         if include_dependents && !dependents.is_empty() {
             println!("## Dependents ({})", dependents.len());
             for d in &dependents { println!("- {}: {}", d.id.clone().unwrap_or_default(), d.title); }
-            println!("");
+            println!();
         }
         let content = fs::read_to_string(&primary.file).unwrap_or_default();
         println!("## Content\n\n{}", content);

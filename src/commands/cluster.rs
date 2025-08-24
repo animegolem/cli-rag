@@ -1,6 +1,6 @@
 use anyhow::Result;
-use serde_json::Value;
-use crate::commands::output::print_json;
+use crate::commands::output::{print_json, print_ndjson_iter, print_ndjson_value};
+use crate::protocol::ClusterMember;
 
 use crate::config::Config;
 use crate::discovery::load_docs;
@@ -14,13 +14,19 @@ pub fn run(cfg: &Config, format: &str, id: String, depth: Option<usize>, include
     for d in &docs { if let Some(ref i) = d.id { by_id.insert(i.clone(), d.clone()); } }
     let cluster = compute_cluster(&id, depth, include_bidirectional, &by_id);
     if format == "json" {
-        let arr: Vec<Value> = cluster.iter().map(|(oid, d)| serde_json::json!({
-            "id": oid,
-            "title": d.title,
-            "status": d.status,
-        })).collect();
-        let out = serde_json::json!({"id": id, "size": cluster.len(), "members": arr});
+        let members: Vec<ClusterMember> = cluster
+            .iter()
+            .map(|(oid, d)| ClusterMember { id: oid.clone(), title: d.title.clone(), status: d.status.clone(), groups: d.groups.clone() })
+            .collect();
+        let out = serde_json::json!({"root": id, "size": cluster.len(), "members": members});
         print_json(&out)?;
+    } else if format == "ndjson" {
+        let header = serde_json::json!({"root": id, "count": cluster.len()});
+        print_ndjson_value(&header)?;
+        let members = cluster
+            .iter()
+            .map(|(oid, d)| ClusterMember { id: oid.clone(), title: d.title.clone(), status: d.status.clone(), groups: d.groups.clone() });
+        print_ndjson_iter(members)?;
     } else {
         println!("# Dependency Cluster for {}\n", id);
         println!("**Cluster Size**: {}\n", cluster.len());

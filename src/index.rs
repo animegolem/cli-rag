@@ -39,7 +39,7 @@ pub fn write_indexes(cfg: &Config, docs: &Vec<AdrDoc>, _force: bool, _auto_write
         let out_path = base.join(&cfg.index_relative);
         if let Some(parent) = out_path.parent() { fs::create_dir_all(parent).ok(); }
         fs::write(&out_path, serde_json::to_string_pretty(&wrapper)?).with_context(|| format!("writing index to {}", out_path.display()))?;
-        println!("Wrote index: {} ({} entries)", out_path.display(), wrapper.get("items").and_then(|v| v.as_array()).map(|a| a.len()).unwrap_or(0));
+        eprintln!("Wrote index: {} ({} entries)", out_path.display(), wrapper.get("items").and_then(|v| v.as_array()).map(|a| a.len()).unwrap_or(0));
     }
     Ok(())
 }
@@ -55,7 +55,7 @@ pub fn write_groups_config(cfg: &Config, docs: &Vec<AdrDoc>) -> Result<()> {
         if let Some(parent) = out_path.parent() { fs::create_dir_all(parent).ok(); }
         let body = serde_json::json!({ "sections": sections });
         fs::write(&out_path, serde_json::to_string_pretty(&body)?).with_context(|| format!("writing groups to {}", out_path.display()))?;
-        println!("Wrote groups: {}", out_path.display());
+        eprintln!("Wrote groups: {}", out_path.display());
     }
     Ok(())
 }

@@ -1,5 +1,11 @@
-use clap::{Parser, Subcommand, Args};
+use clap::{Parser, Subcommand, Args, ValueEnum};
 use std::path::PathBuf;
+
+#[derive(ValueEnum, Debug, Clone, Copy)]
+pub enum OutputFormat { Plain, Json, Ndjson }
+
+#[derive(ValueEnum, Debug, Clone, Copy)]
+pub enum GraphFormat { Mermaid, Dot, Json }
 
 #[derive(Parser, Debug)]
 #[command(name = "adr-rag", version, about = "Per-repo ADR navigator with TOML config")]
@@ -10,9 +16,9 @@ pub struct Cli {
     #[arg(long, value_delimiter = ',', global = true)]
     pub base: Option<Vec<PathBuf>>,
 
-    /// Global output format: plain | json
-    #[arg(long, global = true, default_value = "plain")]
-    pub format: String,
+    /// Global output format
+    #[arg(long, value_enum, global = true, default_value_t = OutputFormat::Plain)]
+    pub format: OutputFormat,
 
     #[command(subcommand)]
     pub command: Commands,
@@ -74,9 +80,9 @@ pub enum Commands {
         depth: Option<usize>,
         #[arg(long)]
         include_bidirectional: Option<bool>,
-        /// Output format: mermaid | dot | json
-        #[arg(long, default_value = "mermaid")]
-        format: String,
+        /// Output format
+        #[arg(long, value_enum, default_value_t = GraphFormat::Mermaid)]
+        format: GraphFormat,
     },
     Validate(ValidateArgs),
 
@@ -102,8 +108,8 @@ pub enum Commands {
 
 #[derive(Args, Debug)]
 pub struct ValidateArgs {
-    #[arg(long, default_value = "plain")]
-    pub format: String,
+    #[arg(long, value_enum, default_value_t = OutputFormat::Plain)]
+    pub format: OutputFormat,
     #[arg(long, default_value_t = false)]
     pub write_groups: bool,
     /// Do not write index/groups; print results only

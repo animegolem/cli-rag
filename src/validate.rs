@@ -42,10 +42,8 @@ pub fn validate_docs(cfg: &Config, docs: &Vec<AdrDoc>) -> ValidationReport {
                     }
                 }
             }
-            if !has_schema_status_rule {
-                if !cfg.allowed_statuses.iter().any(|s| s == st) {
-                    errors.push(format!("{}: invalid status '{}'", d.file.display(), st));
-                }
+            if !has_schema_status_rule && !cfg.allowed_statuses.iter().any(|s| s == st) {
+                errors.push(format!("{}: invalid status '{}'", d.file.display(), st));
             }
         }
     }
@@ -193,7 +191,7 @@ pub fn validate_docs(cfg: &Config, docs: &Vec<AdrDoc>) -> ValidationReport {
     }
     // Warn on isolated ADRs (no depends_on and no dependents). Valid, but highlighted.
     let mut has_dependent: std::collections::HashMap<String, bool> = std::collections::HashMap::new();
-    for (id, _ds) in &id_to_docs { has_dependent.insert(id.clone(), false); }
+    for id in id_to_docs.keys() { has_dependent.insert(id.clone(), false); }
     for d in docs { for dep in &d.depends_on { if let Some(x) = has_dependent.get_mut(dep) { *x = true; } } }
     for d in docs {
         if let Some(ref id) = d.id {
@@ -231,5 +229,54 @@ mod tests {
         assert!(msg.contains("invalid status"));
         assert!(msg.contains("depends_on 'NOPE' not found"));
         assert!(msg.contains("conflict for id A"));
+    }
+
+    #[test]
+    fn test_schema_required_unknown_and_refers_to_types() {
+        use crate::config::{SchemaCfg, SchemaRule};
+        use std::collections::BTreeMap;
+
+        // Build config with two schemas so cross-type ref check can fire
+        let mut rules: BTreeMap<String, SchemaRule> = BTreeMap::new();
+        rules.insert(
+            "depends_on".into(),
+            SchemaRule { allowed: vec![], r#type: Some("array".into()), min_items: None, regex: None, refers_to_types: Some(vec!["ADR".into()]), severity: Some("error".into()), format: None }
+        );
+        let sc_adr = SchemaCfg { name: "ADR".into(), file_patterns: vec!["ADR-*.md".into()], required: vec!["id".into(), "tags".into()], unknown_policy: Some("warn".into()), allowed_keys: vec![], rules };
+        let sc_imp = SchemaCfg { name: "IMP".into(), file_patterns: vec!["IMP-*.md".into()], required: vec!["id".into()], unknown_policy: Some("ignore".into()), allowed_keys: vec![], rules: BTreeMap::new() };
+        let cfg = Config {
+            bases: vec![], index_relative: default_index_rel(), groups_relative: default_groups_rel(),
+            file_patterns: default_file_patterns(), ignore_globs: default_ignore_globs(),
+            allowed_statuses: default_allowed_statuses(), defaults: default_defaults(), schema: vec![sc_adr, sc_imp]
+        };
+
+        // ADR doc with empty required 'tags', unknown key in fm, and depends_on an IMP doc
+        let mut fm = BTreeMap::new();
+        fm.insert("foo".into(), serde_yaml::Value::String("bar".into()));
+        fm.insert("depends_on".into(), serde_yaml::Value::Sequence(vec![serde_yaml::Value::String("IMP-002".into())]));
+        let d1 = AdrDoc { file: PathBuf::from("ADR-001.md"), id: Some("ADR-001".into()), title: "ADR-001".into(), tags: vec![], status: Some("draft".into()), groups: vec![], depends_on: vec!["IMP-002".into()], supersedes: vec![], superseded_by: vec![], fm, mtime: None, size: None };
+        let d2 = AdrDoc { file: PathBuf::from("IMP-002.md"), id: Some("IMP-002".into()), title: "IMP-002".into(), tags: vec![], status: None, groups: vec![], depends_on: vec![], supersedes: vec![], superseded_by: vec![], fm: BTreeMap::new(), mtime: None, size: None };
+
+        let report = validate_docs(&cfg, &vec![d1, d2]);
+        assert!(!report.ok);
+        let errs = report.errors.join("\n");
+        assert!(errs.contains("missing required 'tags'"));
+        assert!(errs.contains("references IMP-002"));
+        let warns = report.warnings.join("\n");
+        assert!(warns.contains("unknown keys: foo"));
+    }
+
+    #[test]
+    fn test_warn_on_isolated_adrs() {
+        let cfg = Config { 
+            bases: vec![], index_relative: default_index_rel(), groups_relative: default_groups_rel(),
+            file_patterns: default_file_patterns(), ignore_globs: default_ignore_globs(),
+            allowed_statuses: default_allowed_statuses(), defaults: default_defaults(), schema: Vec::new()
+        };
+        let d = AdrDoc { file: PathBuf::from("A.md"), id: Some("A".into()), title: "A".into(), tags: vec![], status: None, groups: vec![], depends_on: vec![], supersedes: vec![], superseded_by: vec![], fm: std::collections::BTreeMap::new(), mtime: None, size: None };
+        let report = validate_docs(&cfg, &vec![d]);
+        assert!(report.ok); // warnings allowed
+        let warns = report.warnings.join("\n");
+        assert!(warns.contains("has no graph connections"));
     }
 }

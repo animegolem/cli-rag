@@ -1,6 +1,7 @@
 use anyhow::{Result, Context};
-use serde_json::Value;
 use crate::commands::output::{print_json, print_ndjson_iter};
+use serde_json::Value;
+use crate::protocol::TopicCount;
 
 use crate::config::Config;
 use crate::discovery::load_docs;
@@ -34,11 +35,16 @@ pub fn run(cfg: &Config, format: &str) -> Result<()> {
         for d in docs { for g in d.groups { *groups.entry(g).or_insert(0) += 1; } }
     }
     if format == "json" {
-        let arr: Vec<Value> = groups.into_iter().map(|(k,v)| serde_json::json!({"topic": k, "count": v})).collect();
+        let arr: Vec<TopicCount> = groups
+            .into_iter()
+            .map(|(topic, count)| TopicCount { topic, count })
+            .collect();
         print_json(&arr)?;
     } else if format == "ndjson" {
-        let it = groups.into_iter().map(|(k,v)| serde_json::json!({"topic": k, "count": v}));
-        print_ndjson_iter::<serde_json::Value, _>(it)?;
+        let it = groups
+            .into_iter()
+            .map(|(topic, count)| TopicCount { topic, count });
+        print_ndjson_iter::<TopicCount, _>(it)?;
     } else {
         if groups.is_empty() { println!("No semantic groups found"); return Ok(()); }
         println!("# Available Semantic Topics\n");

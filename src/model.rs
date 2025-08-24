@@ -145,4 +145,43 @@ Body here.
         assert_eq!(doc.depends_on, vec!["ADR-100".to_string()]);
         assert_eq!(doc.supersedes, vec!["ADR-050".to_string()]);
     }
+
+    #[test]
+    fn test_parse_toml_front_matter_and_title() {
+        let md = r#"+++
+id = "ADR-200"
+tags = ["x"]
+status = "accepted"
+groups = ["G1"]
+depends_on = ["ADR-100"]
++++
+
+# ADR-200: TOML Sample
+
+Body here.
+"#;
+        let path = Path::new("/tmp/ADR-200-sample.md");
+        let doc = parse_front_matter_and_title(md, path);
+        assert_eq!(doc.id.as_deref(), Some("ADR-200"));
+        assert_eq!(doc.title, "ADR-200: TOML Sample");
+        assert_eq!(doc.status.as_deref(), Some("accepted"));
+        assert_eq!(doc.tags, vec!["x"]);
+        assert_eq!(doc.groups, vec!["G1".to_string()]);
+        assert_eq!(doc.depends_on, vec!["ADR-100".to_string()]);
+    }
+
+    #[test]
+    fn test_parse_yaml_crlf_and_no_front_matter() {
+        // CRLF front matter + title
+        let md_crlf = "---\r\nstatus: proposed\r\n---\r\n\r\n# T\r\n";
+        let doc_crlf = parse_front_matter_and_title(md_crlf, Path::new("/t.md"));
+        assert_eq!(doc_crlf.status.as_deref(), Some("proposed"));
+        assert_eq!(doc_crlf.title, "T");
+
+        // No front matter, title from H1
+        let md = "# Hello\nBody";
+        let doc = parse_front_matter_and_title(md, Path::new("/hello.md"));
+        assert_eq!(doc.id, None);
+        assert_eq!(doc.title, "Hello");
+    }
 }

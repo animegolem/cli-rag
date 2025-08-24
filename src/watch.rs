@@ -37,7 +37,7 @@ pub fn run_watch(cfg: &Config, args: WatchArgs) -> Result<()> {
         // Wait for an event, then debounce
         let _ = rx.recv();
         // Drain burst
-        while let Ok(_) = rx.try_recv() {}
+        while rx.try_recv().is_ok() {}
         std::thread::sleep(debounce);
         let docs = incremental_collect_docs(cfg, false)?;
         let report = validate_docs(cfg, &docs);

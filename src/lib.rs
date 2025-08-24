@@ -8,3 +8,4 @@ pub mod validate;
 pub mod watch;
 pub mod cli;
 pub mod commands;
+pub mod protocol;
