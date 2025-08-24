@@ -1,6 +1,7 @@
-use anyhow::{Result, anyhow};
+use anyhow::{anyhow, Result};
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 
+use crate::cli::GraphFormat;
 use crate::commands::output::print_json;
 use crate::config::Config;
 use crate::discovery::load_docs;
@@ -8,7 +9,10 @@ use crate::graph::compute_cluster;
 use crate::model::AdrDoc;
 
 #[derive(Debug, Clone)]
-struct Edge { from: String, to: String }
+struct Edge {
+    from: String,
+    to: String,
+}
 
 fn sanitize_id(id: &str) -> String {
     id.chars()
@@ -22,7 +26,10 @@ fn cluster_edges(cluster: &BTreeMap<String, AdrDoc>) -> Vec<Edge> {
     for (id, doc) in cluster.iter() {
         for dep in &doc.depends_on {
             if members.contains(dep) {
-                edges.push(Edge { from: id.clone(), to: dep.clone() });
+                edges.push(Edge {
+                    from: id.clone(),
+                    to: dep.clone(),
+                });
             }
         }
     }
@@ -61,22 +68,42 @@ pub(crate) fn render_dot(cluster: &BTreeMap<String, AdrDoc>) -> String {
     out
 }
 
-pub fn run(cfg: &Config, format: &str, id: String, depth: Option<usize>, include_bidirectional: Option<bool>) -> Result<()> {
+pub fn run(
+    cfg: &Config,
+    format: &GraphFormat,
+    id: String,
+    depth: Option<usize>,
+    include_bidirectional: Option<bool>,
+) -> Result<()> {
     let docs = load_docs(cfg)?;
     let depth = depth.unwrap_or(cfg.defaults.depth);
     let include_bidirectional = include_bidirectional.unwrap_or(cfg.defaults.include_bidirectional);
     let mut by_id: HashMap<String, AdrDoc> = HashMap::new();
-    for d in &docs { if let Some(ref i) = d.id { by_id.insert(i.clone(), d.clone()); } }
-    if !by_id.contains_key(&id) { return Err(anyhow!("ADR not found: {}", id)); }
+    for d in &docs {
+        if let Some(ref i) = d.id {
+            by_id.insert(i.clone(), d.clone());
+        }
+    }
+    if !by_id.contains_key(&id) {
+        return Err(anyhow!("ADR not found: {}", id));
+    }
     let cluster = compute_cluster(&id, depth, include_bidirectional, &by_id);
     match format {
-        "json" => {
-            let members: Vec<serde_json::Value> = cluster.iter().map(|(oid, d)| serde_json::json!({
-                "id": oid,
-                "title": d.title,
-                "status": d.status,
-            })).collect();
-            let edges: Vec<serde_json::Value> = cluster_edges(&cluster).into_iter().map(|e| serde_json::json!({"from": e.from, "to": e.to})).collect();
+        GraphFormat::Json => {
+            let members: Vec<serde_json::Value> = cluster
+                .iter()
+                .map(|(oid, d)| {
+                    serde_json::json!({
+                        "id": oid,
+                        "title": d.title,
+                        "status": d.status,
+                    })
+                })
+                .collect();
+            let edges: Vec<serde_json::Value> = cluster_edges(&cluster)
+                .into_iter()
+                .map(|e| serde_json::json!({"from": e.from, "to": e.to}))
+                .collect();
             let out = serde_json::json!({
                 "root": id,
                 "members": members,
@@ -86,11 +113,11 @@ pub fn run(cfg: &Config, format: &str, id: String, depth: Option<usize>, include
             });
             print_json(&out)?;
         }
-        "dot" => {
+        GraphFormat::Dot => {
             let s = render_dot(&cluster);
             println!("{}", s);
         }
-        _ => { // mermaid default
+        GraphFormat::Mermaid => {
             let s = render_mermaid(&cluster);
             println!("{}", s);
         }
@@ -123,7 +150,7 @@ mod tests {
     #[test]
     fn test_render_mermaid_and_dot() {
         let mut cluster: BTreeMap<String, AdrDoc> = BTreeMap::new();
-        cluster.insert("ADR-001".into(), doc("ADR-001", "Root", vec!["ADR-002"])) ;
+        cluster.insert("ADR-001".into(), doc("ADR-001", "Root", vec!["ADR-002"]));
         cluster.insert("ADR-002".into(), doc("ADR-002", "Child", vec![]));
         let mm = render_mermaid(&cluster);
         assert!(mm.contains("flowchart LR"));

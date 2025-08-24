@@ -11,8 +11,8 @@ pub struct FrontMatter {
     pub id: Option<String>,
     pub tags: Option<Vec<String>>,
     pub status: Option<String>,
-    pub groups: Option<Vec<String>>, 
-    pub depends_on: Option<Vec<String>>, 
+    pub groups: Option<Vec<String>>,
+    pub depends_on: Option<Vec<String>>,
     pub supersedes: Option<OneOrMany>,
     pub superseded_by: Option<OneOrMany>,
 }
@@ -47,9 +47,13 @@ pub fn parse_front_matter_and_title(content: &str, path: &Path) -> AdrDoc {
     // Normalize line endings for delimiter scanning
     let norm = content.replace("\r\n", "\n");
     if norm.starts_with("---\n") || norm.starts_with("+++\n") {
-        let delim = if norm.starts_with("---\n") { "---" } else { "+++" };
+        let delim = if norm.starts_with("---\n") {
+            "---"
+        } else {
+            "+++"
+        };
         let start = 4; // skip delimiter and newline
-        // find closing delimiter on its own line
+                       // find closing delimiter on its own line
         let needle = format!("\n{}\n", delim);
         let end_opt = norm[start..].find(&needle).map(|i| start + i);
         let (fm_text, body_start) = if let Some(end) = end_opt {
@@ -62,16 +66,26 @@ pub fn parse_front_matter_and_title(content: &str, path: &Path) -> AdrDoc {
         };
         if !fm_text.is_empty() {
             if delim == "---" {
-                if let Ok(parsed) = serde_yaml::from_str::<FrontMatter>(fm_text) { fm = parsed; }
+                if let Ok(parsed) = serde_yaml::from_str::<FrontMatter>(fm_text) {
+                    fm = parsed;
+                }
                 if let Ok(mapping) = serde_yaml::from_str::<serde_yaml::Mapping>(fm_text) {
-                    for (k, v) in mapping { if let Some(key) = k.as_str() { fm_map.insert(key.to_string(), v); } }
+                    for (k, v) in mapping {
+                        if let Some(key) = k.as_str() {
+                            fm_map.insert(key.to_string(), v);
+                        }
+                    }
                 }
             } else {
                 // +++ TOML front matter
-                if let Ok(parsed) = toml::from_str::<FrontMatter>(fm_text) { fm = parsed; }
+                if let Ok(parsed) = toml::from_str::<FrontMatter>(fm_text) {
+                    fm = parsed;
+                }
                 if let Ok(tval) = toml::from_str::<toml::Value>(fm_text) {
                     if let Some(table) = tval.as_table() {
-                        for (k, _v) in table.iter() { fm_map.insert(k.clone(), serde_yaml::Value::Null); }
+                        for (k, _v) in table.iter() {
+                            fm_map.insert(k.clone(), serde_yaml::Value::Null);
+                        }
                     }
                 }
             }
@@ -85,7 +99,12 @@ pub fn parse_front_matter_and_title(content: &str, path: &Path) -> AdrDoc {
     let title = title_re
         .captures(body)
         .and_then(|c| c.get(1).map(|m| m.as_str().trim().to_string()))
-        .unwrap_or_else(|| path.file_name().unwrap_or_default().to_string_lossy().to_string());
+        .unwrap_or_else(|| {
+            path.file_name()
+                .unwrap_or_default()
+                .to_string_lossy()
+                .to_string()
+        });
 
     AdrDoc {
         file: path.to_path_buf(),
@@ -95,8 +114,16 @@ pub fn parse_front_matter_and_title(content: &str, path: &Path) -> AdrDoc {
         status: fm.status,
         groups: fm.groups.unwrap_or_default(),
         depends_on: fm.depends_on.unwrap_or_default(),
-        supersedes: match fm.supersedes { Some(OneOrMany::One(s)) => vec![s], Some(OneOrMany::Many(v)) => v, None => vec![] },
-        superseded_by: match fm.superseded_by { Some(OneOrMany::One(s)) => vec![s], Some(OneOrMany::Many(v)) => v, None => vec![] },
+        supersedes: match fm.supersedes {
+            Some(OneOrMany::One(s)) => vec![s],
+            Some(OneOrMany::Many(v)) => v,
+            None => vec![],
+        },
+        superseded_by: match fm.superseded_by {
+            Some(OneOrMany::One(s)) => vec![s],
+            Some(OneOrMany::Many(v)) => v,
+            None => vec![],
+        },
         fm: fm_map,
         mtime: file_mtime(path).ok(),
         size: file_size(path).ok(),
@@ -106,7 +133,9 @@ pub fn parse_front_matter_and_title(content: &str, path: &Path) -> AdrDoc {
 pub fn file_mtime(p: &Path) -> Result<u64> {
     let md = fs::metadata(p)?;
     let m = md.modified()?;
-    let d = m.duration_since(SystemTime::UNIX_EPOCH).unwrap_or(Duration::from_secs(0));
+    let d = m
+        .duration_since(SystemTime::UNIX_EPOCH)
+        .unwrap_or(Duration::from_secs(0));
     Ok(d.as_secs())
 }
 
@@ -144,5 +173,44 @@ Body here.
         assert_eq!(doc.groups, vec!["Tools & Execution".to_string()]);
         assert_eq!(doc.depends_on, vec!["ADR-100".to_string()]);
         assert_eq!(doc.supersedes, vec!["ADR-050".to_string()]);
+    }
+
+    #[test]
+    fn test_parse_toml_front_matter_and_title() {
+        let md = r#"+++
+id = "ADR-200"
+tags = ["x"]
+status = "accepted"
+groups = ["G1"]
+depends_on = ["ADR-100"]
++++
+
+# ADR-200: TOML Sample
+
+Body here.
+"#;
+        let path = Path::new("/tmp/ADR-200-sample.md");
+        let doc = parse_front_matter_and_title(md, path);
+        assert_eq!(doc.id.as_deref(), Some("ADR-200"));
+        assert_eq!(doc.title, "ADR-200: TOML Sample");
+        assert_eq!(doc.status.as_deref(), Some("accepted"));
+        assert_eq!(doc.tags, vec!["x"]);
+        assert_eq!(doc.groups, vec!["G1".to_string()]);
+        assert_eq!(doc.depends_on, vec!["ADR-100".to_string()]);
+    }
+
+    #[test]
+    fn test_parse_yaml_crlf_and_no_front_matter() {
+        // CRLF front matter + title
+        let md_crlf = "---\r\nstatus: proposed\r\n---\r\n\r\n# T\r\n";
+        let doc_crlf = parse_front_matter_and_title(md_crlf, Path::new("/t.md"));
+        assert_eq!(doc_crlf.status.as_deref(), Some("proposed"));
+        assert_eq!(doc_crlf.title, "T");
+
+        // No front matter, title from H1
+        let md = "# Hello\nBody";
+        let doc = parse_front_matter_and_title(md, Path::new("/hello.md"));
+        assert_eq!(doc.id, None);
+        assert_eq!(doc.title, "Hello");
     }
 }

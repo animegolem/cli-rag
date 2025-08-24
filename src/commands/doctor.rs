@@ -2,6 +2,7 @@ use anyhow::Result;
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 use std::path::PathBuf;
 
+use crate::cli::OutputFormat;
 use crate::commands::output::print_json;
 use crate::config::{Config, SchemaCfg};
 use crate::discovery::load_docs;
@@ -128,38 +129,85 @@ pub(crate) fn build_report(
     })
 }
 
-pub fn run(cfg: &Config, cfg_path: &Option<PathBuf>, format: &str) -> Result<()> {
+pub fn run(cfg: &Config, cfg_path: &Option<PathBuf>, format: &OutputFormat) -> Result<()> {
     let docs = load_docs(cfg)?;
-    if format == "json" {
-        let report = build_report(cfg, cfg_path, &docs);
-        print_json(&report)?;
-        return Ok(());
+    match format {
+        OutputFormat::Json | OutputFormat::Ndjson => {
+            let report = build_report(cfg, cfg_path, &docs);
+            print_json(&report)?;
+        }
+        OutputFormat::Plain => {
+            // Plain text output
+            let report = build_report(cfg, cfg_path, &docs);
+            let config_path = report.get("config").and_then(|v| v.as_str()).unwrap_or("");
+            println!("Config: {}", config_path);
+            println!("Bases:");
+            for b in &cfg.bases {
+                println!("  - {}", b.display());
+            }
+            println!("index_relative: {}", cfg.index_relative);
+            println!("groups_relative: {}", cfg.groups_relative);
+            for item in report
+                .get("per_base")
+                .and_then(|v| v.as_array())
+                .unwrap_or(&Vec::new())
+            {
+                let base = item.get("base").and_then(|v| v.as_str()).unwrap_or("");
+                let mode = item.get("mode").and_then(|v| v.as_str()).unwrap_or("");
+                println!("Base {} → {}", base, mode);
+            }
+            let counts = report
+                .get("counts")
+                .and_then(|v| v.as_object())
+                .cloned()
+                .unwrap_or_default();
+            let docs_count = counts.get("docs").and_then(|v| v.as_u64()).unwrap_or(0);
+            let group_entries = counts
+                .get("group_entries")
+                .and_then(|v| v.as_u64())
+                .unwrap_or(0);
+            println!(
+                "Found {} ADR-like files; group entries: {}",
+                docs_count, group_entries
+            );
+            if let Some(arr) = report.get("conflicts").and_then(|v| v.as_array()) {
+                if !arr.is_empty() {
+                    let list: Vec<String> = arr
+                        .iter()
+                        .filter_map(|v| v.as_str().map(|s| s.to_string()))
+                        .collect();
+                    println!(
+                        "Conflicts (ids with differing title/status): {}",
+                        list.join(", ")
+                    );
+                }
+            }
+            if let Some(types) = report.get("types").and_then(|v| v.as_object()) {
+                if !types.is_empty() {
+                    println!("Types:");
+                    for (k, v) in types {
+                        println!("  - {}: {} notes", k, v.as_u64().unwrap_or(0));
+                    }
+                }
+            }
+            if let Some(unknown) = report.get("unknown_stats").and_then(|v| v.as_object()) {
+                if !unknown.is_empty() {
+                    println!("Unknown key stats:");
+                    for (k, v) in unknown {
+                        if let Some(arr) = v.as_array() {
+                            if arr.len() == 2 {
+                                let docs = arr[0].as_u64().unwrap_or(0);
+                                let total = arr[1].as_u64().unwrap_or(0);
+                                println!(
+                                    "  - {}: {} notes with unknowns ({} keys)",
+                                    k, docs, total
+                                );
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
-    // Plain text output
-    let report = build_report(cfg, cfg_path, &docs);
-    let config_path = report.get("config").and_then(|v| v.as_str()).unwrap_or("");
-    println!("Config: {}", config_path);
-    println!("Bases:");
-    for b in &cfg.bases { println!("  - {}", b.display()); }
-    println!("index_relative: {}", cfg.index_relative);
-    println!("groups_relative: {}", cfg.groups_relative);
-    for item in report.get("per_base").and_then(|v| v.as_array()).unwrap_or(&Vec::new()) {
-        let base = item.get("base").and_then(|v| v.as_str()).unwrap_or("");
-        let mode = item.get("mode").and_then(|v| v.as_str()).unwrap_or("");
-        println!("Base {} → {}", base, mode);
-    }
-    let counts = report.get("counts").and_then(|v| v.as_object()).cloned().unwrap_or_default();
-    let docs_count = counts.get("docs").and_then(|v| v.as_u64()).unwrap_or(0);
-    let group_entries = counts.get("group_entries").and_then(|v| v.as_u64()).unwrap_or(0);
-    println!("Found {} ADR-like files; group entries: {}", docs_count, group_entries);
-    if let Some(arr) = report.get("conflicts").and_then(|v| v.as_array()) { if !arr.is_empty() { let list: Vec<String> = arr.iter().filter_map(|v| v.as_str().map(|s| s.to_string())).collect(); println!("Conflicts (ids with differing title/status): {}", list.join(", ")); }}
-    if let Some(types) = report.get("types").and_then(|v| v.as_object()) { if !types.is_empty() {
-        println!("Types:");
-        for (k,v) in types { println!("  - {}: {} notes", k, v.as_u64().unwrap_or(0)); }
-    }}
-    if let Some(unknown) = report.get("unknown_stats").and_then(|v| v.as_object()) { if !unknown.is_empty() {
-        println!("Unknown key stats:");
-        for (k,v) in unknown { if let Some(arr) = v.as_array() { if arr.len() == 2 { let docs = arr[0].as_u64().unwrap_or(0); let total = arr[1].as_u64().unwrap_or(0); println!("  - {}: {} notes with unknowns ({} keys)", k, docs, total); } } }
-    }}
     Ok(())
 }

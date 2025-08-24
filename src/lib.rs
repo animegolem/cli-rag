@@ -1,10 +1,11 @@
+pub mod cli;
+pub mod commands;
 pub mod config;
 pub mod discovery;
 pub mod graph;
 pub mod index;
 pub mod model;
+pub mod protocol;
 pub mod util;
 pub mod validate;
 pub mod watch;
-pub mod cli;
-pub mod commands;

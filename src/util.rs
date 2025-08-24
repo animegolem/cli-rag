@@ -11,8 +11,11 @@ pub fn try_open_editor(path: &Path) -> Result<()> {
     ];
     for ed in editors.into_iter().flatten() {
         let status = std::process::Command::new(ed.clone()).arg(path).status();
-        if let Ok(st) = status { if st.success() { return Ok(()); } }
+        if let Ok(st) = status {
+            if st.success() {
+                return Ok(());
+            }
+        }
     }
     Err(anyhow!("no editor found or editor failed"))
 }
-

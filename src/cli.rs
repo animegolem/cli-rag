@@ -1,8 +1,26 @@
-use clap::{Parser, Subcommand, Args};
+use clap::{Args, Parser, Subcommand, ValueEnum};
 use std::path::PathBuf;
 
+#[derive(ValueEnum, Debug, Clone, Copy)]
+pub enum OutputFormat {
+    Plain,
+    Json,
+    Ndjson,
+}
+
+#[derive(ValueEnum, Debug, Clone, Copy)]
+pub enum GraphFormat {
+    Mermaid,
+    Dot,
+    Json,
+}
+
 #[derive(Parser, Debug)]
-#[command(name = "adr-rag", version, about = "Per-repo ADR navigator with TOML config")]
+#[command(
+    name = "adr-rag",
+    version,
+    about = "Per-repo ADR navigator with TOML config"
+)]
 pub struct Cli {
     #[arg(long, global = true)]
     pub config: Option<PathBuf>,
@@ -10,9 +28,9 @@ pub struct Cli {
     #[arg(long, value_delimiter = ',', global = true)]
     pub base: Option<Vec<PathBuf>>,
 
-    /// Global output format: plain | json
-    #[arg(long, global = true, default_value = "plain")]
-    pub format: String,
+    /// Global output format
+    #[arg(long, value_enum, global = true, default_value_t = OutputFormat::Plain)]
+    pub format: OutputFormat,
 
     #[command(subcommand)]
     pub command: Commands,
@@ -59,9 +77,9 @@ pub enum Commands {
         include_bidirectional: Option<bool>,
     },
     Path {
-        #[arg(long, value_name = "FROM")] 
+        #[arg(long, value_name = "FROM")]
         from: String,
-        #[arg(long, value_name = "TO")] 
+        #[arg(long, value_name = "TO")]
         to: String,
         #[arg(long, default_value_t = 5)]
         max_depth: usize,
@@ -74,9 +92,9 @@ pub enum Commands {
         depth: Option<usize>,
         #[arg(long)]
         include_bidirectional: Option<bool>,
-        /// Output format: mermaid | dot | json
-        #[arg(long, default_value = "mermaid")]
-        format: String,
+        /// Output format
+        #[arg(long, value_enum, default_value_t = GraphFormat::Mermaid)]
+        format: GraphFormat,
     },
     Validate(ValidateArgs),
 
@@ -95,15 +113,15 @@ pub enum Commands {
 
     /// Generate shell completions (bash|zsh|fish)
     Completions {
-        #[arg(value_name = "SHELL")] 
+        #[arg(value_name = "SHELL")]
         shell: String,
-    }
+    },
 }
 
 #[derive(Args, Debug)]
 pub struct ValidateArgs {
-    #[arg(long, default_value = "plain")]
-    pub format: String,
+    #[arg(long, value_enum, default_value_t = OutputFormat::Plain)]
+    pub format: OutputFormat,
     #[arg(long, default_value_t = false)]
     pub write_groups: bool,
     /// Do not write index/groups; print results only

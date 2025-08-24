@@ -1,12 +1,14 @@
-use anyhow::{Result, Context};
-use serde_json::Value;
+use crate::cli::OutputFormat;
 use crate::commands::output::{print_json, print_ndjson_iter};
+use crate::protocol::TopicCount;
+use anyhow::{Context, Result};
+use serde_json::Value;
 
 use crate::config::Config;
 use crate::discovery::load_docs;
 use std::fs;
 
-pub fn run(cfg: &Config, format: &str) -> Result<()> {
+pub fn run(cfg: &Config, format: &OutputFormat) -> Result<()> {
     use std::collections::BTreeMap;
     let mut groups: BTreeMap<String, usize> = BTreeMap::new();
     let mut used_groups_file = false;
@@ -14,14 +16,20 @@ pub fn run(cfg: &Config, format: &str) -> Result<()> {
         let path = b.join(&cfg.groups_relative);
         if path.exists() {
             used_groups_file = true;
-            let s = fs::read_to_string(&path).with_context(|| format!("reading groups {:?}", path))?;
-            let v: Value = serde_json::from_str(&s).with_context(|| format!("parsing groups {:?}", path))?;
+            let s =
+                fs::read_to_string(&path).with_context(|| format!("reading groups {:?}", path))?;
+            let v: Value =
+                serde_json::from_str(&s).with_context(|| format!("parsing groups {:?}", path))?;
             if let Some(sections) = v.get("sections").and_then(|x| x.as_array()) {
                 for sec in sections {
                     let title = sec.get("title").and_then(|x| x.as_str()).unwrap_or("");
                     let mut count = 0usize;
                     if let Some(sels) = sec.get("selectors").and_then(|x| x.as_array()) {
-                        for sel in sels { if let Some(ids) = sel.get("anyIds").and_then(|x| x.as_array()) { count += ids.len(); } }
+                        for sel in sels {
+                            if let Some(ids) = sel.get("anyIds").and_then(|x| x.as_array()) {
+                                count += ids.len();
+                            }
+                        }
                     }
                     *groups.entry(title.to_string()).or_insert(0) += count;
                 }
@@ -31,18 +39,36 @@ pub fn run(cfg: &Config, format: &str) -> Result<()> {
     }
     if !used_groups_file {
         let docs = load_docs(cfg)?;
-        for d in docs { for g in d.groups { *groups.entry(g).or_insert(0) += 1; } }
+        for d in docs {
+            for g in d.groups {
+                *groups.entry(g).or_insert(0) += 1;
+            }
+        }
     }
-    if format == "json" {
-        let arr: Vec<Value> = groups.into_iter().map(|(k,v)| serde_json::json!({"topic": k, "count": v})).collect();
-        print_json(&arr)?;
-    } else if format == "ndjson" {
-        let it = groups.into_iter().map(|(k,v)| serde_json::json!({"topic": k, "count": v}));
-        print_ndjson_iter::<serde_json::Value, _>(it)?;
-    } else {
-        if groups.is_empty() { println!("No semantic groups found"); return Ok(()); }
-        println!("# Available Semantic Topics\n");
-        for (name, count) in groups { println!("- {}: {} ADRs", name, count); }
+    match format {
+        OutputFormat::Json => {
+            let arr: Vec<TopicCount> = groups
+                .into_iter()
+                .map(|(topic, count)| TopicCount { topic, count })
+                .collect();
+            print_json(&arr)?;
+        }
+        OutputFormat::Ndjson => {
+            let it = groups
+                .into_iter()
+                .map(|(topic, count)| TopicCount { topic, count });
+            print_ndjson_iter::<TopicCount, _>(it)?;
+        }
+        OutputFormat::Plain => {
+            if groups.is_empty() {
+                println!("No semantic groups found");
+                return Ok(());
+            }
+            println!("# Available Semantic Topics\n");
+            for (name, count) in groups {
+                println!("- {}: {} ADRs", name, count);
+            }
+        }
     }
     Ok(())
 }
