@@ -24,7 +24,11 @@ where
 
 // Optional enum for centralized format selection (scaffold; not yet wired everywhere)
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum Format { Plain, Json, Ndjson }
+pub enum Format {
+    Plain,
+    Json,
+    Ndjson,
+}
 
 impl FromStr for Format {
     type Err = ();
