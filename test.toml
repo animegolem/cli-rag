@@ -1,0 +1,57 @@
+[[schema]]
+	name = "NPC"
+	config_version = 0.1
+	file_patterns = ["NPC-*.md"]
+
+	[schema.new]
+		filename_template = "{{schema.name}}-{{title|kebab-case}}.md"
+
+		[schema.new.template]
+			[schema.new.template.prompt]
+			template = """
+			# Instructions
+			- Review the recent chat history. Who is this NPC? What did the player ask for specifically?
+			- How do they fit into the world you and the player have built? What motivates them?
+			- Ensure you add at least 2 links to existing NPC's, Items, or Locations.
+			- Fill out the template below exactly as provided.
+			"""
+
+			[schema.new.template.note]
+			template = """
+			---
+			created_on: {{date}}
+			---
+
+			# {{title}}
+
+			## Persona
+			<!-- The core of the character -->
+			{{LOC|200}}
+
+			## Objective
+			<!-- What do they want and how does it relate to the user -->
+			{{LOC|50}}
+
+			## Story so Far
+			<!-- Compressed recent events -->
+			{{LOC|50}}
+
+			## Related
+			<!-- Links to related content -->
+			{{LOC|10}}
+			"""
+
+	[schema.validate]
+		severity = "error" # Default severity for all validate rules
+	    [schema.validate.body]
+			[schema.validate.body.headings]
+		        heading_strictness = "missing_only"
+				severity = "warning"
+
+	        [schema.validate.body.line_count]
+		        scan_policy = "on_creation"
+
+	    [schema.validate.edges]
+		    [schema.validate.edges.wikilinks]
+		        min_outgoing = 2
+		        min_incoming = 0

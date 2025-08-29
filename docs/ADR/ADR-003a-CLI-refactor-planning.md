@@ -1,11 +1,9 @@
 ---
-id: ADR-003
+id: ADR-003a
 tags:
   - cli
   - refactor
-  - TUI
-  - neovim
-status: draft
+status: accepted
 depends_on:
   - ADR-001
   - ADR-004
@@ -15,7 +13,7 @@ related_files:
   - ~/cli-rag/src/commands
 ---
 
-# ADR-004-CLI-review-&-refactor
+# ADR-004-CLI-refactor-planning
 
 ## Objective
 <!-- A concise statement explaining the goal of this decision. -->
@@ -26,8 +24,6 @@ Until this point CLI-RAG has grown adhoc out of a a dog-fooded .js script. As th
 <!-- What is the issue that we're seeing that is motivating this decision or change? -->
 
 The current command list 
-
-
 - `init` — Create `.adr-rag.toml` in the current repo and open it in an editor by default. Flags:
     - `--force` overwrite if exists
     - `--print-template` print template to stdout
@@ -68,49 +64,65 @@ Create `.adr-rag.toml` in the current repo and open it in an editor by default.
 - `--print-template`: Print template to stdout
 
 #### validate 
-
-Lint's notes based on the various [[schema]] configured in `.cli-rag.toml`. By default all index scans are incremental reparse's using `mtime` and `size`. Exits with an error code in the event validation fails. 
+Lint's notes based on the various [[schema]] configured in `.cli-rag.toml`. By default all index scans are incremental reparse's using `mtime` and `size`. Exits with an error code in the event validation fails. Writes out `index_relative` unless `--dry-run` is used.
   
 **Flags** 
-- `--dry-run`: Validate the index and print errors without writing or updating the index on disk. 
+- `--dry-run`: Validate the index and print errors without writing or updating the index on disk. Prints errors or success. 
 - `--full-rescan`: Scans all files regardless of tracked `mtime` or `size`
-- `--write-groups`: 
+- `--write-groups`: Write out only `groups_relative` and updates `semantic-groups.json`. This requires an active schema with `validated_frontmatter` and `groups` active.  
+- `--write-all`: Write out both `groups_relative` and `index_relative`. 
 
-#### new (added from above)
-`[--schema <S>] [--title <T>] [--id ...] [--edit]` 
+#### new 
+The primary tool for creating a new note. Can open the defined editor with the `--edit` flag 
+  
+**Flags**
+- `--schema <S>`: Select a .toml defined schema to use as a template. 
+- `--title <T>`: Create a new note defined by Title. 
+- `--id <I>`: Create a new note defined by ID. 
+- `--edit`: Open the note in the defined editor. 
 
-- The primary tool for creating a new note. Can open the defined editor with the `--edit` flag 
+---
 
 #### watch 
-`[--debounce-ms 400] [--dry-run] [--full-rescan]`
+Watches filepaths for changes and incrementally validates & update the indexes. Debounces rapid events; writes on success (unless `--dry-run`).
 
-- Watch bases for changes and incrementally validate + update indexes.
-- Debounces rapid events; writes on success (unless `--dry-run`).
-
+**Flags**
+- `[--debounce-ms 400]`: Set custom debounce time. 
+- `[--dry-run]`: Watches file changes but does not write to the index. 
+- `[--full-rescan]`: Fully scans all tracked paths and updates the index. 
+  
+  ```markdown 
+  - when watching, ignore temp/lockfiles (`**/*~`, `**/.#*`, `**/*.tmp`) and editor swap dirs.
+  ```
 
 ### The Syntactic Sugar
 
 #### doctor 
-Show resolved config, bases, discovery mode (index vs scan), and quick stats.
-- Reports per-type counts when schemas are defined, and unknown-key stats.
+Show resolved config, filepaths, discovery mode (index vs scan), and quick stats. Reports per-type counts when schemas are defined, and unknown-frontmatter stats.
 
-#### search 
-`[--query <substr>]`
-Fuzzy search by ID/title across discovered ADR files.
+#### search --query `<substr>`
+
+Fuzzy search by ID/title across tracked notes.
+
+**Flags**
+- `--schema <S>`: Search only one defined schema 
 
 #### path --from ABC --to XYZ 
-`[--max-depth N]` 
-- Find a dependency path if any.
-
+Returns the shortest dependency path between two notes or throws and error if none exist.
+  
+**Flags**
+- `[--max-depth N]`: Set maximum number of recursive notes the path will traverse. 
+  
+  
 ### Problematic/Underdeveloped User Story
 
 #### group
 
 ```markdown 
-#### topics
+##### topics
 - List semantic groups derived from frontmatter (`groups` in ADRs).
 
-#### group 
+##### group 
 `[--topic "<name>"] [--include-content]` 
 - Show ADRs in a group; defaults to full content.
 ```
@@ -119,7 +131,7 @@ These tools are currently not logically implemented and are are holdover from th
 
 The purpose of this tool is primarily to give an AI agent a map to understand the code-base. 
 
-One option would be to define `groups` as `validated_frontmatter` with hard-coded logic in the [[ADR-001-cli-rag-toml]];
+One option would be to define `groups` as `validated_frontmatter` with hard-coded logic in the [[ADR-001-cli-rag.toml]];
 
 ```toml
 # --- `validated_frontmatter` are built tools that will run validation logic beyond simply checking if it exist and has content --- 
@@ -139,19 +151,18 @@ This would allow the user to dynamically define groups as required.
 
 The second issue is the split name for `topics` and `groups` is not especially intuitive or ergonomic. Maybe it could be arranged in a single command like so; 
 
-```markdown 
-#### groups
-`[--list] [--] []`
+##### groups
+lists tracked notes organized by `groups` frontmatter. If the frontmatter is not active this will throw errors. 
 
-- `--list` print all semantic groups tracked by `validated_frontmatter` on the current graph.
-```
+**Flags**
+- `--list`: print all semantic groups tracked by `validated_frontmatter` on the current graph.
 
 ---
 
 #### graph
 
 ```markdown
-#### graph 
+##### graph 
 `[--id ABCD] [--depth N] [--include-bidirectional] [--format mermaid|dot|json]`
 - Export a dependency graph around an ADR.
 ```
@@ -219,21 +230,27 @@ You are then shown a screen like this where you can with a single key press to f
                                            └─────────┘
 ```
 
-It is to be completely honest still not entirely clear what the relative value here actually is. Worth thinking about further. We need the ability to filter this down. so 
+I'm not totally sure how useful this would be but it's roughly equal to the obsidian local graph. it's worth a shot. However, it doesn't seem like it requires new graph primitives other than eventually adding an ascii output. 
 
-- Only [[wikistyle links]]
-- Only hard `superscedes` or `depends`. In order to not write custom logic it could be any frontmatter that matches a note title or ID based on the validation type defined in the schema. 
+##### graph 
+Export a dependency graph around an ID.
 
-I think this is "in-theory" useful but it needs to be a very fast and intuitive UI to beat just using telescope or directly opening the notes in obsidian. 
+- `[--id ABCD]: Define the ID or TITLE for the root node of the local graph to display. 
+- `[--depth N] `: Set maximum number of recursive notes the graph will include. 
+- `[--include-bidirectional] `: Include both dependencies as well as notes depending on the selected ID.  
+- `[--format mermaid|dot|json|ascii]`: Select the output format. If undefined it prints graphviz ascii in the terminal. 
 
 ---
 
+#### Get
+
 ```markdown 
-#### get 
+
+##### get 
 `--id ADR-021 [--include-dependents]` 
 - Traverse a note (and it's dependencies) and print the contents. This tool is primarily designed for an AI consumer and is the primary 'RAG' in CLI-RAG. 
 
-#### cluster 
+##### cluster 
 `[--id ABCD] [--depth N] [--include-bidirectional]` 
 ```
 
@@ -245,52 +262,50 @@ Currently the user story here is a bit unclear. Cluster should probably just be 
 
 the point being the top level commands should be 'verbs' so all in;  
 
-```markdown 
-#### get 
-`--id <ID> [--cluster] [--depth N] [--include-bidirectional]` 
+##### get 
 Traverse a note (and it's dependencies) and print the contents. This tool is primarily designed for an AI consumer and is the primary 'RAG' in CLI-RAG. 
-```
 
-## LLM Sourced Feature Ideas/Changes 
+**Flags**
+- `--id <ID>`: Define any tracked note ID 
+- `[--cluster] `: Pull an ID and it's connections as defined by the following flags. 
+- `[--depth N] `: Set maximum number of recursive notes the path will traverse. 
+- `[--include-bidirectional]`: Include dependencies and notes depending on the selected ID.  
 
-- Deep Refactor Support (very useful for agents) 
-	- `rename --id ADR-012 --new-id ADR-012R` updates filename and all `depends_on` references in repo (front matter and wiki-links in bodies).
-	- `supersede --old ADR-008 --new ADR-031` writes both sides of the link (`supersedes`/`superseded_by`) 
+## Better Error Handling and Output 
 
-- **Improved Output and Formatting**:
-    - **Why?** Plain output is functional but can be noisy (e.g., long paths in `doctor`). JSON is great for scripting, but humans need summaries.
-    - **How**: For plain mode, use tables (e.g., via `comfy_table` crate: add to Cargo.toml). In `doctor`, output like:
-       
-        ```
-        +---------+-------+
-        | Base    | Mode  |
-        +---------+-------+
-        | docs/   | index |
-        +---------+-------+
-        ```
-        
-	- Colorize errors/warnings in `validate` (use `anstream` for cross-platform coloring—already in your deps).
-
+```markdown 
 - **Autocompletion and ID Suggestions**:
     
     - **Why?** Commands like `get --id ADR-022` are error-prone if IDs are mistyped. Your `completions` command is a start—enhance with dynamic suggestions.
     - **How**: In `get`/`cluster`/`path`, if `--id` is invalid, fuzzy-search IDs (like your `search`) and suggest: "Did you mean ADR-022? (y/n)". Use `clap` 's built-in validation for runtime checks.
 - **Config Ergonomics and Defaults**:
-    
-    - **Why?** The `.adr-rag.toml` is comprehensive but overwhelming (e.g., long schema comments). `init --print-template` is good—make it interactive.
-    - **How**: In `init`, prompt for key values (e.g., "Enter bases (comma-separated):") using `dialoguer` crate (add to Cargo.toml: `dialoguer = "0.11"`). Add a `config edit` command that opens the file (like your `try_open_editor`).
+```
+
+```markdown 
 - **Error Handling and UX**:
     
     - **Why?** Rust's `anyhow` is used well, but user-facing errors could be friendlier (e.g., "Config not found—run init?").
     - **How**: In `load_config`, if no config, prompt to run `init`. Add verbose logging with `--debug` (use `env_logger` crate). For `validate`, group errors by file/schema for easier debugging.
-    - 
-- **Advanced Validation Rules**:
-    
-    - **Why?** Your schemas are already powerful (e.g., required fields, allowed statuses, regex for `depends_on`). Extend to cyclic dependency detection or status consistency (e.g., warn if a "draft" ADR depends on a "superseded" one).
-    - **How**: In `validate_docs`, after building `id_to_docs` and `id_set`, add a graph traversal to detect cycles (using your existing `compute_cluster`). For status checks, walk dependencies and compare against `allowed_statuses` or schema rules.
-    - **Ergonomic Twist**: Add a `--fix` flag to `validate` that auto-updates statuses (e.g., propagate "superseded") or suggests resolutions in JSON output.
+```
+
+```markdown
+- **Improved Output and Formatting**:
+    - **Why?** Plain output is functional but can be noisy (e.g., long paths in `doctor`). JSON is great for scripting, but humans need summaries.
+    - **How**: For plain mode, use tables (e.g., via `comfy_table` crate: add to Cargo.toml). In `doctor`, output like:
+        
+        +---------+-------+
+        | Base    | Mode  |
+        +---------+-------+
+        | docs/   | index |
+        +---------+-------+
+       
+	- Colorize errors/warnings in `validate` (use `anstream` for cross-platform coloring—already in your deps).
+```
+
+
+---
 
 ## Consequences
 <!-- What becomes easier or more difficult to do because of this change? -->
 
-A more ergonomic and intuitive developer experience. 
+A more ergonomic and intuitive developer experience. see [[ADR-003b-v1-CLI-commands]]
