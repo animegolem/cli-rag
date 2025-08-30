@@ -34,7 +34,7 @@ Creating an interactive kanban in the TUI that edits the front matter as you mak
 ## Context
 <!-- What is the issue that we're seeing that is motivating this decision or change? -->
 
-### **CRITICAL!: See [[💾 Software Development/🖳 CLI-RAG/🗎 ADR/🤖 AI/ADR-AI-002-gtd-kanban-integration]] for full context.** 
+### **CRITICAL!: See [[ADR-AI-002-gtd-kanban-integration]] for full context.** 
 
 Straightforward project tool that allows setting a tracked priority field. This should be functionally a validator on a schema that allows you to track any tag for date/etc and add it to GTD. 
 

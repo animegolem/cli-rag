@@ -20,7 +20,7 @@ related_files:
 
 At the time of writing this document is **aspirational** and is not in line with the actual codebase. The intention of this effort is to create a north star that explains the UX vision for the application. 
 
-The .toml is designed to be very extensible but we will create a [[💾 Software Development/🖳 CLI-RAG/🗎 ADR/ADR-010-the-LUA-escape-hatch]] escape hatch for highly custom use-cases. 
+The .toml is designed to be very extensible but we will create a [[ADR-010-the-LUA-escape-hatch]] escape hatch for highly custom use-cases. 
   
 ## Context
 <!-- What is the issue that we're seeing that is motivating this decision or change? -->

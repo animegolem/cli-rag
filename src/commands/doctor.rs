@@ -253,6 +253,7 @@ mod tests {
     #[test]
     fn test_build_report_invariants_duplicates() {
         let cfg = Config {
+            import: Vec::new(),
             bases: vec![],
             index_relative: default_index_rel(),
             groups_relative: default_groups_rel(),

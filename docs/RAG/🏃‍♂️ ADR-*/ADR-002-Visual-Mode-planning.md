@@ -26,7 +26,7 @@ related_files: []
 
 1. The user opens a new repo and types `cli-rag init` which checks for a .cli-rag.toml and if not present opens their editor with a marked up config file. They can either save this or exit the process. 
    
-   See [[💾 Software Development/🖳 CLI-RAG/🗎 ADR/ADR-001-cli-rag.toml]] for a full example. 
+   See [[ADR-001-cli-rag.toml]] for a full example. 
 
 2. Once the .cli-rag.toml is created it opens the TUI "master control" screen e.g. Magit/org style tab collapsible lists. This expands as tracked notes are added. 
    

@@ -1,6 +1,7 @@
 use anyhow::{anyhow, Context, Result};
 use globset::Glob;
 use globset::GlobSetBuilder;
+use globwalk::GlobWalkerBuilder;
 use serde::Deserialize;
 use std::env;
 use std::fs;
@@ -51,6 +52,8 @@ pub struct SchemaCfg {
 
 #[derive(Debug, Deserialize, Clone)]
 pub struct Config {
+    #[serde(default)]
+    pub import: Vec<String>,
     #[serde(default = "default_bases")]
     pub bases: Vec<PathBuf>,
     #[serde(default = "default_index_rel")]
@@ -178,6 +181,7 @@ pub fn load_config(
         toml::from_str(&s).with_context(|| format!("parsing TOML config {:?}", p))?
     } else {
         Config {
+            import: Vec::new(),
             bases: default_bases(),
             index_relative: default_index_rel(),
             groups_relative: default_groups_rel(),
@@ -202,6 +206,71 @@ pub fn load_config(
     if let Some(override_bases) = base_override {
         if !override_bases.is_empty() {
             cfg.bases = override_bases.clone();
+        }
+    }
+    // Import external schema files (schemas only)
+    if let Some(ref cfg_path) = path {
+        if !cfg.import.is_empty() {
+            let cfg_dir = cfg_path.parent().unwrap_or(Path::new("."));
+            let mut imported: Vec<SchemaCfg> = Vec::new();
+            for patt in &cfg.import {
+                let patt_path = cfg_dir.join(patt);
+                let mut files: Vec<PathBuf> = Vec::new();
+                // Expand globs if any; if no matches, try as a direct file path.
+                let walk_res = GlobWalkerBuilder::from_patterns(
+                    cfg_dir,
+                    &[patt.as_str()]
+                )
+                .max_depth(10)
+                .follow_links(true)
+                .build();
+                if let Ok(walker) = walk_res {
+                    for entry in walker.filter_map(Result::ok) {
+                        if entry.path().is_file() {
+                            files.push(entry.path().to_path_buf());
+                        }
+                    }
+                }
+                if files.is_empty() {
+                    if patt_path.exists() && patt_path.is_file() {
+                        files.push(patt_path);
+                    } else {
+                        let abs = PathBuf::from(patt);
+                        if abs.is_absolute() && abs.exists() && abs.is_file() {
+                            files.push(abs);
+                        }
+                    }
+                }
+                for fpath in files {
+                    let s = fs::read_to_string(&fpath)
+                        .with_context(|| format!("reading import {:?}", fpath))?;
+                    let tv: toml::Value = toml::from_str(&s)
+                        .with_context(|| format!("parsing import {:?}", fpath))?;
+                    // Validate only [[schema]] allowed at top-level
+                    let illegal_keys: Vec<String> = tv
+                        .as_table()
+                        .map(|t| {
+                            t.keys()
+                                .filter(|k| k.as_str() != "schema")
+                                .cloned()
+                                .collect::<Vec<_>>()
+                        })
+                        .unwrap_or_default();
+                    if !illegal_keys.is_empty() {
+                        return Err(anyhow!(
+                            "E110: Illegal top-level key(s) [{}] in import {}. Imports may define schemas only.",
+                            illegal_keys.join(", "),
+                            fpath.display()
+                        ));
+                    }
+                    #[derive(Deserialize)]
+                    struct ImportSchemas { #[serde(default)] schema: Vec<SchemaCfg> }
+                    let imp: ImportSchemas = toml::from_str(&s)
+                        .with_context(|| format!("parsing schemas in import {:?}", fpath))?;
+                    imported.extend(imp.schema);
+                }
+            }
+            cfg.schema.extend(imported);
         }
     }
     // Invariant: unique schema names across the effective config
@@ -354,8 +423,9 @@ mod tests {
             .duration_since(std::time::UNIX_EPOCH)
             .unwrap()
             .as_nanos();
-        let p = PathBuf::from("tmp").join(format!("{}_{}", prefix, now));
-        fs::create_dir_all(&p).ok();
+        let base = std::env::current_dir().unwrap().join("tmp");
+        let p = base.join(format!("{}_{}", prefix, now));
+        fs::create_dir_all(&p).unwrap();
         p
     }
 
@@ -425,7 +495,103 @@ required = ["id"]
 "#;
         let mut f = fs::File::create(&cfg_path).unwrap();
         f.write_all(toml.as_bytes()).unwrap();
-        assert!(cfg_path.exists(), "test setup failed: cfg file not created");
+        let res = load_config(&Some(cfg_path.clone()), &None);
+        assert!(res.is_err(), "expected E120 error");
+        let msg = format!("{}", res.unwrap_err());
+        assert!(msg.contains("E120"), "missing E120 in: {}", msg);
+    }
+
+    #[test]
+    fn test_imports_only_schema_success() {
+        let dir = unique_tmp("imp_ok");
+        let cfg_path = dir.join(".adr-rag.toml");
+        let templates = dir.join("templates");
+        fs::create_dir_all(&templates).unwrap();
+        let a_path = templates.join("a.toml");
+        let a_toml = r#"
+[[schema]]
+name = "A"
+file_patterns = ["A-*.md"]
+required = ["id"]
+"#;
+        fs::create_dir_all(a_path.parent().unwrap()).unwrap();
+        fs::write(&a_path, a_toml).unwrap();
+        let top = format!(
+            "import = [\"templates/a.toml\"]\n{}\n",
+            &String::from_utf8_lossy(TEMPLATE.as_bytes())
+        );
+        fs::write(&cfg_path, top).unwrap();
+        let res = load_config(&Some(cfg_path.clone()), &None).expect("load ok");
+        let cfg = res.0;
+        assert!(cfg.schema.iter().any(|s| s.name == "A"));
+    }
+
+    #[test]
+    fn test_imports_illegal_keys_e110() {
+        let dir = unique_tmp("imp_bad");
+        let cfg_path = dir.join(".adr-rag.toml");
+        let templates = dir.join("templates");
+        fs::create_dir_all(&templates).unwrap();
+        let bad_path = templates.join("bad.toml");
+        let bad = r#"
+bases = ["docs"]
+"#;
+        fs::create_dir_all(bad_path.parent().unwrap()).unwrap();
+        fs::write(&bad_path, bad).unwrap();
+        let top = format!(
+            "import = [\"templates/bad.toml\"]\n{}\n",
+            &String::from_utf8_lossy(TEMPLATE.as_bytes())
+        );
+        fs::create_dir_all(cfg_path.parent().unwrap()).unwrap();
+        fs::write(&cfg_path, top).unwrap();
+        let res = load_config(&Some(cfg_path.clone()), &None);
+        assert!(res.is_err(), "expected E110 error");
+        let msg = format!("{}", res.unwrap_err());
+        assert!(msg.contains("E110"), "missing E110 in: {}", msg);
+    }
+
+    #[test]
+    fn test_imports_duplicate_across_project_e120() {
+        let dir = unique_tmp("imp_dup");
+        let cfg_path = dir.join(".adr-rag.toml");
+        let templates = dir.join("templates");
+        fs::create_dir_all(&templates).unwrap();
+        let a_path = templates.join("a.toml");
+        let a_toml = r#"
+[[schema]]
+name = "ADR"
+file_patterns = ["A-*.md"]
+required = ["id"]
+"#;
+        fs::create_dir_all(a_path.parent().unwrap()).unwrap();
+        fs::write(&a_path, a_toml).unwrap();
+        // Project defines ADR as well
+        let import_abs = format!("{}", a_path.display());
+        let proj = format!(r#"
+import = ["{import_abs}"]
+
+bases = ["docs"]
+index_relative = "index/adr-index.json"
+groups_relative = "index/semantic-groups.json"
+file_patterns = ["ADR-*.md", "ADR-DB-*.md", "IMP-*.md"]
+ignore_globs  = ["**/node_modules/**", "**/.obsidian/**"]
+allowed_statuses = [
+  "draft", "incomplete", "proposed", "accepted",
+  "complete", "design", "legacy-reference", "superseded"
+]
+
+[defaults]
+depth = 2
+include_bidirectional = true
+include_content = true
+
+[[schema]]
+name = "ADR"
+file_patterns = ["ADR-*.md"]
+required = ["id"]
+"#);
+        fs::create_dir_all(cfg_path.parent().unwrap()).unwrap();
+        fs::write(&cfg_path, proj).unwrap();
         let res = load_config(&Some(cfg_path.clone()), &None);
         assert!(res.is_err(), "expected E120 error");
         let msg = format!("{}", res.unwrap_err());
