@@ -28,70 +28,24 @@ The some what unclear space is if we should use our own logic for document linki
 ## Context
 <!-- What is the issue that we're seeing that is motivating this decision or change? -->
 
+`have ai genrerate it's own dogfood here when the time is right`
+
+stuff like so 
 ```toml
-    
-# A schema for notes the AI creates and manages for itself.
-# The human user does not touch these.
-[[schema]]
-name = "AI-MEM" 
-
-# =============================================================================
-#                           # --- DISCOVERY --- #
-# =============================================================================
-file_patterns = ["AIM-*.md"]
-
-# =============================================================================
-#                    # --- TEMPLATES & GENERATION --- #
-# =============================================================================
-[schema.new]
-    # UUID is perfect for machine-generated, non-sequential IDs.
-    id_generator = { strategy = "uuid", prefix = "AIM-" }
-    filename_template = "{{id}}-{{title|kebab-case}}.md"
-
-    # The template is just a bare structure for the AI to fill.
-    [schema.new.template.note]
-        template = """
-        ((frontmatter))
-
-        # {{title}}
-		
-        ## Summary
-        {{LOC|100}}
-
-        ## Connections & Rationale
-        <!-- Why was this note created and what does it link to? -->
-        {{LOC|200}}
-        """
-
-# =============================================================================
-#                    # --- FRONTMATTER VALIDATION --- #
-# =============================================================================
-[schema.frontmatter]
-    # These are the fields the AI MUST provide.
-    custom_frontmatter = ["id", "title", "keywords", "confidence_score", "source_id"]
-    unknown_frontmatter_policy = "missing_only" 
-    managed_frontmatter = ["depends_on", "created_date"]
-
-# =============================================================================
-#                          # --- VALIDATION --- #
-# =============================================================================
-[schema.rules]
-    [schema.rules.frontmatter]
-        [schema.rules.frontmatter.confidence_score]
-            # Make sure it's a valid float between 0.0 and 1.0
-            legal_entry = "^(0(\\.\\d+)?|1(\\.0+)?)$"
-            severity = "error"
-
-    [schema.rules.body]
-        [schema.rules.body.wikilinks]
-            # CRITICAL: Every AI note must link to at least one other note.
-            # This forces the graph to be connected.
-            min_links = 1
-            severity = "error"
+template = """
+# Instructions
+1. Extract the NPC name from the user's request
+2. Identify 2-3 existing notes that would logically connect
+3. Generate a confidence_score based on:
+   - Explicit user details: 0.8-1.0
+   - Inferred from context: 0.5-0.7
+   - Speculative additions: 0.2-0.4
+"""
 ```
 
-
 ### Possible Future Requirements (scratchpad) 
+
+Nothing thought trough this is just a place to store conversation snips
 
 ```gemini 2.5 pro
 **1. A More Powerful Query Language:**
@@ -111,6 +65,48 @@ file_patterns = ["AIM-*.md"]
 *   **The Implication:** `doctor` and `graph` will need to evolve. You might add flags like:
     *   `doctor --find-orphan-ai-notes`: Find AI memories that have no incoming links from human notes.
     *   `graph --source-of ADR-005`: Generate a graph of all AI memories that were derived from a specific human-written ADR.
+```
+
+complaints from opus but i'm somewhat less concerned given the vibe is a bit more "experiment" but for best results this is all likely true. I just want to try the other way for fun. 
+
+```
+## The Deeper Issue: Bidirectional Trust
+
+If the AI can write notes that influence its own future retrievals, you're creating a feedback loop. You need:
+
+1. **Immutable human notes**: AI shouldn't edit human-authored content
+2. **Trust scoring**: Weight human notes higher in retrieval
+3. **Audit trail**: Track which agent (human/AI) created/modified each note
+
+This might look like:
+
+
+[schema.authorship]
+immutable_after_creation = true  # For human schemas
+author_type = "human"  # or "ai"
+trust_weight = 1.0  # Human notes weighted higher in search
+```
+
+```fair
+### 2. Circular Dependency Detection
+
+With `depends_on` validation, you'll need cycle detection in your graph traversal. The config doesn't specify how to handle this.
+
+## Critical Design Gap: Memory Lifecycle
+
+If the AI creates thousands of AIM-* notes, you need lifecycle management:
+
+1. **Decay/Archival**: Old memories with low confidence scores that haven't been accessed should fade
+2. **Consolidation**: Multiple related memories should potentially merge
+3. **Versioning**: When the AI updates its understanding, does it edit or create new notes?
+
+Consider adding:
+
+
+[schema.lifecycle]
+archive_after_days = 90
+min_confidence_to_persist = 0.3
+consolidation_strategy = "merge_similar"
 ```
 
 ## Decision

@@ -8,7 +8,7 @@ status: draft
 depends_on:
   - ADR-01
   - ADR-003
-created_date: 2025-08-28
+created_date: 2025-08-25
 last_modified: 2025-08-28
 related_files: []
 ---
@@ -126,7 +126,7 @@ All of the above can be much smoother in neovim. In theory we could
 - Define a consistent naviation UI using a leader key. 
 - Lean on Existing fuzzy finding and implement less ourselves. 
 - Offer a first class editing experience. We could in theory parse our index and have tree-sitter powered live linting of valid id's and note names
-- make `[[links]]` and ID: ADR-005 directly navigable from the editor. 
+- make [[links]] and ID: ADR-005 directly navigable from the editor. 
 
 This is ultimately inching much closer to a AI Co-Programmer friendly obsidian that lives in a repo without fuss. I'm not sure if that's a good or a bad thing. It would without a doubt be the most comfortable and fully featured version. 
 

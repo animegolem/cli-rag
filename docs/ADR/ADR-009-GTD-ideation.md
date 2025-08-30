@@ -14,6 +14,7 @@ depends_on:
   - ADR-004
   - ADR-008
   - ADR-010
+  - ADR-AI-001
 created_date: 2025-08-25
 last_modified: 2025-08-25
 related_files: [.cli-rag.toml]
@@ -32,6 +33,8 @@ Creating an interactive kanban in the TUI that edits the front matter as you mak
 
 ## Context
 <!-- What is the issue that we're seeing that is motivating this decision or change? -->
+
+### **CRITICAL!: See [[ADR-AI-002-gtd-kanban-integration]] for full context.** 
 
 Straightforward project tool that allows setting a tracked priority field. This should be functionally a validator on a schema that allows you to track any tag for date/etc and add it to GTD. 
 
@@ -109,6 +112,48 @@ Because `gtd` is a `managed_frontmatter` key the following rules are applied to 
 
 then the operation of GTD tracking itself is written to something like json,toml,yaml the idea being the AI managing it's rag can overwrite the priority list directly + tracking additional special logic. we'll see.  
 
+### From a conversation with an llm
+```bash
+ > I think we probably need to think in terms of like deadlines and targets take a look over 'ADR-002-Visual-Mode-planning' the idea is kind of in the neovim main screen you see a sort of magit/org agenda screen. these are my deliverables and these are my current notes grouped by schema in foldable lists so i see my imp-* tickets my adr-* planning but also whats upcoming eg 
+  
+
+V ToDo ! 
+  - 8-16 - DueNow!: [[imp-001-*]]
+  - Tagged!: [[ADR-010-the-LUA-escape-hatch]]: -[] implement the above steps before proceed on implementing the embedded lua runtime
+
+V **Kanban**
+	> Backlog
+	V In-Progress
+	  L IMP-004
+	  L IMP-002 
+	> Completed
+	> Cancelled 
+
+v **Templates** 
+	1 - IMP-*  
+	2 - ADR-*
+	3 - ADR-DB-*
+		
+v **ADR** 
+	- ADR-001-my-first-plan
+	- ADR-002-my-happy-place
+> **ADR-DB** 
+v **IMP** 
+	+ IMP-001-database-spike
+	+ IMP-002-websocket-spike  
+       
+TAB: Collapse/Expand | RETURN: Select | SPACE+F: FuzzyFind | G: GraphView
+
+
+So probably parsing for some kind of syntax both in the header for kanban status + duedate. But then the real ideal also maybe is parsing for a phrase like 
+
+{TODO}: -[] implement the above steps before proceed on implementing the embedded lua runtime
+ 
+Then anything on that line gets added to the TODO screen. if the -[x] is filled out its removed. 
+
+Ideally we lean on the lsp to do those updates and edits maybe. 
+``` 
+
 ## Decision
 <!-- What is the change that we're proposing and/or doing? -->
 
@@ -117,7 +162,9 @@ Most likely defer for v1 and when TUI planning picks consider doing a basic due 
 ## Consequences
 <!-- What becomes easier or more difficult to do because of this change? -->
 
-No direct impact on the core function but a baseline for extending the tool as it gains a gui. It's a polish and not core to 1.0. 
+~~No direct impact on the core function but a baseline for extending the tool as it gains a gui. It's a polish and not core to 1.0.~~ 
+
+I've come to see this effort as more core to the goal. We will aim to add for v1 but if it hits blockers it's not 100% required. 
 
 ## Updates
 <!-- Changes that happened when the rubber met the road -->

@@ -184,7 +184,7 @@ lists tracked notes organized by `groups` frontmatter. If the frontmatter is not
 ---
 
 #### validate 
-Lint's notes based on the various [[schema]] configured in `.cli-rag.toml`. By default all index scans are incremental reparse's using `mtime` and `size`. Exits with an error code in the event validation fails. Writes out `index_relative` unless `--dry-run` is used.
+Lint's notes based on the various `[[schema]]` configured in `.cli-rag.toml`. By default all index scans are incremental reparse's using `mtime` and `size`. Exits with an error code in the event validation fails. Writes out `index_relative` unless `--dry-run` is used.
   
 **Flags** 
 - `--dry-run`: Validate the index and print errors without writing or updating the index on disk. Prints errors or success. 
@@ -213,7 +213,7 @@ we need some kind of command to list out "all in progress, all closed, all draft
 
 ## The Missing Tools 
 
-**The "Refactor" Problem:** A common pain point in these systems is renaming a note. If NPC-Grak.md is renamed to NPC-Grak-The-Loud.md, how do all the [[NPC-Grak]] links get updated? A `cli-rag refactor --id <ID> --new-title <T>` command would be a massive power feature.
+**The "Refactor" Problem:** A common pain point in these systems is renaming a note. If NPC-Grak.md is renamed to NPC-Grak-The-Loud.md, how do all the `[[NPC-Grak]]` links get updated? A `cli-rag refactor --id <ID> --new-title <T>` command would be a massive power feature.
 
 In the same vein we could have an add dependency or supersede tool. the issue is keeping the abstractions universal. 
 

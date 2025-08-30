@@ -64,7 +64,7 @@ Create `.adr-rag.toml` in the current repo and open it in an editor by default.
 - `--print-template`: Print template to stdout
 
 #### validate 
-Lint's notes based on the various [[schema]] configured in `.cli-rag.toml`. By default all index scans are incremental reparse's using `mtime` and `size`. Exits with an error code in the event validation fails. Writes out `index_relative` unless `--dry-run` is used.
+Lint's notes based on the various `[[schema]]` configured in `.cli-rag.toml`. By default all index scans are incremental reparse's using `mtime` and `size`. Exits with an error code in the event validation fails. Writes out `index_relative` unless `--dry-run` is used.
   
 **Flags** 
 - `--dry-run`: Validate the index and print errors without writing or updating the index on disk. Prints errors or success. 

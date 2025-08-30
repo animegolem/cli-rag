@@ -97,10 +97,74 @@ Our template manager presents various items to parse.
 3. **Validation** remains yours: run `validate --json` and surface diagnostics through Neovim’s `vim.diagnostic` (spans map 1:1).
 ```
 
+### future... 
+
+```llm 
+# Two paths for the Neovim side
+
+## A) Zero-grammar fork (fast to ship)
+
+Use the official **tree-sitter-markdown** (+ `markdown_inline`) for base Markdown. Add semantic highlights and completions via extmarks and `nvim-cmp`:
+
+- For **graph edges** (`[[ADR-123]]`, `depends_on:` in YAML), get byte spans from your **markdown-rs** pass and set highlights via extmarks; you don’t need a new TS node type.
+    
+- For **tag completions**, use a cmp source that triggers:
+    
+    - inside YAML `tags:` values, or
+        
+    - after `[[` (wikilinks)  
+        The cmp source can query your project index (IDs, tags) and insert candidates.
+        
+
+Pros: no grammar maintenance; works today.  
+Cons: highlights are “semantic” (extmarks), not query-driven.
+
+## B) Tiny grammar delta (cleaner long-term)
+
+Fork **tree-sitter-markdown_inline** and add just your inline tokens:
+
+- `wikilink` → children: `(page) (heading?) (alias?)`
+    
+- `loc_marker` → `{{LOC|N}}`
+    
+- `filter_pipe` → `{{title|kebab}}`
+    
+- (optional) `fm_tag` inside front-matter values
+    
+
+Then ship minimal queries:
+
+**queries/markdown/highlights.scm**
+
+```scm
+; wikilinks
+(wikilink (page) @clirag.id)
+(wikilink (heading) @clirag.fragment)
+(wikilink (alias) @clirag.alias)
+
+; frontmatter tags
+(fm_tag) @clirag.tag
+
+; loc markers left in body
+(loc_marker) @clirag.todo ; highlight loudly
+
+
+**queries/markdown/injections.scm** (if you ever want injections)
+
+
+; e.g., inject dot/mermaid code fences
+(fenced_code_block
+  (info_string) @injection.language
+  (code_fence_content) @injection.content)
+
+
+Now your **cmp** source can ask “what node is under cursor?” and suggest the right things (IDs for `wikilink/page`, tag values for `fm_tag`). Pros: all UI logic stays in TS queries; cleaner highlighting. Cons: maintain a tiny fork. 
+```
+
 ## Decision
 <!-- What is the change that we're proposing and/or doing? -->
 
-Accept the stack in principal knowing some specifics will be hammered out in implementation. 
+Proceed with markdown-rs and accept the stack in principal knowing some specifics will be hammered out in implementation. 
 
 ## Consequences
 <!-- What becomes easier or more difficult to do because of this change? -->

@@ -31,7 +31,7 @@ We accept the following invariants:
 **Process**
 1. Read the single project .cli-rag.toml.
 2. Read any import = [...] files.
-3. Validate each import contains only [[schema]] blocks (else: error).
+3. Validate each import contains only `[[schema]]` blocks (else: error).
 4. Concatenate all schemas (project + imports).
 5. Enforce unique schema names (else: error).
 6. Freeze the effective config.

@@ -58,8 +58,32 @@ A parking lot for error code ideas as they come up in llm chats or otherwise
    * Error: `E250: File notes/ADR-024.md is outside [scan.filepaths].`
 ```
 
+```
+### 3. Template Variable Conflicts
+
+What happens if someone names a frontmatter field "title" or "id"? You might need a precedence rule or namespace separation.
+## Missing Pieces
+
+1. **Conflict Resolution**: If multiple schemas match the same file pattern, which wins?
+```
+
+error on conflict, explain the merge error in stderr
 
 by the opposite hand successes should just be silent unless we have a very good reason. fire writes "this will update x notes (list) y/n " is probably sane when we add file operations. 
+
+
+
+```
+## Template Variable Collision Still Unaddressed
+
+Your AI-MEM template uses `{{title}}` but what if the AI sets a frontmatter field called "title"? You need explicit precedence:
+
+```toml
+[schema.new.template]
+variable_precedence = ["system", "frontmatter", "computed"]
+```
+
+worth thinking through if a conflict is just an error. less overhead on the user frankly to just get "change x" vs setting inheritance logic. 
 
 ## Decision
 <!-- What is the change that we're proposing and/or doing? -->
