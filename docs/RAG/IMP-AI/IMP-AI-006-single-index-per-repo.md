@@ -5,8 +5,8 @@ tags:
   - watch
   - cache
 kanban_status:
-  - planned
-kanban_statusline: Adopt a single index per repo and derive groups from it.
+  - in-progress
+kanban_statusline: Unified index written at config root; reader remains per-base for now.
 depends_on:
   - ADR-001
   - ADR-AI-001
@@ -28,11 +28,11 @@ Adopt a single repo-level index file and derive group views from it, simplifying
 Current implementation writes per-base indexes, while ADR-001’s direction favors a single, consolidated index to avoid fragmentation and enable cheaper cache invalidation. A unified index also simplifies downstream consumers and reduces file churn.
 
 ### **Implementation Plan**
-- [ ] Decide index location semantics: path relative to project config dir; single file (e.g., `.adr-rag/index.json`).
-- [ ] Writer: merge all bases into a single in-memory list and write the consolidated index; move groups generation to be derived (or embed groups in index).
-- [ ] Reader: prefer unified index if present; else scan; ensure backward compatibility with legacy per-base indexes (deprecation warning).
-- [ ] Watch: on changes, update unified index once per debounce window; emit NDJSON events (`index_written`).
-- [ ] Doctor/Status: display unified index path and mode; counts sourced from the unified index.
+- [x] Decide index location semantics: path relative to project config dir; single file (e.g., `.cli-rag/index.json`).
+- [x] Writer: write the consolidated index at config root (in addition to current per-base writes to preserve compatibility).
+- [ ] Reader: prefer unified index if present; else per-base; else scan; emit deprecation warning for per-base.
+- [x] Watch: update unified index on debounce cycles (uses config dir from resolved `--config`).
+- [ ] Doctor/Status: display unified index path/mode; counts sourced from unified index when present.
 - [ ] Tests: unified read/write; dual-mode fallback; migration behavior (warn once).
 
 ### **Acceptance Criteria**
@@ -42,4 +42,5 @@ Current implementation writes per-base indexes, while ADR-001’s direction favo
 - Tests cover the migration and fallback scenarios.
 
 ### **Takeaway**
-To be completed upon ticket closure (migration notes and perf observations).
+- Implemented unified index writer at the config root and integrated it into `validate` and `watch` while retaining per-base index writes for compatibility.
+- Next steps: update `load_docs` to prefer the unified index, enhance `doctor` reporting, and add migration/fallback tests.

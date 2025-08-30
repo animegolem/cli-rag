@@ -5,7 +5,7 @@ use std::path::PathBuf;
 use crate::cli::OutputFormat;
 use crate::commands::output::print_json;
 use crate::config::{Config, SchemaCfg};
-use crate::discovery::load_docs;
+use crate::discovery::{load_docs, load_docs_unified};
 
 pub(crate) fn build_report(
     cfg: &Config,
@@ -118,6 +118,13 @@ pub(crate) fn build_report(
         })
         .collect();
 
+    // Unified index info
+    let unified = cfg_path.as_ref().and_then(|p| p.parent()).map(|dir| dir.join(&cfg.index_relative));
+    let unified_info = unified.as_ref().map(|p| {
+        let mode = if p.exists() { "index" } else { "absent" };
+        serde_json::json!({"path": p, "mode": mode})
+    });
+
     // Invariants summary (post-load)
     let mut invariants_ok = true;
     let mut invariants_errors: Vec<String> = Vec::new();
@@ -138,6 +145,7 @@ pub(crate) fn build_report(
         "config": cfg_path.as_ref().map(|p| p.display().to_string()).unwrap_or("<defaults>".into()),
         "bases": cfg.bases,
         "per_base": per_base,
+        "unified": unified_info,
         "counts": {"docs": docs.len(), "group_entries": group_count},
         "conflicts": conflicts,
         "types": type_counts,
@@ -148,7 +156,10 @@ pub(crate) fn build_report(
 }
 
 pub fn run(cfg: &Config, cfg_path: &Option<PathBuf>, format: &OutputFormat) -> Result<()> {
-    let docs = load_docs(cfg)?;
+    let docs = match load_docs_unified(cfg, cfg_path)? {
+        Some(d) => d,
+        None => load_docs(cfg)?,
+    };
     match format {
         OutputFormat::Json | OutputFormat::Ndjson => {
             let report = build_report(cfg, cfg_path, &docs);
