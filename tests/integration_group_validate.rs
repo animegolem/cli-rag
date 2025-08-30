@@ -17,7 +17,7 @@ fn group_json_wraps_members() {
     write_simple_adr(&base.child("ADR-010.md"), "ADR-010", "Tools");
 
     let cfg = temp.child(".adr-rag.toml");
-    cfg.write_str(&format!("bases = [\n  \"{}\"\n]\n", base.path().display()))
+    cfg.write_str(&format!("bases = [\n  '{}'\n]\n", base.path().display()))
         .unwrap();
 
     let mut cmd = Command::cargo_bin("adr-rag").unwrap();
@@ -50,7 +50,7 @@ fn validate_ndjson_header_only_on_empty() {
     base.create_dir_all().unwrap();
 
     let cfg = temp.child(".adr-rag.toml");
-    cfg.write_str(&format!("bases = [\n  \"{}\"\n]\n", base.path().display()))
+    cfg.write_str(&format!("bases = [\n  '{}'\n]\n", base.path().display()))
         .unwrap();
 
     let mut cmd = Command::cargo_bin("adr-rag").unwrap();
@@ -86,7 +86,7 @@ fn group_ndjson_emits_header_then_members() {
     write_simple_adr(&base.child("ADR-020.md"), "ADR-020", "Tools");
 
     let cfg = temp.child(".adr-rag.toml");
-    cfg.write_str(&format!("bases = [\n  \"{}\"\n]\n", base.path().display()))
+    cfg.write_str(&format!("bases = [\n  '{}'\n]\n", base.path().display()))
         .unwrap();
 
     let mut cmd = Command::cargo_bin("adr-rag").unwrap();
