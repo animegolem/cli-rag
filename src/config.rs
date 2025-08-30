@@ -568,7 +568,7 @@ required = ["id"]
         let import_abs = format!("{}", a_path.display());
         let proj = format!(
             r#"
-import = ["{import_abs}"]
+import = ['{import_abs}']
 
 bases = ["docs"]
 index_relative = "index/adr-index.json"
