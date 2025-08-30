@@ -25,6 +25,16 @@ jobs:
             rust: nightly
     steps:
       - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            src
+            tests
+            Cargo.toml
+            Cargo.lock
+            README.md
+            Justfile
+            .github
+          sparse-checkout-cone: true
       
       - name: Install Rust
         uses: dtolnay/rust-toolchain@master
@@ -73,6 +83,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            src
+            tests
+            Cargo.toml
+            Cargo.lock
+            README.md
+            Justfile
+            .github
+          sparse-checkout-cone: true
       
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
@@ -103,6 +123,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            src
+            tests
+            Cargo.toml
+            Cargo.lock
+            README.md
+            Justfile
+            .github
+          sparse-checkout-cone: true
       
       - name: Extract MSRV
         id: msrv
