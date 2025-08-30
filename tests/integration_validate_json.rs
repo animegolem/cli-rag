@@ -10,7 +10,7 @@ fn validate_json_shape_and_writes_groups() {
 
     // Minimal config pointing to empty base
     let cfg = temp.child(".adr-rag.toml");
-    cfg.write_str(&format!("bases = [\n  \"{}\"\n]\n", base.path().display()))
+    cfg.write_str(&format!("bases = [\n  '{}'\n]\n", base.path().display()))
         .unwrap();
 
     // Run validate in JSON mode and request writing groups

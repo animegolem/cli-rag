@@ -18,7 +18,7 @@ fn search_returns_protocol_with_groups() {
     write_simple_adr(&adr, "ADR-001", "G1");
 
     let cfg = temp.child(".adr-rag.toml");
-    cfg.write_str(&format!("bases = [\n  \"{}\"\n]\n", base.path().display()))
+    cfg.write_str(&format!("bases = [\n  '{}'\n]\n", base.path().display()))
         .unwrap();
 
     let mut cmd = Command::cargo_bin("adr-rag").unwrap();
@@ -56,7 +56,7 @@ fn topics_counts_groups_from_docs() {
     write_simple_adr(&base.child("ADR-001.md"), "ADR-001", "Tools");
 
     let cfg = temp.child(".adr-rag.toml");
-    cfg.write_str(&format!("bases = [\n  \"{}\"\n]\n", base.path().display()))
+    cfg.write_str(&format!("bases = [\n  '{}'\n]\n", base.path().display()))
         .unwrap();
 
     let mut cmd = Command::cargo_bin("adr-rag").unwrap();
