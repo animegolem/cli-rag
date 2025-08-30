@@ -8,7 +8,7 @@ status: draft
 depends_on:
   - ADR-01
   - ADR-003
-created_date: 2025-08-25
+created_date: 2025-08-28
 last_modified: 2025-08-28
 related_files: []
 ---
@@ -26,34 +26,50 @@ related_files: []
 
 1. The user opens a new repo and types `cli-rag init` which checks for a .cli-rag.toml and if not present opens their editor with a marked up config file. They can either save this or exit the process. 
    
-   See [[ADR-001-cli-rag.toml]] for a full example. 
+   See [[💾 Software Development/🖳 CLI-RAG/🗎 ADR/ADR-001-cli-rag.toml]] for a full example. 
 
 2. Once the .cli-rag.toml is created it opens the TUI "master control" screen e.g. Magit/org style tab collapsible lists. This expands as tracked notes are added. 
    
-```bash
+  ```bash 
+# Agenda
+V ToDo ! 
+	-[] TODO@HIGH: Critical parser bug | Note:[[IMP-005]] | Created: 2025-09-01
+	-[] TODO@MED:  Refactor validation  | Note:[[IMP-005]] | Created: 2025-08-27
+	-[] TODO: Default priority task | Note:[[IMP-003]] | Created: 2025-09-03
+V Due_Dates
+  - 2025-8-16: IMP-001 **OVERDUE!** # past due color coded red and gets a flag 
+  - 2025-9-03: IMP-004 
+V **Kanban**
+	> Backlog
+	V In-Progress
+	  L IMP-004
+	  L IMP-002 
+	> Completed
+	> Cancelled 
+
+# Vault 
 v **Templates** 
 	1 - IMP-*  
 	2 - ADR-*
-	3 - ADR-DB-*
-		
-v **Tracked Notes** 
-	- ADR-001-my-first-plan
-	- ADR-002-my-happy-place
-	- ADR-003-oh-god-oh-fuck
-	- ADR-004-panic-refactor
-	* ADR-DB-001-event-store
-	* ADR-DB-002-idempotency
-	+ IMP-001-database-spike
-	+ IMP-002-websocket-spike  
-	...	        
+	3 - ADR-AI-*
+v **ADR** 
+	L ADR-001-my-first-plan
+	L ADR-002-my-happy-place
+> **ADR-AI** 
+v **IMP** 
+	L IMP-001-database-spike
+	L IMP-002-websocket-spike  
+       
 TAB: Collapse/Expand | RETURN: Select | SPACE+F: FuzzyFind | G: GraphView
 ```
+
+- This may not be possible in neovim vs emacs but the ideal is being able unfold the note directly into an editable minibuffer or hit enter to open the full note.  
 
 3.  The user can begin creating notes populated with expected (empty) frontmatter and template. Selecting a note or a template opens the editor for the user. When the close the editor the TUI catches the exit code and rebuilds the index and adds the new tracked notes to the master control screen. 
 
 4. Ideally we would have a simple fuzzy finder that is accessible in all windows with the same keystrokes. It only indexes tracked notes. This and the master control screen let you fly around the knowledge base. 
    
-5. GraphView the leans on graphviz dot view's ability to render out ascii. Could use the [[ADR-DRAFT-simple-query-dsl]] and let the user navigate the graph by pulling different clusters. 
+5. GraphView the leans on graphviz dot view's ability to render out ascii. Could use the search command and let the user navigate the graph by pulling different clusters 
    
 ```
    An idea that keeps coming to mind is using the local `--include-bidirectional` graph as a navigation system in the TUI/NVIM. 
@@ -126,7 +142,7 @@ All of the above can be much smoother in neovim. In theory we could
 - Define a consistent naviation UI using a leader key. 
 - Lean on Existing fuzzy finding and implement less ourselves. 
 - Offer a first class editing experience. We could in theory parse our index and have tree-sitter powered live linting of valid id's and note names
-- make [[links]] and ID: ADR-005 directly navigable from the editor. 
+- make `[[links]]` and ID: ADR-005 directly navigable from the editor. 
 
 This is ultimately inching much closer to a AI Co-Programmer friendly obsidian that lives in a repo without fuss. I'm not sure if that's a good or a bad thing. It would without a doubt be the most comfortable and fully featured version. 
 
@@ -138,6 +154,7 @@ Prioritize neovim. While the TUI is nice and more universal the neovim community
 1. less work. 
 2. more powerful. 
 
+Also i want it to be fennel ))))))))))))))))))))))))))))))))))
 
 ## Consequences
 <!-- What becomes easier or more difficult to do because of this change? -->
@@ -146,5 +163,3 @@ plan to adopt `nvim-oxi` and ensure our patterns do not contradict this future g
 
 ## Updates
 <!-- Changes that happened when the rubber met the road -->
-
-

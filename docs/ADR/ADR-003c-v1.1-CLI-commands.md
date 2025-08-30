@@ -154,7 +154,7 @@ Shortest path between two IDs with edge kinds.
 **Human example**
 
 ADR-024 → IMP-006 (depends_on)
-IMP-006 → ADR-029 (mentions: [[ADR-029]] L42)
+IMP-006 → ADR-029 (mentions: `[[ADR-029]]` L42)
 
 ## `groups`
 

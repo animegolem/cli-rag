@@ -131,7 +131,7 @@ These tools are currently not logically implemented and are are holdover from th
 
 The purpose of this tool is primarily to give an AI agent a map to understand the code-base. 
 
-One option would be to define `groups` as `validated_frontmatter` with hard-coded logic in the [[ADR-001-cli-rag.toml]];
+One option would be to define `groups` as `validated_frontmatter` with hard-coded logic in the [[💾 Software Development/🖳 CLI-RAG/🗎 ADR/ADR-001-cli-rag.toml]];
 
 ```toml
 # --- `validated_frontmatter` are built tools that will run validation logic beyond simply checking if it exist and has content --- 
@@ -308,4 +308,4 @@ Traverse a note (and it's dependencies) and print the contents. This tool is pri
 ## Consequences
 <!-- What becomes easier or more difficult to do because of this change? -->
 
-A more ergonomic and intuitive developer experience. see [[ADR-003b-v1-CLI-commands]]
+A more ergonomic and intuitive developer experience. see [[💾 Software Development/🖳 CLI-RAG/🗎 ADR/ADR-003b-v1-CLI-commands]]
