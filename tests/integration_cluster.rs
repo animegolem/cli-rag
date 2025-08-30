@@ -30,7 +30,7 @@ fn cluster_json_includes_members() {
     write_adr(&base.child("ADR-101.md"), "ADR-101", "Child", &["ADR-100"]);
 
     let cfg = temp.child(".adr-rag.toml");
-    cfg.write_str(&format!("bases = [\n  \"{}\"\n]\n", base.path().display()))
+    cfg.write_str(&format!("bases = [\n  '{}'\n]\n", base.path().display()))
         .unwrap();
 
     let mut cmd = Command::cargo_bin("adr-rag").unwrap();
