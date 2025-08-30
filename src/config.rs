@@ -54,7 +54,7 @@ pub struct SchemaCfg {
 pub struct Config {
     #[serde(default)]
     pub import: Vec<String>,
-    #[serde(default = "default_bases")]
+    #[serde(default = "default_bases", alias = "filepaths")]
     pub bases: Vec<PathBuf>,
     #[serde(default = "default_index_rel")]
     pub index_relative: String,
@@ -192,8 +192,8 @@ pub fn load_config(
             schema: Vec::new(),
         }
     };
-    // Env override for bases (comma-separated)
-    if let Ok(env_bases) = env::var("ADR_RAG_BASES") {
+    // Env override for bases/filepaths (comma-separated)
+    if let Ok(env_bases) = env::var("ADR_RAG_FILEPATHS").or_else(|_| env::var("ADR_RAG_BASES")) {
         let list: Vec<PathBuf> = env_bases
             .split(',')
             .map(|s| PathBuf::from(s.trim()))
@@ -323,7 +323,8 @@ pub fn build_schema_sets(cfg: &Config) -> Vec<(SchemaCfg, globset::GlobSet)> {
 pub const TEMPLATE: &str = r#"# Repo-local ADR CLI config (adr-rag)
 
 # One or more directories to scan or read an index from.
-bases = [
+# Prefer `filepaths`; `bases` is still accepted for backwards-compat.
+filepaths = [
   "docs/masterplan",
   # "docs/notes",
 ]

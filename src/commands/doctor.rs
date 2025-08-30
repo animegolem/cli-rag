@@ -159,7 +159,7 @@ pub fn run(cfg: &Config, cfg_path: &Option<PathBuf>, format: &OutputFormat) -> R
             let report = build_report(cfg, cfg_path, &docs);
             let config_path = report.get("config").and_then(|v| v.as_str()).unwrap_or("");
             println!("Config: {}", config_path);
-            println!("Bases:");
+            println!("Filepaths:");
             for b in &cfg.bases {
                 println!("  - {}", b.display());
             }

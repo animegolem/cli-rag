@@ -30,3 +30,7 @@ tempfile = "3.10"
 opt-level = 3
 lto = true
 codegen-units = 1
+
+[[bin]]
+name = "cli-rag"
+path = "src/bin/adr-rag.rs"

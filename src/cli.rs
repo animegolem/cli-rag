@@ -17,7 +17,7 @@ pub enum GraphFormat {
 
 #[derive(Parser, Debug)]
 #[command(
-    name = "adr-rag",
+    name = "cli-rag",
     version,
     about = "Per-repo ADR navigator with TOML config"
 )]
@@ -25,7 +25,7 @@ pub struct Cli {
     #[arg(long, global = true)]
     pub config: Option<PathBuf>,
 
-    #[arg(long, value_delimiter = ',', global = true)]
+    #[arg(long, value_delimiter = ',', global = true, alias = "filepaths")]
     pub base: Option<Vec<PathBuf>>,
 
     /// Global output format
