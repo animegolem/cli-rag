@@ -10,7 +10,7 @@ fn doctor_json_on_empty_base_reports_structure() {
     base.create_dir_all().unwrap();
 
     let cfg = temp.child(".adr-rag.toml");
-    cfg.write_str(&format!("bases = [\n  \"{}\"\n]\n", base.path().display()))
+    cfg.write_str(&format!("bases = [\n  '{}'\n]\n", base.path().display()))
         .unwrap();
 
     // Run `adr-rag doctor --format json --config <cfg>`
