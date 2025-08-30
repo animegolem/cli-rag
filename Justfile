@@ -37,3 +37,9 @@ doctor-json:
 
 init-dry:
     just run init --silent --force
+
+# Local pre-CI checks
+precommit:
+    scripts/line_guard.sh
+    cargo fmt --all -- --check
+    cargo clippy --all-targets --all-features -- -D warnings
