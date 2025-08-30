@@ -225,7 +225,10 @@ pub fn run(cfg: &Config, cfg_path: &Option<PathBuf>, format: &OutputFormat) -> R
                     }
                 }
             }
-            let invariants_ok = report.get("invariants_ok").and_then(|v| v.as_bool()).unwrap_or(true);
+            let invariants_ok = report
+                .get("invariants_ok")
+                .and_then(|v| v.as_bool())
+                .unwrap_or(true);
             if invariants_ok {
                 println!("Invariants: OK");
             } else if let Some(errs) = report.get("invariants_errors").and_then(|v| v.as_array()) {
@@ -286,7 +289,10 @@ mod tests {
             .get("invariants_ok")
             .and_then(|v| v.as_bool())
             .unwrap_or(true);
-        assert!(!ok, "expected invariants_ok=false with duplicate schema names");
+        assert!(
+            !ok,
+            "expected invariants_ok=false with duplicate schema names"
+        );
         let errs = report
             .get("invariants_errors")
             .and_then(|v| v.as_array())

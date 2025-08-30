@@ -217,13 +217,10 @@ pub fn load_config(
                 let patt_path = cfg_dir.join(patt);
                 let mut files: Vec<PathBuf> = Vec::new();
                 // Expand globs if any; if no matches, try as a direct file path.
-                let walk_res = GlobWalkerBuilder::from_patterns(
-                    cfg_dir,
-                    &[patt.as_str()]
-                )
-                .max_depth(10)
-                .follow_links(true)
-                .build();
+                let walk_res = GlobWalkerBuilder::from_patterns(cfg_dir, &[patt.as_str()])
+                    .max_depth(10)
+                    .follow_links(true)
+                    .build();
                 if let Ok(walker) = walk_res {
                     for entry in walker.filter_map(Result::ok) {
                         if entry.path().is_file() {
@@ -264,7 +261,10 @@ pub fn load_config(
                         ));
                     }
                     #[derive(Deserialize)]
-                    struct ImportSchemas { #[serde(default)] schema: Vec<SchemaCfg> }
+                    struct ImportSchemas {
+                        #[serde(default)]
+                        schema: Vec<SchemaCfg>,
+                    }
                     let imp: ImportSchemas = toml::from_str(&s)
                         .with_context(|| format!("parsing schemas in import {:?}", fpath))?;
                     imported.extend(imp.schema);
@@ -416,7 +416,6 @@ severity = "error"
 mod tests {
     use super::*;
     use std::fs;
-    use std::io::Write as _;
 
     fn unique_tmp(prefix: &str) -> PathBuf {
         let now = std::time::SystemTime::now()
@@ -567,7 +566,8 @@ required = ["id"]
         fs::write(&a_path, a_toml).unwrap();
         // Project defines ADR as well
         let import_abs = format!("{}", a_path.display());
-        let proj = format!(r#"
+        let proj = format!(
+            r#"
 import = ["{import_abs}"]
 
 bases = ["docs"]
@@ -589,7 +589,8 @@ include_content = true
 name = "ADR"
 file_patterns = ["ADR-*.md"]
 required = ["id"]
-"#);
+"#
+        );
         fs::create_dir_all(cfg_path.parent().unwrap()).unwrap();
         fs::write(&cfg_path, proj).unwrap();
         let res = load_config(&Some(cfg_path.clone()), &None);
