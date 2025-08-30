@@ -24,25 +24,25 @@ fn main() -> Result<()> {
             adr_rag::commands::completions::run_completions(cmd, shell);
         }
         Commands::Search { query } => {
-            let (cfg, _) = load_config(&cli.config, &cli.base)?;
+            let (cfg, cfg_path) = load_config(&cli.config, &cli.base)?;
             adr_rag::commands::search::run(&cfg, &cli.format, query)?;
         }
         Commands::Topics {} => {
-            let (cfg, _) = load_config(&cli.config, &cli.base)?;
+            let (cfg, cfg_path) = load_config(&cli.config, &cli.base)?;
             adr_rag::commands::topics::run(&cfg, &cli.format)?;
         }
         Commands::Group {
             topic,
             include_content,
         } => {
-            let (cfg, _) = load_config(&cli.config, &cli.base)?;
+            let (cfg, cfg_path) = load_config(&cli.config, &cli.base)?;
             adr_rag::commands::group::run(&cfg, &cli.format, topic, include_content)?;
         }
         Commands::Get {
             id,
             include_dependents,
         } => {
-            let (cfg, _) = load_config(&cli.config, &cli.base)?;
+            let (cfg, cfg_path) = load_config(&cli.config, &cli.base)?;
             adr_rag::commands::get::run(&cfg, &cli.format, id, include_dependents)?;
         }
         Commands::Cluster {
@@ -50,7 +50,7 @@ fn main() -> Result<()> {
             depth,
             include_bidirectional,
         } => {
-            let (cfg, _) = load_config(&cli.config, &cli.base)?;
+            let (cfg, cfg_path) = load_config(&cli.config, &cli.base)?;
             adr_rag::commands::cluster::run(&cfg, &cli.format, id, depth, include_bidirectional)?;
         }
         Commands::Path {
@@ -58,7 +58,7 @@ fn main() -> Result<()> {
             to,
             max_depth,
         } => {
-            let (cfg, _) = load_config(&cli.config, &cli.base)?;
+            let (cfg, cfg_path) = load_config(&cli.config, &cli.base)?;
             adr_rag::commands::path::run(&cfg, &cli.format, from, to, max_depth)?;
         }
         Commands::Graph {
@@ -67,7 +67,7 @@ fn main() -> Result<()> {
             include_bidirectional,
             format,
         } => {
-            let (cfg, _) = load_config(&cli.config, &cli.base)?;
+            let (cfg, cfg_path) = load_config(&cli.config, &cli.base)?;
             adr_rag::commands::graph::run(&cfg, &format, id, depth, include_bidirectional)?;
         }
         Commands::Watch {
@@ -75,13 +75,14 @@ fn main() -> Result<()> {
             debounce_ms,
             dry_run,
         } => {
-            let (cfg, _) = load_config(&cli.config, &cli.base)?;
-            adr_rag::commands::watch_cmd::run(&cfg, full_rescan, debounce_ms, dry_run)?;
+            let (cfg, cfg_path) = load_config(&cli.config, &cli.base)?;
+            adr_rag::commands::watch_cmd::run(&cfg, &cfg_path, full_rescan, debounce_ms, dry_run)?;
         }
         Commands::Validate(args) => {
-            let (cfg, _) = load_config(&cli.config, &cli.base)?;
+            let (cfg, cfg_path) = load_config(&cli.config, &cli.base)?;
             adr_rag::commands::validate_cmd::run(
                 &cfg,
+                &cfg_path,
                 &args.format,
                 args.write_groups,
                 args.dry_run,

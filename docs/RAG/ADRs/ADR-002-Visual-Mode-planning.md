@@ -31,14 +31,13 @@ related_files: []
 2. Once the .cli-rag.toml is created it opens the TUI "master control" screen e.g. Magit/org style tab collapsible lists. This expands as tracked notes are added. 
    
   ```bash 
-# Agenda
 V ToDo ! 
-	-[] TODO@HIGH: Critical parser bug | Note:[[IMP-005]] | Created: 2025-09-01
+	-[] TODO@HIGH: Critical parser bug | Note:[[IMP-005]] | Created: 2025-09-01 
 	-[] TODO@MED:  Refactor validation  | Note:[[IMP-005]] | Created: 2025-08-27
 	-[] TODO: Default priority task | Note:[[IMP-003]] | Created: 2025-09-03
 V Due_Dates
-  - 2025-8-16: IMP-001 **OVERDUE!** # past due color coded red and gets a flag 
-  - 2025-9-03: IMP-004 
+    - 2025-8-16: IMP-001 **OVERDUE!** # past due color coded red and gets a flag 
+    - 2025-9-03: IMP-004 
 V **Kanban**
 	> Backlog
 	V In-Progress
@@ -46,8 +45,7 @@ V **Kanban**
 	  L IMP-002 
 	> Completed
 	> Cancelled 
-
-# Vault 
+ 
 v **Templates** 
 	1 - IMP-*  
 	2 - ADR-*
@@ -59,7 +57,7 @@ v **ADR**
 v **IMP** 
 	L IMP-001-database-spike
 	L IMP-002-websocket-spike  
-       
+ 
 TAB: Collapse/Expand | RETURN: Select | SPACE+F: FuzzyFind | G: GraphView
 ```
 

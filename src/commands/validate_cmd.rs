@@ -10,6 +10,7 @@ use crate::validate::validate_docs;
 
 pub fn run(
     cfg: &Config,
+    cfg_path: &Option<std::path::PathBuf>,
     format: &OutputFormat,
     write_groups: bool,
     dry_run: bool,
@@ -86,7 +87,11 @@ pub fn run(
         }
     }
     if report.ok && !dry_run {
-        write_indexes(cfg, &docs, true, true)?;
+        let cfg_dir = cfg_path
+            .as_ref()
+            .and_then(|p| p.parent())
+            .map(|p| p as &std::path::Path);
+        write_indexes(cfg, &docs, true, true, cfg_dir)?;
     }
     if write_groups && !dry_run {
         write_groups_config(cfg, &docs)?;

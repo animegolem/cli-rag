@@ -14,13 +14,21 @@ pub struct WatchArgs {
     pub write_groups: bool,
 }
 
-pub fn run_watch(cfg: &Config, args: WatchArgs) -> Result<()> {
+pub fn run_watch(
+    cfg: &Config,
+    cfg_path: &Option<std::path::PathBuf>,
+    args: WatchArgs,
+) -> Result<()> {
     // Initial run
     {
         let docs = incremental_collect_docs(cfg, args.full_rescan)?;
         let report = validate_docs(cfg, &docs);
         if report.ok && !args.dry_run {
-            write_indexes(cfg, &docs, true, true)?;
+            let cfg_dir = cfg_path
+                .as_ref()
+                .and_then(|p| p.parent())
+                .map(|p| p as &std::path::Path);
+            write_indexes(cfg, &docs, true, true, cfg_dir)?;
         }
         if !report.errors.is_empty() {
             eprintln!("Validation failed:");
@@ -56,7 +64,11 @@ pub fn run_watch(cfg: &Config, args: WatchArgs) -> Result<()> {
         let docs = incremental_collect_docs(cfg, false)?;
         let report = validate_docs(cfg, &docs);
         if report.ok && !args.dry_run {
-            write_indexes(cfg, &docs, true, true)?;
+            let cfg_dir = cfg_path
+                .as_ref()
+                .and_then(|p| p.parent())
+                .map(|p| p as &std::path::Path);
+            write_indexes(cfg, &docs, true, true, cfg_dir)?;
         }
         if args.write_groups && !args.dry_run {
             write_groups_config(cfg, &docs)?;

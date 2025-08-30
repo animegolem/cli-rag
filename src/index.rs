@@ -10,6 +10,7 @@ pub fn write_indexes(
     docs: &Vec<AdrDoc>,
     _force: bool,
     _auto_write: bool,
+    config_dir: Option<&std::path::Path>,
 ) -> Result<()> {
     let schema_sets = build_schema_sets(cfg);
     for base in &cfg.bases {
@@ -57,6 +58,59 @@ pub fn write_indexes(
             .with_context(|| format!("writing index to {}", out_path.display()))?;
         eprintln!(
             "Wrote index: {} ({} entries)",
+            out_path.display(),
+            wrapper
+                .get("items")
+                .and_then(|v| v.as_array())
+                .map(|a| a.len())
+                .unwrap_or(0)
+        );
+    }
+    // Unified index at config root (optional)
+    if let Some(dir) = config_dir {
+        let mut list = Vec::new();
+        let schema_sets = build_schema_sets(cfg);
+        for d in docs {
+            let mut note_type: Option<String> = None;
+            let fname = d.file.file_name().and_then(|s| s.to_str()).unwrap_or("");
+            for (sc, set) in &schema_sets {
+                if set.is_match(fname) {
+                    note_type = Some(sc.name.clone());
+                    break;
+                }
+            }
+            list.push(serde_json::json!({
+                "file": d.file.to_string_lossy(),
+                "id": d.id.clone().unwrap_or_default(),
+                "title": d.title,
+                "tags": d.tags,
+                "status": d.status.clone().unwrap_or_default(),
+                "depends_on": d.depends_on,
+                "supersedes": d.supersedes,
+                "superseded_by": d.superseded_by,
+                "groups": d.groups,
+                "type": note_type,
+                "mtime": d.mtime,
+                "size": d.size,
+            }));
+        }
+        let now = SystemTime::now()
+            .duration_since(SystemTime::UNIX_EPOCH)
+            .unwrap_or(Duration::from_secs(0))
+            .as_secs();
+        let wrapper = serde_json::json!({
+            "index_version": 1,
+            "generated_at": now,
+            "items": list,
+        });
+        let out_path = dir.join(&cfg.index_relative);
+        if let Some(parent) = out_path.parent() {
+            fs::create_dir_all(parent).ok();
+        }
+        fs::write(&out_path, serde_json::to_string_pretty(&wrapper)?)
+            .with_context(|| format!("writing unified index to {}", out_path.display()))?;
+        eprintln!(
+            "Wrote unified index: {} ({} entries)",
             out_path.display(),
             wrapper
                 .get("items")
