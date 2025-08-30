@@ -3,7 +3,7 @@ use std::process::Command;
 
 #[test]
 fn cli_help_prints_usage() {
-    let mut cmd = Command::cargo_bin("adr-rag").unwrap();
+    let mut cmd = Command::cargo_bin("cli-rag").unwrap();
     cmd.arg("--help")
         .assert()
         .success()

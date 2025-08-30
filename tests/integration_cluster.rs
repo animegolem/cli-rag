@@ -29,11 +29,11 @@ fn cluster_json_includes_members() {
     write_adr(&base.child("ADR-100.md"), "ADR-100", "Root", &[]);
     write_adr(&base.child("ADR-101.md"), "ADR-101", "Child", &["ADR-100"]);
 
-    let cfg = temp.child(".adr-rag.toml");
+    let cfg = temp.child(".cli-rag.toml");
     cfg.write_str(&format!("bases = [\n  '{}'\n]\n", base.path().display()))
         .unwrap();
 
-    let mut cmd = Command::cargo_bin("adr-rag").unwrap();
+    let mut cmd = Command::cargo_bin("cli-rag").unwrap();
     let out = cmd
         .arg("--config")
         .arg(cfg.path())

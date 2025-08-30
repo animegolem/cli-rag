@@ -1,5 +1,5 @@
 [package]
-name = "adr-rag"
+name = "cli-rag"
 version = "0.1.0"
 edition = "2021"
 rust-version = "1.80.0"
@@ -33,4 +33,4 @@ codegen-units = 1
 
 [[bin]]
 name = "cli-rag"
-path = "src/bin/adr-rag.rs"
+path = "src/bin/cli-rag.rs"

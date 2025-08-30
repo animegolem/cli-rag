@@ -17,11 +17,11 @@ fn search_returns_protocol_with_groups() {
     let adr = base.child("ADR-001.md");
     write_simple_adr(&adr, "ADR-001", "G1");
 
-    let cfg = temp.child(".adr-rag.toml");
+    let cfg = temp.child(".cli-rag.toml");
     cfg.write_str(&format!("bases = [\n  '{}'\n]\n", base.path().display()))
         .unwrap();
 
-    let mut cmd = Command::cargo_bin("adr-rag").unwrap();
+    let mut cmd = Command::cargo_bin("cli-rag").unwrap();
     let output = cmd
         .arg("--config")
         .arg(cfg.path())
@@ -55,11 +55,11 @@ fn topics_counts_groups_from_docs() {
     base.create_dir_all().unwrap();
     write_simple_adr(&base.child("ADR-001.md"), "ADR-001", "Tools");
 
-    let cfg = temp.child(".adr-rag.toml");
+    let cfg = temp.child(".cli-rag.toml");
     cfg.write_str(&format!("bases = [\n  '{}'\n]\n", base.path().display()))
         .unwrap();
 
-    let mut cmd = Command::cargo_bin("adr-rag").unwrap();
+    let mut cmd = Command::cargo_bin("cli-rag").unwrap();
     let output = cmd
         .arg("--config")
         .arg(cfg.path())

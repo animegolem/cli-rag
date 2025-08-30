@@ -113,10 +113,10 @@ jobs:
       - name: Test CLI commands
         run: |
           cargo build --release
-          ./target/release/adr-rag --version
-          ./target/release/adr-rag init --print-template > /tmp/test-template.toml
-          ./target/release/adr-rag completions bash > /tmp/test-completions.bash
-          ./target/release/adr-rag completions zsh > /tmp/test-completions.zsh
+          ./target/release/cli-rag --version
+          ./target/release/cli-rag init --print-template > /tmp/test-template.toml
+          ./target/release/cli-rag completions bash > /tmp/test-completions.bash
+          ./target/release/cli-rag completions zsh > /tmp/test-completions.zsh
 
   msrv:
     name: Minimum Supported Rust Version

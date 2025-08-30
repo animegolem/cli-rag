@@ -39,7 +39,7 @@ pub struct Cli {
 #[derive(Subcommand, Debug)]
 pub enum Commands {
     Init {
-        /// Optional path to write config (defaults to ./.adr-rag.toml)
+    /// Optional path to write config (defaults to ./.cli-rag.toml)
         #[arg(long)]
         path: Option<PathBuf>,
         #[arg(long)]

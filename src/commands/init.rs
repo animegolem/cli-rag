@@ -5,7 +5,7 @@ use crate::config::{find_config_upwards, write_template, TEMPLATE};
 use crate::util::try_open_editor;
 
 pub fn run(path: Option<PathBuf>, force: bool, print_template: bool, silent: bool) -> Result<()> {
-    let target = path.unwrap_or_else(|| PathBuf::from(".adr-rag.toml"));
+    let target = path.unwrap_or_else(|| PathBuf::from(".cli-rag.toml"));
     if print_template {
         print!("{}", TEMPLATE);
         return Ok(());

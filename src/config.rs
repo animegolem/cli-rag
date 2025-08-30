@@ -118,7 +118,7 @@ pub fn find_config_upwards(explicit: &Option<PathBuf>) -> Option<PathBuf> {
     if let Some(p) = explicit {
         return Some(p.clone());
     }
-    if let Ok(env_path) = env::var("ADR_RAG_CONFIG") {
+    if let Ok(env_path) = env::var("CLI_RAG_CONFIG") {
         let p = PathBuf::from(env_path);
         if p.exists() {
             return Some(p);
@@ -126,7 +126,7 @@ pub fn find_config_upwards(explicit: &Option<PathBuf>) -> Option<PathBuf> {
     }
     let mut dir = env::current_dir().ok()?;
     loop {
-        let candidate = dir.join(".adr-rag.toml");
+        let candidate = dir.join(".cli-rag.toml");
         if candidate.exists() {
             return Some(candidate);
         }
@@ -142,7 +142,7 @@ fn find_all_configs_upwards_chain() -> Vec<PathBuf> {
     let mut out = Vec::new();
     if let Ok(mut dir) = env::current_dir() {
         loop {
-            let candidate = dir.join(".adr-rag.toml");
+            let candidate = dir.join(".cli-rag.toml");
             if candidate.exists() {
                 out.push(candidate);
             }
@@ -159,8 +159,8 @@ pub fn load_config(
     path_opt: &Option<PathBuf>,
     base_override: &Option<Vec<PathBuf>>,
 ) -> Result<(Config, Option<PathBuf>)> {
-    // Detect multiple configs in scope (unless an explicit path is provided or ADR_RAG_CONFIG is set)
-    let env_cfg = env::var("ADR_RAG_CONFIG").ok().map(PathBuf::from);
+    // Detect multiple configs in scope (unless an explicit path is provided or CLI_RAG_CONFIG is set)
+    let env_cfg = env::var("CLI_RAG_CONFIG").ok().map(PathBuf::from);
     let path = find_config_upwards(path_opt);
     if path_opt.is_none() && env_cfg.is_none() {
         let chain = find_all_configs_upwards_chain();
@@ -171,7 +171,7 @@ pub fn load_config(
                 .collect::<Vec<_>>()
                 .join(", ");
             return Err(anyhow!(
-                "E100: Multiple project configs detected. Only one .adr-rag.toml is allowed. Found: {}",
+                "E100: Multiple project configs detected. Only one .cli-rag.toml is allowed. Found: {}",
                 list
             ));
         }
@@ -193,7 +193,7 @@ pub fn load_config(
         }
     };
     // Env override for bases/filepaths (comma-separated)
-    if let Ok(env_bases) = env::var("ADR_RAG_FILEPATHS").or_else(|_| env::var("ADR_RAG_BASES")) {
+    if let Ok(env_bases) = env::var("CLI_RAG_FILEPATHS") {
         let list: Vec<PathBuf> = env_bases
             .split(',')
             .map(|s| PathBuf::from(s.trim()))
@@ -320,7 +320,7 @@ pub fn build_schema_sets(cfg: &Config) -> Vec<(SchemaCfg, globset::GlobSet)> {
     out
 }
 
-pub const TEMPLATE: &str = r#"# Repo-local ADR CLI config (adr-rag)
+pub const TEMPLATE: &str = r#"# Repo-local CLI config (cli-rag)
 
 # One or more directories to scan or read an index from.
 # Prefer `filepaths`; `bases` is still accepted for backwards-compat.
@@ -447,15 +447,15 @@ mod tests {
 
     #[test]
     fn test_e100_multiple_configs_detected() {
-        // Create parent/child each with a .adr-rag.toml and chdir into child.
+        // Create parent/child each with a .cli-rag.toml and chdir into child.
         let parent = unique_tmp("e100_parent");
         let child = parent.join("child");
         fs::create_dir_all(&child).unwrap();
-        fs::File::create(parent.join(".adr-rag.toml")).unwrap();
-        fs::File::create(child.join(".adr-rag.toml")).unwrap();
+        fs::File::create(parent.join(".cli-rag.toml")).unwrap();
+        fs::File::create(child.join(".cli-rag.toml")).unwrap();
         let _guard = DirGuard::new(&child);
         // Ensure no explicit path/env override
-        std::env::remove_var("ADR_RAG_CONFIG");
+        std::env::remove_var("CLI_RAG_CONFIG");
         let res = load_config(&None, &None);
         assert!(res.is_err(), "expected E100 error");
         let msg = format!("{}", res.unwrap_err());
@@ -466,7 +466,7 @@ mod tests {
     fn test_e120_duplicate_schema_names() {
         // Build a minimal valid config file with duplicate schema names
         let dir = unique_tmp("e120_cfg");
-        let cfg_path = dir.join(".adr-rag.toml");
+        let cfg_path = dir.join(".cli-rag.toml");
         let toml = r#"
 bases = ["docs"]
 index_relative = "index/adr-index.json"
@@ -504,7 +504,7 @@ required = ["id"]
     #[test]
     fn test_imports_only_schema_success() {
         let dir = unique_tmp("imp_ok");
-        let cfg_path = dir.join(".adr-rag.toml");
+        let cfg_path = dir.join(".cli-rag.toml");
         let templates = dir.join("templates");
         fs::create_dir_all(&templates).unwrap();
         let a_path = templates.join("a.toml");
@@ -529,7 +529,7 @@ required = ["id"]
     #[test]
     fn test_imports_illegal_keys_e110() {
         let dir = unique_tmp("imp_bad");
-        let cfg_path = dir.join(".adr-rag.toml");
+        let cfg_path = dir.join(".cli-rag.toml");
         let templates = dir.join("templates");
         fs::create_dir_all(&templates).unwrap();
         let bad_path = templates.join("bad.toml");
@@ -553,7 +553,7 @@ bases = ["docs"]
     #[test]
     fn test_imports_duplicate_across_project_e120() {
         let dir = unique_tmp("imp_dup");
-        let cfg_path = dir.join(".adr-rag.toml");
+        let cfg_path = dir.join(".cli-rag.toml");
         let templates = dir.join("templates");
         fs::create_dir_all(&templates).unwrap();
         let a_path = templates.join("a.toml");

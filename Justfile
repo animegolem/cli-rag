@@ -29,7 +29,7 @@ test:
 
 # Run binary with arbitrary args after `--`
 run *args:
-    cargo run --bin adr-rag -- {{args}}
+    cargo run --bin cli-rag -- {{args}}
 
 # Handy shortcuts
 doctor-json:

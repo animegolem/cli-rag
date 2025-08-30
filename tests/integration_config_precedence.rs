@@ -20,14 +20,14 @@ fn env_overrides_config_and_cli_overrides_env() {
     write_adr(&base2.child("ADR-002.md"), "ADR-002");
 
     // Config points to base1
-    let cfg = temp.child(".adr-rag.toml");
+    let cfg = temp.child(".cli-rag.toml");
     cfg.write_str(&format!("bases = [\n  '{}'\n]\n", base1.path().display()))
         .unwrap();
 
     // Case A: env overrides config to base2
-    let mut cmd = Command::cargo_bin("adr-rag").unwrap();
+    let mut cmd = Command::cargo_bin("cli-rag").unwrap();
     let out = cmd
-        .env("ADR_RAG_BASES", base2.path())
+        .env("CLI_RAG_FILEPATHS", base2.path())
         .arg("--config")
         .arg(cfg.path())
         .arg("search")
@@ -45,9 +45,9 @@ fn env_overrides_config_and_cli_overrides_env() {
     assert_eq!(v.as_array().unwrap()[0]["id"], "ADR-002");
 
     // Case B: CLI --base overrides env back to base1
-    let mut cmd = Command::cargo_bin("adr-rag").unwrap();
+    let mut cmd = Command::cargo_bin("cli-rag").unwrap();
     let out = cmd
-        .env("ADR_RAG_BASES", base2.path())
+        .env("CLI_RAG_FILEPATHS", base2.path())
         .arg("--base")
         .arg(base1.path())
         .arg("--config")

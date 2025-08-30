@@ -9,12 +9,12 @@ fn validate_json_shape_and_writes_groups() {
     base.create_dir_all().unwrap();
 
     // Minimal config pointing to empty base
-    let cfg = temp.child(".adr-rag.toml");
+    let cfg = temp.child(".cli-rag.toml");
     cfg.write_str(&format!("bases = [\n  '{}'\n]\n", base.path().display()))
         .unwrap();
 
     // Run validate in JSON mode and request writing groups
-    let mut cmd = Command::cargo_bin("adr-rag").unwrap();
+    let mut cmd = Command::cargo_bin("cli-rag").unwrap();
     let out = cmd
         .arg("--config")
         .arg(cfg.path())

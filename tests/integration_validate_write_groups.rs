@@ -17,11 +17,11 @@ fn validate_writes_groups_with_ids() {
     write_adr(&base.child("ADR-030.md"), "ADR-030", "A");
     write_adr(&base.child("ADR-031.md"), "ADR-031", "B");
 
-    let cfg = temp.child(".adr-rag.toml");
+    let cfg = temp.child(".cli-rag.toml");
     cfg.write_str(&format!("bases = [\n  '{}'\n]\n", base.path().display()))
         .unwrap();
 
-    let mut cmd = Command::cargo_bin("adr-rag").unwrap();
+    let mut cmd = Command::cargo_bin("cli-rag").unwrap();
     cmd.arg("--config")
         .arg(cfg.path())
         .arg("validate")

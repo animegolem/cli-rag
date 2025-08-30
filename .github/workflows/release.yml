@@ -121,14 +121,14 @@ jobs:
         if: matrix.os != 'windows-latest'
         run: |
           cd target/${{ matrix.target }}/release
-          tar czf ../../../adr-rag-${{ needs.create-release.outputs.version }}-${{ matrix.target }}.tar.gz adr-rag
+          tar czf ../../../cli-rag-${{ needs.create-release.outputs.version }}-${{ matrix.target }}.tar.gz cli-rag
           cd ../../../
       
       - name: Package (Windows)
         if: matrix.os == 'windows-latest'
         run: |
           cd target/${{ matrix.target }}/release
-          7z a ../../../adr-rag-${{ needs.create-release.outputs.version }}-${{ matrix.target }}.zip adr-rag.exe
+          7z a ../../../cli-rag-${{ needs.create-release.outputs.version }}-${{ matrix.target }}.zip cli-rag.exe
           cd ../../../
       
       - name: Upload Release Asset
@@ -137,8 +137,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ needs.create-release.outputs.upload_url }}
-          asset_path: ./adr-rag-${{ needs.create-release.outputs.version }}-${{ matrix.target }}.${{ matrix.archive }}
-          asset_name: adr-rag-${{ needs.create-release.outputs.version }}-${{ matrix.target }}.${{ matrix.archive }}
+          asset_path: ./cli-rag-${{ needs.create-release.outputs.version }}-${{ matrix.target }}.${{ matrix.archive }}
+          asset_name: cli-rag-${{ needs.create-release.outputs.version }}-${{ matrix.target }}.${{ matrix.archive }}
           asset_content_type: application/octet-stream
 
   publish-crate:

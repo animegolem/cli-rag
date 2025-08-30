@@ -9,12 +9,12 @@ fn doctor_json_on_empty_base_reports_structure() {
     let base = temp.child("notes");
     base.create_dir_all().unwrap();
 
-    let cfg = temp.child(".adr-rag.toml");
+    let cfg = temp.child(".cli-rag.toml");
     cfg.write_str(&format!("bases = [\n  '{}'\n]\n", base.path().display()))
         .unwrap();
 
     // Run `adr-rag doctor --format json --config <cfg>`
-    let mut cmd = Command::cargo_bin("adr-rag").unwrap();
+    let mut cmd = Command::cargo_bin("cli-rag").unwrap();
     let assert = cmd
         .arg("doctor")
         .arg("--format")
@@ -31,7 +31,7 @@ fn doctor_json_on_empty_base_reports_structure() {
         .get("config")
         .and_then(|x| x.as_str())
         .unwrap()
-        .ends_with(".adr-rag.toml"));
+        .ends_with(".cli-rag.toml"));
     assert_eq!(v["counts"]["docs"].as_u64().unwrap_or(999), 0);
     let per_base = v["per_base"].as_array().unwrap();
     assert_eq!(per_base.len(), 1);
