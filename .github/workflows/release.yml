@@ -30,7 +30,7 @@ jobs:
             README.md
             Justfile
             .github
-          sparse-checkout-cone: true
+          sparse-checkout-cone-mode: true
       
       - name: Get version
         id: get_version
@@ -89,7 +89,7 @@ jobs:
             README.md
             Justfile
             .github
-          sparse-checkout-cone: true
+          sparse-checkout-cone-mode: true
       
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
@@ -155,7 +155,7 @@ jobs:
             README.md
             Justfile
             .github
-          sparse-checkout-cone: true
+          sparse-checkout-cone-mode: true
       
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable

@@ -34,7 +34,7 @@ jobs:
             README.md
             Justfile
             .github
-          sparse-checkout-cone: true
+          sparse-checkout-cone-mode: true
       
       - name: Install Rust
         uses: dtolnay/rust-toolchain@master
@@ -92,7 +92,7 @@ jobs:
             README.md
             Justfile
             .github
-          sparse-checkout-cone: true
+          sparse-checkout-cone-mode: true
       
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
@@ -132,7 +132,7 @@ jobs:
             README.md
             Justfile
             .github
-          sparse-checkout-cone: true
+          sparse-checkout-cone-mode: true
       
       - name: Extract MSRV
         id: msrv
@@ -150,4 +150,6 @@ jobs:
           toolchain: ${{ steps.msrv.outputs.msrv }}
       
       - name: Check MSRV
-        run: cargo check --all-features
+        run: |
+          rm -f Cargo.lock
+          cargo check --all-features
