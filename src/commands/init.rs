@@ -18,10 +18,12 @@ pub fn run(path: Option<PathBuf>, force: bool, print_template: bool, silent: boo
         );
     }
     if let Some(parent_cfg) = find_config_upwards(&None) {
-        if let Ok(cur) = std::env::current_dir() {
-            if parent_cfg != target && parent_cfg.parent() != Some(cur.as_path()) {
-                eprintln!("Warning: a parent config exists at {} and may be shadowed by creating one here", parent_cfg.display());
-            }
+        // Warn if creating a new config while another exists in an ancestor directory
+        if parent_cfg != target {
+            eprintln!(
+                "Warning: a parent config exists at {} and may be shadowed by creating one here",
+                parent_cfg.display()
+            );
         }
     }
     if !existed || force {

@@ -1,4 +1,4 @@
-use anyhow::{Context, Result};
+use anyhow::{anyhow, Context, Result};
 use globset::Glob;
 use globset::GlobSetBuilder;
 use serde::Deserialize;
@@ -135,11 +135,44 @@ pub fn find_config_upwards(explicit: &Option<PathBuf>) -> Option<PathBuf> {
     }
 }
 
+fn find_all_configs_upwards_chain() -> Vec<PathBuf> {
+    let mut out = Vec::new();
+    if let Ok(mut dir) = env::current_dir() {
+        loop {
+            let candidate = dir.join(".adr-rag.toml");
+            if candidate.exists() {
+                out.push(candidate);
+            }
+            match dir.parent() {
+                Some(p) => dir = p.to_path_buf(),
+                None => break,
+            }
+        }
+    }
+    out
+}
+
 pub fn load_config(
     path_opt: &Option<PathBuf>,
     base_override: &Option<Vec<PathBuf>>,
 ) -> Result<(Config, Option<PathBuf>)> {
+    // Detect multiple configs in scope (unless an explicit path is provided or ADR_RAG_CONFIG is set)
+    let env_cfg = env::var("ADR_RAG_CONFIG").ok().map(PathBuf::from);
     let path = find_config_upwards(path_opt);
+    if path_opt.is_none() && env_cfg.is_none() {
+        let chain = find_all_configs_upwards_chain();
+        if chain.len() > 1 {
+            let list = chain
+                .iter()
+                .map(|p| p.display().to_string())
+                .collect::<Vec<_>>()
+                .join(", ");
+            return Err(anyhow!(
+                "E100: Multiple project configs detected. Only one .adr-rag.toml is allowed. Found: {}",
+                list
+            ));
+        }
+    }
     let mut cfg: Config = if let Some(ref p) = path {
         let s = fs::read_to_string(p).with_context(|| format!("reading config {:?}", p))?;
         toml::from_str(&s).with_context(|| format!("parsing TOML config {:?}", p))?
@@ -169,6 +202,24 @@ pub fn load_config(
     if let Some(override_bases) = base_override {
         if !override_bases.is_empty() {
             cfg.bases = override_bases.clone();
+        }
+    }
+    // Invariant: unique schema names across the effective config
+    if !cfg.schema.is_empty() {
+        use std::collections::BTreeMap;
+        let mut seen: BTreeMap<String, usize> = BTreeMap::new();
+        for sc in &cfg.schema {
+            *seen.entry(sc.name.clone()).or_insert(0) += 1;
+        }
+        let dups: Vec<String> = seen
+            .into_iter()
+            .filter_map(|(k, v)| if v > 1 { Some(k) } else { None })
+            .collect();
+        if !dups.is_empty() {
+            return Err(anyhow!(
+                "E120: Duplicate schema name(s) detected: {}",
+                dups.join(", ")
+            ));
         }
     }
     Ok((cfg, path))
@@ -291,3 +342,93 @@ unknown_policy = "ignore"
 allowed = ["in-progress", "blocked", "on-hold", "cancelled", "done"]
 severity = "error"
 "#;
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::fs;
+    use std::io::Write as _;
+
+    fn unique_tmp(prefix: &str) -> PathBuf {
+        let now = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        let p = PathBuf::from("tmp").join(format!("{}_{}", prefix, now));
+        fs::create_dir_all(&p).ok();
+        p
+    }
+
+    struct DirGuard {
+        old: PathBuf,
+    }
+    impl DirGuard {
+        fn new(to: &Path) -> Self {
+            let old = std::env::current_dir().unwrap();
+            std::env::set_current_dir(to).unwrap();
+            Self { old }
+        }
+    }
+    impl Drop for DirGuard {
+        fn drop(&mut self) {
+            let _ = std::env::set_current_dir(&self.old);
+        }
+    }
+
+    #[test]
+    fn test_e100_multiple_configs_detected() {
+        // Create parent/child each with a .adr-rag.toml and chdir into child.
+        let parent = unique_tmp("e100_parent");
+        let child = parent.join("child");
+        fs::create_dir_all(&child).unwrap();
+        fs::File::create(parent.join(".adr-rag.toml")).unwrap();
+        fs::File::create(child.join(".adr-rag.toml")).unwrap();
+        let _guard = DirGuard::new(&child);
+        // Ensure no explicit path/env override
+        std::env::remove_var("ADR_RAG_CONFIG");
+        let res = load_config(&None, &None);
+        assert!(res.is_err(), "expected E100 error");
+        let msg = format!("{}", res.unwrap_err());
+        assert!(msg.contains("E100"), "missing E100 in: {}", msg);
+    }
+
+    #[test]
+    fn test_e120_duplicate_schema_names() {
+        // Build a minimal valid config file with duplicate schema names
+        let dir = unique_tmp("e120_cfg");
+        let cfg_path = dir.join(".adr-rag.toml");
+        let toml = r#"
+bases = ["docs"]
+index_relative = "index/adr-index.json"
+groups_relative = "index/semantic-groups.json"
+file_patterns = ["ADR-*.md", "ADR-DB-*.md", "IMP-*.md"]
+ignore_globs  = ["**/node_modules/**", "**/.obsidian/**"]
+allowed_statuses = [
+  "draft", "incomplete", "proposed", "accepted",
+  "complete", "design", "legacy-reference", "superseded"
+]
+
+[defaults]
+depth = 2
+include_bidirectional = true
+include_content = true
+
+[[schema]]
+name = "ADR"
+file_patterns = ["ADR-*.md"]
+required = ["id"]
+
+[[schema]]
+name = "ADR"
+file_patterns = ["ADR-DB-*.md"]
+required = ["id"]
+"#;
+        let mut f = fs::File::create(&cfg_path).unwrap();
+        f.write_all(toml.as_bytes()).unwrap();
+        assert!(cfg_path.exists(), "test setup failed: cfg file not created");
+        let res = load_config(&Some(cfg_path.clone()), &None);
+        assert!(res.is_err(), "expected E120 error");
+        let msg = format!("{}", res.unwrap_err());
+        assert!(msg.contains("E120"), "missing E120 in: {}", msg);
+    }
+}

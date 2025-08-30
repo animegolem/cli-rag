@@ -118,6 +118,22 @@ pub(crate) fn build_report(
         })
         .collect();
 
+    // Invariants summary (post-load)
+    let mut invariants_ok = true;
+    let mut invariants_errors: Vec<String> = Vec::new();
+    // Duplicate schema names (should be enforced at load time, but re-check for visibility)
+    use std::collections::BTreeMap as _BTreeMap;
+    let mut seen: _BTreeMap<String, usize> = _BTreeMap::new();
+    for sc in &cfg.schema {
+        *seen.entry(sc.name.clone()).or_insert(0) += 1;
+    }
+    for (name, count) in seen {
+        if count > 1 {
+            invariants_ok = false;
+            invariants_errors.push(format!("E120 duplicate schema name: {} ({}x)", name, count));
+        }
+    }
+
     serde_json::json!({
         "config": cfg_path.as_ref().map(|p| p.display().to_string()).unwrap_or("<defaults>".into()),
         "bases": cfg.bases,
@@ -126,6 +142,8 @@ pub(crate) fn build_report(
         "conflicts": conflicts,
         "types": type_counts,
         "unknown_stats": unknown_stats,
+        "invariants_ok": invariants_ok,
+        "invariants_errors": invariants_errors,
     })
 }
 
@@ -207,7 +225,77 @@ pub fn run(cfg: &Config, cfg_path: &Option<PathBuf>, format: &OutputFormat) -> R
                     }
                 }
             }
+            let invariants_ok = report.get("invariants_ok").and_then(|v| v.as_bool()).unwrap_or(true);
+            if invariants_ok {
+                println!("Invariants: OK");
+            } else if let Some(errs) = report.get("invariants_errors").and_then(|v| v.as_array()) {
+                println!("Invariants: FAILED");
+                for e in errs {
+                    if let Some(s) = e.as_str() {
+                        println!("  - {}", s);
+                    }
+                }
+            }
         }
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::config::{
+        default_allowed_statuses, default_defaults, default_file_patterns, default_groups_rel,
+        default_ignore_globs, default_index_rel, Config, SchemaCfg,
+    };
+    use std::collections::BTreeMap;
+
+    #[test]
+    fn test_build_report_invariants_duplicates() {
+        let cfg = Config {
+            bases: vec![],
+            index_relative: default_index_rel(),
+            groups_relative: default_groups_rel(),
+            file_patterns: default_file_patterns(),
+            ignore_globs: default_ignore_globs(),
+            allowed_statuses: default_allowed_statuses(),
+            defaults: default_defaults(),
+            schema: vec![
+                SchemaCfg {
+                    name: "ADR".into(),
+                    file_patterns: vec!["ADR-*.md".into()],
+                    required: vec!["id".into()],
+                    unknown_policy: Some("ignore".into()),
+                    allowed_keys: vec![],
+                    rules: BTreeMap::new(),
+                },
+                SchemaCfg {
+                    name: "ADR".into(),
+                    file_patterns: vec!["ADR-DB-*.md".into()],
+                    required: vec!["id".into()],
+                    unknown_policy: Some("ignore".into()),
+                    allowed_keys: vec![],
+                    rules: BTreeMap::new(),
+                },
+            ],
+        };
+        let docs = Vec::new();
+        let report = build_report(&cfg, &None, &docs);
+        let ok = report
+            .get("invariants_ok")
+            .and_then(|v| v.as_bool())
+            .unwrap_or(true);
+        assert!(!ok, "expected invariants_ok=false with duplicate schema names");
+        let errs = report
+            .get("invariants_errors")
+            .and_then(|v| v.as_array())
+            .cloned()
+            .unwrap_or_default();
+        assert!(
+            errs.iter()
+                .filter_map(|v| v.as_str())
+                .any(|s| s.contains("E120")),
+            "expected E120 in invariants_errors"
+        );
+    }
 }
