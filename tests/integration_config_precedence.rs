@@ -21,7 +21,7 @@ fn env_overrides_config_and_cli_overrides_env() {
 
     // Config points to base1
     let cfg = temp.child(".adr-rag.toml");
-    cfg.write_str(&format!("bases = [\n  \"{}\"\n]\n", base1.path().display()))
+    cfg.write_str(&format!("bases = [\n  '{}'\n]\n", base1.path().display()))
         .unwrap();
 
     // Case A: env overrides config to base2
