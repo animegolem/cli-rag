@@ -26,7 +26,7 @@ pub fn run(
     }
     let res = bfs_path(&from, &to, max_depth, &by_id);
     match format {
-        OutputFormat::Json | OutputFormat::Ndjson => {
+        OutputFormat::Json | OutputFormat::Ndjson | OutputFormat::Ai => {
             let out = serde_json::json!({"from": from, "to": to, "path": res});
             print_json(&out)?;
         }

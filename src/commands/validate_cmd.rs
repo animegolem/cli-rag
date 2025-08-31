@@ -19,7 +19,7 @@ pub fn run(
     let docs = incremental_collect_docs(cfg, full_rescan)?;
     let report = validate_docs(cfg, &docs);
     match format {
-        OutputFormat::Json => {
+        OutputFormat::Json | OutputFormat::Ai => {
             let errors: Vec<ValidateIssue> = report
                 .errors
                 .iter()

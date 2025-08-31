@@ -88,9 +88,17 @@ fn main() -> Result<()> {
             full_rescan,
             debounce_ms,
             dry_run,
+            json,
         } => {
             let (cfg, cfg_path) = load_config(&cli.config, &cli.base)?;
-            cli_rag::commands::watch_cmd::run(&cfg, &cfg_path, full_rescan, debounce_ms, dry_run)?;
+            cli_rag::commands::watch_cmd::run(
+                &cfg,
+                &cfg_path,
+                full_rescan,
+                debounce_ms,
+                dry_run,
+                json,
+            )?;
         }
         Commands::Validate(args) => {
             let (cfg, cfg_path) = load_config(&cli.config, &cli.base)?;

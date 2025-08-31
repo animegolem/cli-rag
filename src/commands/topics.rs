@@ -53,7 +53,7 @@ pub fn run(
         }
     }
     match format {
-        OutputFormat::Json => {
+        OutputFormat::Json | OutputFormat::Ai => {
             let arr: Vec<TopicCount> = groups
                 .into_iter()
                 .map(|(topic, count)| TopicCount { topic, count })

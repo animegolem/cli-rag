@@ -9,6 +9,7 @@ pub fn run(
     full_rescan: bool,
     debounce_ms: u64,
     dry_run: bool,
+    json: bool,
 ) -> Result<()> {
     run_watch(
         cfg,
@@ -18,6 +19,7 @@ pub fn run(
             debounce_ms,
             dry_run,
             write_groups: false,
+            json,
         },
     )
 }

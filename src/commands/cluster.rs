@@ -29,7 +29,7 @@ pub fn run(
     }
     let cluster = compute_cluster(&id, depth, include_bidirectional, &by_id);
     match format {
-        OutputFormat::Json => {
+        OutputFormat::Json | OutputFormat::Ai => {
             let members: Vec<ClusterMember> = cluster
                 .iter()
                 .map(|(oid, d)| ClusterMember {

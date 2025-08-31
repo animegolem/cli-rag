@@ -26,7 +26,7 @@ pub fn run(
     matches.sort_by(|a, b| a.title.to_lowercase().cmp(&b.title.to_lowercase()));
     let include_content = include_content.unwrap_or(cfg.defaults.include_content);
     match format {
-        OutputFormat::Json => {
+        OutputFormat::Json | OutputFormat::Ai => {
             let members: Vec<GroupMember> = matches
                 .iter()
                 .filter_map(|d| d.id.as_ref().map(|id| (id, d)))

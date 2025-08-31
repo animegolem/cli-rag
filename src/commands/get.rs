@@ -5,6 +5,7 @@ use crate::cli::OutputFormat;
 use crate::commands::output::print_json;
 use crate::config::Config;
 use crate::discovery::docs_with_source;
+use crate::protocol::ContentBlock;
 
 pub fn run(
     cfg: &Config,
@@ -50,6 +51,33 @@ pub fn run(
                 "depends_on": deps.iter().filter_map(|d| d.id.clone()).collect::<Vec<_>>(),
                 "dependents": dependents.iter().filter_map(|d| d.id.clone()).collect::<Vec<_>>(),
                 "content": fs::read_to_string(&primary.file).unwrap_or_default(),
+            });
+            print_json(&out)?;
+        }
+        OutputFormat::Ai => {
+            let mut blocks: Vec<ContentBlock> = Vec::new();
+            let path_str = primary.file.to_string_lossy().to_string();
+            blocks.push(ContentBlock::ResourceLink {
+                uri: path_str.clone(),
+                description: None,
+                mime_type: None,
+                title: Some(primary.title.clone()),
+                annotations: None,
+            });
+            let content = fs::read_to_string(&primary.file).unwrap_or_default();
+            blocks.push(ContentBlock::Text {
+                text: content,
+                annotations: None,
+            });
+            let out = serde_json::json!({
+                "id": id,
+                "title": primary.title,
+                "file": primary.file,
+                "tags": primary.tags,
+                "status": primary.status,
+                "neighbors": {"depends_on": deps.iter().filter_map(|d| d.id.clone()).collect::<Vec<_>>(),
+                               "dependents": dependents.iter().filter_map(|d| d.id.clone()).collect::<Vec<_>>()},
+                "content": blocks,
             });
             print_json(&out)?;
         }

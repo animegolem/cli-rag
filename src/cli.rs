@@ -6,6 +6,7 @@ pub enum OutputFormat {
     Plain,
     Json,
     Ndjson,
+    Ai,
 }
 
 #[derive(ValueEnum, Debug, Clone, Copy)]
@@ -109,6 +110,9 @@ pub enum Commands {
         /// Print only; do not write indexes or groups
         #[arg(long, default_value_t = false)]
         dry_run: bool,
+        /// Emit ACP-like NDJSON events to stdout
+        #[arg(long, default_value_t = false)]
+        json: bool,
     },
 
     /// Generate shell completions (bash|zsh|fish)

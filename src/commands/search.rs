@@ -25,7 +25,7 @@ pub fn run(
         }
     }
     match format {
-        OutputFormat::Json => {
+        OutputFormat::Json | OutputFormat::Ai => {
             let arr: Vec<SearchResult> = hits
                 .iter()
                 .filter_map(|d| d.id.as_ref().map(|id| (id, *d)))

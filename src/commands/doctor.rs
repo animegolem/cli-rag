@@ -144,7 +144,7 @@ pub(crate) fn build_report(
         }
     }
 
-    serde_json::json!({
+    let mut obj = serde_json::json!({
         "config": cfg_path.as_ref().map(|p| p.display().to_string()).unwrap_or("<defaults>".into()),
         "bases": cfg.bases,
         "per_base": per_base,
@@ -155,7 +155,22 @@ pub(crate) fn build_report(
         "unknown_stats": unknown_stats,
         "invariants_ok": invariants_ok,
         "invariants_errors": invariants_errors,
-    })
+    });
+    if let Some(map) = obj.as_object_mut() {
+        map.insert(
+            "protocolVersion".into(),
+            serde_json::json!(crate::protocol::PROTOCOL_VERSION),
+        );
+        map.insert(
+            "capabilities".into(),
+            serde_json::json!({
+                "watchNdjson": true,
+                "getAi": true,
+                "pathLocations": false
+            }),
+        );
+    }
+    obj
 }
 
 pub fn run(cfg: &Config, cfg_path: &Option<PathBuf>, format: &OutputFormat) -> Result<()> {
@@ -164,7 +179,7 @@ pub fn run(cfg: &Config, cfg_path: &Option<PathBuf>, format: &OutputFormat) -> R
         None => load_docs(cfg)?,
     };
     match format {
-        OutputFormat::Json | OutputFormat::Ndjson => {
+        OutputFormat::Json | OutputFormat::Ndjson | OutputFormat::Ai => {
             let report = build_report(cfg, cfg_path, &docs);
             print_json(&report)?;
         }
