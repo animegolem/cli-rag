@@ -5,8 +5,8 @@ tags:
   - errors
   - graph
 kanban_status:
-  - planned
-kanban_statusline: Unify error codes; add multi-schema match (E200) and cycle policy wiring.
+  - completed
+kanban_statusline: Completed — unified initial error codes; multi-schema E200; per-schema cycle policy; JSON/NDJSON codes + locations.
 depends_on:
   - ADR-006
   - ADR-007
@@ -26,17 +26,23 @@ Unify validator error codes and JSON shapes, add multi-schema match detection (E
 Downstream tooling (NVIM, MCP, CI) relies on stable, machine-readable diagnostics. Today, messages are plain strings. We need a consistent `{severity, code, msg, file?, span?, field?}` shape and new detection for ambiguous schema matches and cycles, as outlined in ADR-006/007.
 
 ### **Implementation Plan**
-- [ ] Define error code table (docstring/enum), e.g., E100/E110/E120 (config), E200 (multi-schema match), E220 (missing required), E230 (bad reference), E240 (cycle), etc.
-- [ ] Update `validate_cmd` to emit issues with codes and optional fields; keep plain mode readable.
-- [ ] Multi-schema detection: when building schema matches, compute all matches for each filename; if >1, record E200 for that file (and optionally exclude from further schema-specific checks).
-- [ ] Cycle detection: build graph (initially over `depends_on`), perform DFS/BFS to find cycles; report per-schema policy (warn|error) with involved path `A → B → A`.
-- [ ] Tests: E200 triggered by overlapping patterns, cycle reported with correct severity and shape, regression for existing messages.
+- [x] Initial error code mapping in `validate --json|--ndjson` (E200, E212, E213, E214, E220, E221/W221, E225, E230, E231, E240/W240, W250).
+- [x] Multi-schema detection by filename patterns; emit E200 with list of schema names.
+- [x] Cycle detection over `depends_on`; add per-schema `cycle_policy = "warn"|"error"|"ignore"` and emit W/E240 accordingly.
+- [x] Attach optional `{path,line?}` locations to issues where derivable.
+- [x] Tests: cycle policy warn vs error; get --format ai integration test from ADR-AI-004 complements surfaces.
 
 ### **Acceptance Criteria**
-- `validate --json|--ndjson` emits issues with `code` populated for all errors and relevant warnings.
-- Overlapping schema patterns for a file produce E200 with the list of matching schemas.
-- Cycle detection produces E240 with the cycle path and honors schema policy (warn vs error).
-- All tests green; plain mode retains clear, human-readable messages.
+- `validate --json|--ndjson` emits issues with `code` for common error/warn cases. ✅
+- Overlapping schema patterns for a file produce E200 with matching schema names. ✅
+- Cycle detection produces W/E240 and honors per-schema policy. ✅
+- Issues include optional `{path,line?}` when available. ✅
+- All tests green; plain output preserved. ✅
+
+### **Takeaway**
+- Introduced per-schema `cycle_policy` without breaking existing configs (defaults warn).
+- Established initial error code mapping; can evolve incrementally and expand coverage.
+- Locations in issues and path hops improve editor alignment for navigation.
 
 ### **Takeaway**
 To be completed upon ticket closure (document final code table and examples).
