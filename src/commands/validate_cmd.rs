@@ -5,7 +5,7 @@ use crate::commands::output::{print_json, print_ndjson_iter, print_ndjson_value}
 use crate::config::Config;
 use crate::discovery::incremental_collect_docs;
 use crate::index::{write_groups_config, write_indexes};
-use crate::protocol::{ValidateHeader, ValidateIssue};
+use crate::protocol::{ToolCallLocation, ValidateHeader, ValidateIssue};
 use crate::validate::validate_docs;
 
 pub fn run(
@@ -18,26 +18,88 @@ pub fn run(
 ) -> Result<()> {
     let docs = incremental_collect_docs(cfg, full_rescan)?;
     let report = validate_docs(cfg, &docs);
+    // Helper to derive location from message when possible
+    fn derive_location(message: &str) -> Option<(String, ToolCallLocation)> {
+        // Expected leading pattern: "/path/to/file.md: ..."
+        let mut parts = message.splitn(2, ':');
+        let file = parts.next()?.to_string();
+        if file.is_empty() {
+            return None;
+        }
+        // Try to infer a needle to search for a line number
+        let needle = if let Some(rest) = parts.next() {
+            // depends_on 'ID' not found
+            if let Some(idx) = rest.find("'") {
+                let rest2 = &rest[idx + 1..];
+                rest2.find("'").map(|end| rest2[..end].to_string())
+            } else {
+                None
+            }
+        } else {
+            None
+        };
+        let path = std::path::PathBuf::from(&file);
+        let mut line: Option<u32> = None;
+        if let Some(needle) = needle {
+            if let Ok(content) = std::fs::read_to_string(&path) {
+                for (i, l) in content.lines().enumerate() {
+                    if l.contains(&needle) {
+                        line = Some((i + 1) as u32);
+                        break;
+                    }
+                }
+            }
+        }
+        Some((file, ToolCallLocation { path, line }))
+    }
     match format {
         OutputFormat::Json | OutputFormat::Ai => {
             let errors: Vec<ValidateIssue> = report
                 .errors
                 .iter()
-                .map(|m| ValidateIssue {
-                    kind: "error".into(),
-                    file: None,
-                    message: m.clone(),
-                    code: None,
+                .map(|m| {
+                    let (file, location) = derive_location(m).unwrap_or((
+                        String::new(),
+                        ToolCallLocation {
+                            path: std::path::PathBuf::new(),
+                            line: None,
+                        },
+                    ));
+                    ValidateIssue {
+                        kind: "error".into(),
+                        file: if file.is_empty() { None } else { Some(file) },
+                        message: m.clone(),
+                        code: None,
+                        location: if location.path.as_os_str().is_empty() {
+                            None
+                        } else {
+                            Some(location)
+                        },
+                    }
                 })
                 .collect();
             let warnings: Vec<ValidateIssue> = report
                 .warnings
                 .iter()
-                .map(|m| ValidateIssue {
-                    kind: "warning".into(),
-                    file: None,
-                    message: m.clone(),
-                    code: None,
+                .map(|m| {
+                    let (file, location) = derive_location(m).unwrap_or((
+                        String::new(),
+                        ToolCallLocation {
+                            path: std::path::PathBuf::new(),
+                            line: None,
+                        },
+                    ));
+                    ValidateIssue {
+                        kind: "warning".into(),
+                        file: if file.is_empty() { None } else { Some(file) },
+                        message: m.clone(),
+                        code: None,
+                        location: if location.path.as_os_str().is_empty() {
+                            None
+                        } else {
+                            Some(location)
+                        },
+                    }
                 })
                 .collect();
             let obj = serde_json::json!({
@@ -55,17 +117,45 @@ pub fn run(
                 doc_count: docs.len(),
             };
             print_ndjson_value(&serde_json::to_value(&header)?)?;
-            let errs = report.errors.iter().map(|m| ValidateIssue {
-                kind: "error".into(),
-                file: None,
-                message: m.clone(),
-                code: None,
+            let errs = report.errors.iter().map(|m| {
+                let (file, location) = derive_location(m).unwrap_or((
+                    String::new(),
+                    ToolCallLocation {
+                        path: std::path::PathBuf::new(),
+                        line: None,
+                    },
+                ));
+                ValidateIssue {
+                    kind: "error".into(),
+                    file: if file.is_empty() { None } else { Some(file) },
+                    message: m.clone(),
+                    code: None,
+                    location: if location.path.as_os_str().is_empty() {
+                        None
+                    } else {
+                        Some(location)
+                    },
+                }
             });
-            let warns = report.warnings.iter().map(|m| ValidateIssue {
-                kind: "warning".into(),
-                file: None,
-                message: m.clone(),
-                code: None,
+            let warns = report.warnings.iter().map(|m| {
+                let (file, location) = derive_location(m).unwrap_or((
+                    String::new(),
+                    ToolCallLocation {
+                        path: std::path::PathBuf::new(),
+                        line: None,
+                    },
+                ));
+                ValidateIssue {
+                    kind: "warning".into(),
+                    file: if file.is_empty() { None } else { Some(file) },
+                    message: m.clone(),
+                    code: None,
+                    location: if location.path.as_os_str().is_empty() {
+                        None
+                    } else {
+                        Some(location)
+                    },
+                }
             });
             print_ndjson_iter(errs.chain(warns))?;
         }

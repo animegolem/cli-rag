@@ -166,7 +166,7 @@ pub(crate) fn build_report(
             serde_json::json!({
                 "watchNdjson": true,
                 "getAi": true,
-                "pathLocations": false
+                "pathLocations": true
             }),
         );
     }

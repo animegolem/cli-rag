@@ -43,6 +43,8 @@ pub struct ValidateIssue {
     pub message: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub code: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub location: Option<ToolCallLocation>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -168,4 +170,11 @@ pub enum SessionUpdate {
         path: std::path::PathBuf,
         count: usize,
     },
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ToolCallLocation {
+    pub path: std::path::PathBuf,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub line: Option<u32>,
 }
