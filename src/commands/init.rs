@@ -40,6 +40,14 @@ fn write_separate_schema(cfg_path: &Path, name: &str, force: bool) -> Result<()>
         body.push_str(&schema_block(name));
         fs::write(&file_path, body).with_context(|| format!("writing template {:?}", file_path))?;
     }
+    // Also write a minimal note body template alongside (non-config file)
+    let body_path = templates_dir.join(format!("{}.md", name));
+    if !body_path.exists() || force {
+        let body =
+            "---\nid: {{id}}\ntags: []\nstatus: draft\ndepends_on: []\n---\n\n# {{id}}: Title\n\n";
+        fs::write(&body_path, body)
+            .with_context(|| format!("writing note stub {:?}", body_path))?;
+    }
     // Update import list in the main config
     let rel = Path::new(".cli-rag/templates").join(format!("{}.toml", name));
     let rel_str = rel.to_string_lossy().to_string();

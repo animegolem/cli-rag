@@ -45,6 +45,11 @@ fn init_writes_separate_schema_and_imports() {
     tmpl.assert(predicates::str::contains("[[schema]]"));
     tmpl.assert(predicates::str::contains("name = \"IMP\""));
 
+    // Body template stub exists
+    let body = temp.child(".cli-rag/templates/IMP.md");
+    body.assert(predicates::path::exists());
+    body.assert(predicates::str::contains("id: {{id}}"));
+
     // Config has import list
     cfg.assert(predicates::str::contains("import = ["));
     cfg.assert(predicates::str::contains(".cli-rag/templates/IMP.toml"));
