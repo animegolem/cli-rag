@@ -49,6 +49,7 @@ include_content = true
 # file_patterns = ["ADR-*.md", "ADR-DB-*.md"]
 # required = ["id", "tags", "status", "depends_on"]
 # unknown_policy = "ignore"   # ignore | warn | error (default: ignore)
+# cycle_policy = "warn"        # warn | error | ignore (default: warn)
 # allowed_keys = ["produces", "files_touched"]  # optional pass-through keys
 #
 # [schema.rules.status]

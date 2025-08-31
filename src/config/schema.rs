@@ -38,6 +38,8 @@ pub struct SchemaCfg {
     #[serde(default)]
     pub unknown_policy: Option<String>, // ignore | warn | error (default ignore)
     #[serde(default)]
+    pub cycle_policy: Option<String>, // warn | error | ignore (default warn)
+    #[serde(default)]
     pub allowed_keys: Vec<String>,
     #[serde(default)]
     pub rules: std::collections::BTreeMap<String, SchemaRule>,

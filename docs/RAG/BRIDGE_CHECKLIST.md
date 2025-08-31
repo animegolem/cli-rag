@@ -12,12 +12,12 @@ This file captures a technical requirements bridge between the ADRs in `docs/ADR
 - Present: `init`, `doctor`, `search`, `topics`, `group`, `get`, `cluster`, `graph`, `path`, `validate`, `watch`, `completions`.
 - Gaps:
   - [ ] `new` command (templating, id generation, `--edit`, `--dry-run`, `--print-body`).
-  - [ ] `get --format md|ai|json` (current: plain/json with full content; no ai shape).
+  - [ ] `get --format md|ai|json` (partial: `ai` format added; no `md` variant yet).
   - [ ] `get --depth N --include-bidirectional` (current: only immediate deps; `include_dependents` boolean).
   - [ ] `graph --graph-format ascii` and `--root none` (current: mermaid/dot/json only; requires id).
   - [ ] `search` filters (`--schema`, `--recent`, `--field`, `--kanban`, `--TODO`).
   - [ ] `status` command (aka improved `doctor`) with table output, color, `--json`, `--verbose`.
-  - [ ] Cross-cutting: global `--json`/`--ndjson` coherence; align flags/names per ADR-003b/003c.
+  - [ ] Cross-cutting: global `--json`/`--ndjson` coherence; align flags/names per ADR-003b/003c (partial: `watch --json` added; `doctor --json` includes capabilities; formats not fully unified).
 
 ### Config & Loader (ADR-001, ADR-004, ADR-006)
 - Present: `.cli-rag.toml` load/discover; `bases` (alias: `filepaths`), `index_relative`, `groups_relative`, `file_patterns`, `ignore_globs`, `allowed_statuses`, defaults; `[[schema]]` with `required`, `unknown_policy`, `allowed_keys`, keyed `rules`.
@@ -33,9 +33,9 @@ This file captures a technical requirements bridge between the ADRs in `docs/ADR
 ### Validation Engine (ADR-006, ADR-007, ADR-AI-003)
 - Present: id required; global status allowlist (overridden by schema rule); duplicate/conflict detection; `depends_on`/`supersedes`/`superseded_by` existence; schema required/unknown/allowed-keys; rule types (array/date), `min_items`, `regex`; `refers_to_types` basic check.
 - Gaps:
-  - [ ] Uniform machine-readable error codes and shapes (E2xx/E24x etc.) wired through `validate --json|--ndjson`.
-  - [ ] File matches multiple schemas → error (priority/first-match policy) (E200) (current: first-match wins; no error).
-  - [ ] Cycle detection options per schema (warn/error) and DAG policy.
+  - [ ] Uniform machine-readable error codes and shapes (E2xx/E24x etc.) wired through `validate --json|--ndjson` (partial: initial codes now emitted for common cases; stabilize and document numbering).
+  - [x] File matches multiple schemas → error (priority/first-match policy) (E200).
+  - [ ] Cycle detection options per schema (warn/error) and DAG policy (partial: basic cycle detection emits warnings; no per-schema policy yet).
   - [ ] Extensible graph edges: classify `graph_edges = [...]` that auto-validate as id refs (ADR-AI-003); not just hardcoded keys.
   - [ ] Filename uniqueness across graph when id generator used (ADR-001 note).
   - [ ] Better isolated/orphan analysis surfaced in `doctor/status` (currently only warning text from validation; formalize).
@@ -46,17 +46,17 @@ This file captures a technical requirements bridge between the ADRs in `docs/ADR
 ### Graph & Retrieval (ADR-003b/003c)
 - Present: BFS `path` with bidirectional traversal; `cluster` computation; `graph` render mermaid/dot/json; `get` prints content and immediate deps; `groups/topics` summary tools.
 - Gaps:
-  - [ ] `path` output with edge kinds and line refs when mention-derived (per ADR-003b example).
+  - [ ] `path` output with edge kinds and line refs when mention-derived (partial: line refs/locations included; edge kinds not yet).
   - [ ] ASCII graph rendering (graphviz ASCII-like) and optional navigation affordances later; `graph --graph-format ascii`.
   - [ ] Graph traversal over all configured `graph_edges`, not just `depends_on`.
-  - [ ] `get --depth` neighborhood export with `ai`/compact JSON for LLMs.
+  - [ ] `get --depth` neighborhood export with `ai`/compact JSON for LLMs (partial: `ai` format implemented; no depth yet).
 
 ### Indexing & Watch & Cache (ADR-AI-001)
 - Present: JSON index writer per base; groups writer; `watch` with debounce, incremental re-parse by `mtime/size`.
 - Gaps:
   - [ ] Three-layer cache (in-mem session, on-disk rebuildable, source-of-truth in notes) with simple file lock.
   - [ ] `validate --rebuild-cache` hook to force recomputation of expensive metadata.
-  - [ ] `watch --json` NDJSON stream of events (for NVIM/TUI) with event kinds (`validated`, `index_written`, `groups_written`); option to write groups during watch.
+  - [x] `watch --json` NDJSON stream of events (for NVIM/TUI) with event kinds (`validated`, `index_written`, `groups_written`); option to write groups during watch.
   - [ ] Adopt “single index per repo”: unify current per-base writes; derive groups view from index (partial: unified index written at config root; readers prefer unified; per-base remains for compatibility).
 
 ### Templates, Parsing, and `new` (ADR-001, ADR-011, ADR-010)
@@ -81,7 +81,7 @@ This file captures a technical requirements bridge between the ADRs in `docs/ADR
 ### NVIM/TUI Integration (ADR-002, ADR-011)
 - Present: None.
 - Gaps:
-  - [ ] Provide stable `--json`/`--ndjson` outputs, spans where applicable, to drive NVIM integration (partial: JSON/NDJSON surfaces exist for search/topics/group/validate/doctor; spans not implemented).
+  - [ ] Provide stable `--json`/`--ndjson` outputs, spans where applicable, to drive NVIM integration (partial: JSON/NDJSON surfaces exist for search/topics/group/validate/doctor; `watch --json` added; basic locations for path/validate).
   - [ ] Plan for `nvim-oxi` plugin scaffolding consuming `watch --json`, `get --format json|ai`, `validate --json`; scenes: Agenda, Kanban, Vault (templates/notes), Graph nav.
   - [ ] Consider minibuffer-like quick edits or open-in-editor workflow; fuzzy finder over tracked notes.
 
@@ -109,12 +109,12 @@ This file captures a technical requirements bridge between the ADRs in `docs/ADR
    - [ ] `search --schema|--recent` and `group --list` polish.
 
 3) Graph & Retrieval Improvements
-   - [ ] `get --format ai|json` + `--depth` + `--include-bidirectional`.
-   - [ ] `path` edge-kinds; `graph` ASCII option.
+   - [ ] `get --format ai|json` + `--depth` + `--include-bidirectional` (partial: `ai` done).
+   - [ ] `path` edge-kinds; `graph` ASCII option (partial: `path` line refs done).
    - [ ] Generalize traversal over `graph_edges`.
 
 4) Index/Watch/Cache
-   - [ ] NDJSON watch stream (`{"event":"validated"|"index_written"|...}`) and optional groups write.
+   - [x] NDJSON watch stream (`{"event":"validated"|"index_written"|...}`) and optional groups write.
    - [ ] Disk cache layer and simple file lock; `--rebuild-cache` plumbing; background watch integration from config.
 
 5) Templates and `new`
@@ -162,10 +162,10 @@ This file captures a technical requirements bridge between the ADRs in `docs/ADR
 - [ ] E100/E110/E120 codes; clear messages; JSON emission via `validate --ndjson` and `status --json`.
 
 ### ADR-007 General Error Codes
-- [ ] Unify error numbering and shape; include `{severity, code, msg, span?, field?}`.
+- [ ] Unify error numbering and shape; include `{severity, code, msg, span?, field?}` (partial: initial codes now emitted in `validate --json|--ndjson`; finalize table and propagation).
 
 ### ADR-008 AI RAG
-- [ ] Defer advanced query DSL; start with `get --format ai` and cache that avoids recompute.
+- [x] Defer advanced query DSL; start with `get --format ai` (cache deferred).
 
 ### ADR-009 GTD/Kanban
 - [ ] Parse TODOs + simple frontmatter fields; `search --TODO|--kanban`.

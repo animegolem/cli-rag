@@ -54,7 +54,7 @@ pub fn validate_docs(cfg: &Config, docs: &Vec<AdrDoc>) -> ValidationReport {
         &mut warnings,
     );
 
-    // Cycle detection (depends_on graph) — emit as warnings for now
+    // Cycle detection (depends_on graph) — policy per schema: warn|error|ignore
     {
         use std::collections::HashMap as Map;
         let mut adj: Map<String, Vec<String>> = Map::new();
@@ -65,15 +65,36 @@ pub fn validate_docs(cfg: &Config, docs: &Vec<AdrDoc>) -> ValidationReport {
         }
         for cyc in cycles::find_cycles(&adj) {
             if !cyc.is_empty() {
+                // Determine severity from involved schemas
+                let mut severity = "warn"; // default to warn to preserve current behavior
+                for nid in cyc.iter() {
+                    if let Some(sname) = doc_schema.get(nid) {
+                        if let Some(sc) = cfg.schema.iter().find(|s| &s.name == sname) {
+                            if let Some(policy) = sc.cycle_policy.as_deref() {
+                                match policy {
+                                    "error" => {
+                                        severity = "error";
+                                        break;
+                                    }
+                                    "ignore" => {}
+                                    _ => {}
+                                }
+                            }
+                        }
+                    }
+                }
+                let msg = format!("cycle detected: {}", cyc.join(" -> "));
                 if let Some(first) = cyc.first() {
                     if let Some(doc) = id_to_docs.get(first).and_then(|v| v.first()) {
-                        warnings.push(format!(
-                            "{}: cycle detected: {}",
-                            doc.file.display(),
-                            cyc.join(" -> ")
-                        ));
-                    } else {
-                        warnings.push(format!("cycle detected: {}", cyc.join(" -> ")));
+                        if severity == "error" {
+                            errors.push(format!("{}: {}", doc.file.display(), msg));
+                        } else if severity != "ignore" {
+                            warnings.push(format!("{}: {}", doc.file.display(), msg));
+                        }
+                    } else if severity == "error" {
+                        errors.push(msg);
+                    } else if severity != "ignore" {
+                        warnings.push(msg);
                     }
                 }
             }
@@ -190,6 +211,7 @@ mod tests {
             file_patterns: vec!["ADR-*.md".into()],
             required: vec!["id".into(), "tags".into()],
             unknown_policy: Some("warn".into()),
+            cycle_policy: None,
             allowed_keys: vec![],
             rules,
         };
@@ -198,6 +220,7 @@ mod tests {
             file_patterns: vec!["IMP-*.md".into()],
             required: vec!["id".into()],
             unknown_policy: Some("ignore".into()),
+            cycle_policy: None,
             allowed_keys: vec![],
             rules: BTreeMap::new(),
         };
