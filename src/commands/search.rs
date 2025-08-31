@@ -6,7 +6,12 @@ use anyhow::Result;
 use crate::config::Config;
 use crate::discovery::{docs_with_source, load_docs, load_docs_unified};
 
-pub fn run(cfg: &Config, cfg_path: &Option<std::path::PathBuf>, format: &OutputFormat, query: String) -> Result<()> {
+pub fn run(
+    cfg: &Config,
+    cfg_path: &Option<std::path::PathBuf>,
+    format: &OutputFormat,
+    query: String,
+) -> Result<()> {
     let q = query.to_lowercase();
     let (docs, used_unified) = docs_with_source(cfg, cfg_path)?;
     if !used_unified {

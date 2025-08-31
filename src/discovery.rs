@@ -174,7 +174,10 @@ pub fn load_docs(cfg: &Config) -> Result<Vec<AdrDoc>> {
 
 /// Attempt to load a unified index located at the config directory joined with
 /// `cfg.index_relative`. Pass the full config path if known.
-pub fn load_docs_unified(cfg: &Config, cfg_path: &Option<std::path::PathBuf>) -> Result<Option<Vec<AdrDoc>>> {
+pub fn load_docs_unified(
+    cfg: &Config,
+    cfg_path: &Option<std::path::PathBuf>,
+) -> Result<Option<Vec<AdrDoc>>> {
     use serde_json::Value;
     let cfg_dir = match cfg_path.as_ref().and_then(|p| p.parent()) {
         Some(d) => d,
@@ -189,19 +192,70 @@ pub fn load_docs_unified(cfg: &Config, cfg_path: &Option<std::path::PathBuf>) ->
     let root: Value = serde_json::from_str(&data)
         .with_context(|| format!("parsing unified index {:?}", unified_path))?;
     let mut docs = Vec::new();
-    let items = root.get("items").and_then(|v| v.as_array()).cloned().unwrap_or_default();
+    let items = root
+        .get("items")
+        .and_then(|v| v.as_array())
+        .cloned()
+        .unwrap_or_default();
     for it in items {
         let file_str = it.get("file").and_then(|v| v.as_str()).unwrap_or("");
-        if file_str.is_empty() { continue; }
+        if file_str.is_empty() {
+            continue;
+        }
         let file = std::path::PathBuf::from(file_str);
         let id = it.get("id").and_then(|v| v.as_str()).map(|s| s.to_string());
-        let title = it.get("title").and_then(|v| v.as_str()).unwrap_or("").to_string();
-        let tags = it.get("tags").and_then(|v| v.as_array()).map(|a| a.iter().filter_map(|x| x.as_str().map(|s| s.to_string())).collect()).unwrap_or_else(Vec::new);
-        let status = it.get("status").and_then(|v| v.as_str()).map(|s| s.to_string());
-        let groups = it.get("groups").and_then(|v| v.as_array()).map(|a| a.iter().filter_map(|x| x.as_str().map(|s| s.to_string())).collect()).unwrap_or_else(Vec::new);
-        let depends_on = it.get("depends_on").and_then(|v| v.as_array()).map(|a| a.iter().filter_map(|x| x.as_str().map(|s| s.to_string())).collect()).unwrap_or_else(Vec::new);
-        let supersedes = match it.get("supersedes") { Some(Value::Array(a)) => a.iter().filter_map(|x| x.as_str().map(|s| s.to_string())).collect(), Some(Value::String(s)) => vec![s.to_string()], _ => Vec::new(), };
-        let superseded_by = match it.get("superseded_by") { Some(Value::Array(a)) => a.iter().filter_map(|x| x.as_str().map(|s| s.to_string())).collect(), Some(Value::String(s)) => vec![s.to_string()], _ => Vec::new(), };
+        let title = it
+            .get("title")
+            .and_then(|v| v.as_str())
+            .unwrap_or("")
+            .to_string();
+        let tags = it
+            .get("tags")
+            .and_then(|v| v.as_array())
+            .map(|a| {
+                a.iter()
+                    .filter_map(|x| x.as_str().map(|s| s.to_string()))
+                    .collect()
+            })
+            .unwrap_or_else(Vec::new);
+        let status = it
+            .get("status")
+            .and_then(|v| v.as_str())
+            .map(|s| s.to_string());
+        let groups = it
+            .get("groups")
+            .and_then(|v| v.as_array())
+            .map(|a| {
+                a.iter()
+                    .filter_map(|x| x.as_str().map(|s| s.to_string()))
+                    .collect()
+            })
+            .unwrap_or_else(Vec::new);
+        let depends_on = it
+            .get("depends_on")
+            .and_then(|v| v.as_array())
+            .map(|a| {
+                a.iter()
+                    .filter_map(|x| x.as_str().map(|s| s.to_string()))
+                    .collect()
+            })
+            .unwrap_or_else(Vec::new);
+        let supersedes = match it.get("supersedes") {
+            Some(Value::Array(a)) => a
+                .iter()
+                .filter_map(|x| x.as_str().map(|s| s.to_string()))
+                .collect(),
+            Some(Value::String(s)) => vec![s.to_string()],
+            _ => Vec::new(),
+        };
+        let superseded_by = match it.get("superseded_by") {
+            Some(Value::Array(a)) => a
+                .iter()
+                .filter_map(|x| x.as_str().map(|s| s.to_string()))
+                .collect(),
+            Some(Value::String(s)) => vec![s.to_string()],
+            _ => Vec::new(),
+        };
         let mtime = it.get("mtime").and_then(|v| v.as_u64());
         let size = it.get("size").and_then(|v| v.as_u64());
         docs.push(AdrDoc {

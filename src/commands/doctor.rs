@@ -119,7 +119,10 @@ pub(crate) fn build_report(
         .collect();
 
     // Unified index info
-    let unified = cfg_path.as_ref().and_then(|p| p.parent()).map(|dir| dir.join(&cfg.index_relative));
+    let unified = cfg_path
+        .as_ref()
+        .and_then(|p| p.parent())
+        .map(|dir| dir.join(&cfg.index_relative));
     let unified_info = unified.as_ref().map(|p| {
         let mode = if p.exists() { "index" } else { "absent" };
         serde_json::json!({"path": p, "mode": mode})

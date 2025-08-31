@@ -51,7 +51,14 @@ fn main() -> Result<()> {
             include_bidirectional,
         } => {
             let (cfg, cfg_path) = load_config(&cli.config, &cli.base)?;
-            cli_rag::commands::cluster::run(&cfg, &cfg_path, &cli.format, id, depth, include_bidirectional)?;
+            cli_rag::commands::cluster::run(
+                &cfg,
+                &cfg_path,
+                &cli.format,
+                id,
+                depth,
+                include_bidirectional,
+            )?;
         }
         Commands::Path {
             from,
@@ -68,7 +75,14 @@ fn main() -> Result<()> {
             format,
         } => {
             let (cfg, cfg_path) = load_config(&cli.config, &cli.base)?;
-            cli_rag::commands::graph::run(&cfg, &cfg_path, &format, id, depth, include_bidirectional)?;
+            cli_rag::commands::graph::run(
+                &cfg,
+                &cfg_path,
+                &format,
+                id,
+                depth,
+                include_bidirectional,
+            )?;
         }
         Commands::Watch {
             full_rescan,

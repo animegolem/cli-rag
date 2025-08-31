@@ -14,7 +14,9 @@ pub fn run(
     include_dependents: bool,
 ) -> Result<()> {
     let (docs, used_unified) = docs_with_source(cfg, cfg_path)?;
-    if !used_unified { eprintln!("Note: unified index not found; falling back to per-base/scan. Consider `cli-rag validate`."); }
+    if !used_unified {
+        eprintln!("Note: unified index not found; falling back to per-base/scan. Consider `cli-rag validate`.");
+    }
     let mut by_id = std::collections::HashMap::new();
     for d in &docs {
         if let Some(ref i) = d.id {

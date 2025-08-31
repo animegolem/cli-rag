@@ -16,7 +16,9 @@ pub fn run(
     include_bidirectional: Option<bool>,
 ) -> Result<()> {
     let (docs, used_unified) = docs_with_source(cfg, cfg_path)?;
-    if !used_unified { eprintln!("Note: unified index not found; falling back to per-base/scan. Consider `cli-rag validate`."); }
+    if !used_unified {
+        eprintln!("Note: unified index not found; falling back to per-base/scan. Consider `cli-rag validate`.");
+    }
     let depth = depth.unwrap_or(cfg.defaults.depth);
     let include_bidirectional = include_bidirectional.unwrap_or(cfg.defaults.include_bidirectional);
     let mut by_id = std::collections::HashMap::new();

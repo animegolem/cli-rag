@@ -16,7 +16,9 @@ pub fn run(
 ) -> Result<()> {
     let t = topic.to_lowercase();
     let (docs, used_unified) = docs_with_source(cfg, cfg_path)?;
-    if !used_unified { eprintln!("Note: unified index not found; falling back to per-base/scan. Consider `cli-rag validate`."); }
+    if !used_unified {
+        eprintln!("Note: unified index not found; falling back to per-base/scan. Consider `cli-rag validate`.");
+    }
     let mut matches: Vec<crate::model::AdrDoc> = docs
         .into_iter()
         .filter(|d| d.groups.iter().any(|g| g.to_lowercase().contains(&t)))
