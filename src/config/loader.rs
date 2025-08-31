@@ -108,6 +108,15 @@ pub fn load_config(
         if !cfg.import.is_empty() {
             let cfg_dir = cfg_path.parent().unwrap_or(Path::new("."));
             let mut imported: Vec<SchemaCfg> = Vec::new();
+            // Track schema name -> sources for better E120 reporting across imports
+            use std::collections::BTreeMap as _BTreeMap;
+            let mut name_sources: _BTreeMap<String, Vec<String>> = _BTreeMap::new();
+            for sc in &cfg.schema {
+                name_sources
+                    .entry(sc.name.clone())
+                    .or_default()
+                    .push(cfg_path.display().to_string());
+            }
             for patt in &cfg.import {
                 let patt_path = cfg_dir.join(patt);
                 let mut files: Vec<PathBuf> = Vec::new();
@@ -162,7 +171,23 @@ pub fn load_config(
                     }
                     let imp: ImportSchemas = toml::from_str(&s)
                         .with_context(|| format!("parsing schemas in import {:?}", fpath))?;
-                    imported.extend(imp.schema);
+                    // Detect duplicate names against prior and current imports with source paths
+                    for sc in imp.schema {
+                        if let Some(srcs) = name_sources.get(&sc.name).cloned() {
+                            let mut all = srcs;
+                            all.push(fpath.display().to_string());
+                            return Err(anyhow!(
+                                "E120: Duplicate schema name(s) detected: {}\nConflicting schema sources:\n  - {}",
+                                sc.name,
+                                all.join("\n  - ")
+                            ));
+                        }
+                        name_sources
+                            .entry(sc.name.clone())
+                            .or_default()
+                            .push(fpath.display().to_string());
+                        imported.push(sc);
+                    }
                 }
             }
             cfg.schema.extend(imported);

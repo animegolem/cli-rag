@@ -122,7 +122,7 @@ pub fn run(
         if !edited && final_body == body {
             // Treat as cancelled; do not create note
             let _ = fs::remove_file(&tmp);
-            println!("Cancelled (no changes saved); not creating note");
+            println!("Cancelled (no changes saved)");
             return Ok(());
         }
         // Ensure we don't overwrite an existing file; bump numeric suffix if needed
