@@ -44,7 +44,7 @@ fn write_separate_schema(cfg_path: &Path, name: &str, force: bool) -> Result<()>
     let body_path = templates_dir.join(format!("{}.md", name));
     if !body_path.exists() || force {
         let body =
-            "---\nid: {{id}}\ntags: []\nstatus: draft\ndepends_on: []\n---\n\n# {{id}}: Title\n\n";
+            "---\nid: {{id}}\ntags: []\nstatus: draft\ndepends_on: []\n---\n\n# {{id}}: {{title}}\n\n";
         fs::write(&body_path, body)
             .with_context(|| format!("writing note stub {:?}", body_path))?;
     }
