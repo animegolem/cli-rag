@@ -50,6 +50,7 @@ include_content = true
 # required = ["id", "tags", "status", "depends_on"]
 # unknown_policy = "ignore"   # ignore | warn | error (default: ignore)
 # cycle_policy = "warn"        # warn | error | ignore (default: warn)
+# filename_template = "{{id}}-{{title}}.md"  # optional filename pattern
 # allowed_keys = ["produces", "files_touched"]  # optional pass-through keys
 #
 # [schema.rules.status]

@@ -212,6 +212,7 @@ mod tests {
             required: vec!["id".into(), "tags".into()],
             unknown_policy: Some("warn".into()),
             cycle_policy: None,
+            filename_template: None,
             allowed_keys: vec![],
             rules,
         };
@@ -221,6 +222,7 @@ mod tests {
             required: vec!["id".into()],
             unknown_policy: Some("ignore".into()),
             cycle_policy: None,
+            filename_template: None,
             allowed_keys: vec![],
             rules: BTreeMap::new(),
         };

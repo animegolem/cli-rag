@@ -40,6 +40,8 @@ pub struct SchemaCfg {
     #[serde(default)]
     pub cycle_policy: Option<String>, // warn | error | ignore (default warn)
     #[serde(default)]
+    pub filename_template: Option<String>, // e.g., "{{id}}-{{title}}.md"
+    #[serde(default)]
     pub allowed_keys: Vec<String>,
     #[serde(default)]
     pub rules: std::collections::BTreeMap<String, SchemaRule>,

@@ -65,6 +65,7 @@ pub fn run(
     schema: String,
     title_opt: Option<String>,
     filename_template: Option<String>,
+    dest_base: Option<std::path::PathBuf>,
     print_body: bool,
     dry_run: bool,
     edit: bool,
@@ -74,7 +75,27 @@ pub fn run(
             "No bases configured; please run `cli-rag init` first"
         ));
     }
-    let base = &cfg.bases[0];
+    // Determine destination base
+    let base = if let Some(dest) = dest_base {
+        // Try to find matching configured base (canonicalized)
+        let dest_c = std::fs::canonicalize(&dest).unwrap_or(dest.clone());
+        let mut found: Option<&std::path::PathBuf> = None;
+        for b in &cfg.bases {
+            let bc = std::fs::canonicalize(b).unwrap_or(b.clone());
+            if bc == dest_c {
+                found = Some(b);
+                break;
+            }
+        }
+        found.ok_or_else(|| {
+            anyhow!(
+                "--dest-base does not match any configured base: {}",
+                dest_c.display()
+            )
+        })?
+    } else {
+        &cfg.bases[0]
+    };
     let (docs, _used_unified) = docs_with_source(cfg, cfg_path)?;
     let id = compute_next_id(&schema, &docs);
     let title = title_opt.unwrap_or_else(|| id.clone());
@@ -99,12 +120,22 @@ pub fn run(
         )
     };
     let body = render_template(body_raw, &id, &title);
+    // Determine filename template: CLI flag takes precedence, else per-schema config
+    let schema_tpl: Option<String> = if filename_template.is_none() {
+        cfg.schema
+            .iter()
+            .find(|s| s.name == schema)
+            .and_then(|s| s.filename_template.clone())
+    } else {
+        None
+    };
+    let tpl_eff: Option<String> = filename_template.or(schema_tpl);
     // Compute target filename with optional template
     fn sanitize_filename_component(s: &str) -> String {
         let out = s.replace('/', "-").replace(['\n', '\r'], " ");
         out.trim().to_string()
     }
-    let initial_name = if let Some(tpl) = &filename_template {
+    let initial_name = if let Some(tpl) = &tpl_eff {
         let mut f = tpl.replace("{{id}}", &id).replace("{{title}}", &title);
         f = sanitize_filename_component(&f);
         if !f.ends_with(".md") {
@@ -164,7 +195,7 @@ pub fn run(
                 n += 1;
                 let newid = format!("{}-{:03}", prefix, n);
                 // Recompute filename if template provided
-                let cand_name = if let Some(tpl) = &filename_template {
+                let cand_name = if let Some(tpl) = &tpl_eff {
                     let mut f = tpl.replace("{{id}}", &newid).replace("{{title}}", &title);
                     f = sanitize_filename_component(&f);
                     if !f.ends_with(".md") {
@@ -203,7 +234,7 @@ pub fn run(
             loop {
                 n += 1;
                 let newid = format!("{}-{:03}", prefix, n);
-                let cand_name = if let Some(tpl) = &filename_template {
+                let cand_name = if let Some(tpl) = &tpl_eff {
                     let mut f = tpl.replace("{{id}}", &newid).replace("{{title}}", &title);
                     f = sanitize_filename_component(&f);
                     if !f.ends_with(".md") {

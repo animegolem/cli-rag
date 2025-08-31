@@ -156,6 +156,40 @@ fn new_filename_template_creates_expected_file() {
 }
 
 #[test]
+fn new_writes_to_specified_dest_base() {
+    let temp = assert_fs::TempDir::new().unwrap();
+    let base1 = temp.child("notes1");
+    let base2 = temp.child("notes2");
+    base1.create_dir_all().unwrap();
+    base2.create_dir_all().unwrap();
+    let cfg = temp.child(".cli-rag.toml");
+    cfg.write_str(&format!(
+        "bases = [\n  '{}',\n  '{}'\n]\n",
+        base1.path().display(),
+        base2.path().display()
+    ))
+    .unwrap();
+
+    // Write into base2 via --dest-base
+    Command::cargo_bin("cli-rag")
+        .unwrap()
+        .current_dir(temp.path())
+        .arg("new")
+        .arg("--schema")
+        .arg("ADR")
+        .arg("--dest-base")
+        .arg(base2.path())
+        .assert()
+        .success();
+
+    base1
+        .child("ADR-001.md")
+        .assert(predicates::path::missing());
+    base2.child("ADR-001.md").assert(predicates::path::exists());
+    temp.close().unwrap();
+}
+
+#[test]
 fn new_injects_frontmatter_when_token_present() {
     let temp = assert_fs::TempDir::new().unwrap();
     let base = temp.child("notes");
