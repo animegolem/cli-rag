@@ -131,6 +131,31 @@ fn new_print_body_prints() {
 }
 
 #[test]
+fn new_filename_template_creates_expected_file() {
+    let temp = assert_fs::TempDir::new().unwrap();
+    let base = temp.child("notes");
+    base.create_dir_all().unwrap();
+    let _cfg = write_base_cfg(&temp, "notes");
+
+    Command::cargo_bin("cli-rag")
+        .unwrap()
+        .current_dir(temp.path())
+        .arg("new")
+        .arg("--schema")
+        .arg("ADR")
+        .arg("--title")
+        .arg("hello")
+        .arg("--filename-template")
+        .arg("{{id}}-{{title}}.md")
+        .assert()
+        .success();
+
+    base.child("ADR-001-hello.md")
+        .assert(predicates::path::exists());
+    temp.close().unwrap();
+}
+
+#[test]
 fn new_injects_frontmatter_when_token_present() {
     let temp = assert_fs::TempDir::new().unwrap();
     let base = temp.child("notes");

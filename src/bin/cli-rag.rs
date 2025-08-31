@@ -89,12 +89,22 @@ fn main() -> Result<()> {
         Commands::New {
             schema,
             title,
+            filename_template,
             print_body,
             dry_run,
             edit,
         } => {
             let (cfg, cfg_path) = load_config(&cli.config, &cli.base)?;
-            cli_rag::commands::new::run(&cfg, &cfg_path, schema, title, print_body, dry_run, edit)?;
+            cli_rag::commands::new::run(
+                &cfg,
+                &cfg_path,
+                schema,
+                title,
+                filename_template,
+                print_body,
+                dry_run,
+                edit,
+            )?;
         }
         Commands::Watch {
             full_rescan,

@@ -58,11 +58,13 @@ fn compute_next_id(prefix: &str, docs: &Vec<crate::model::AdrDoc>) -> String {
     format!("{}-{:03}", prefix, max_n + 1)
 }
 
+#[allow(clippy::too_many_arguments)]
 pub fn run(
     cfg: &Config,
     cfg_path: &Option<std::path::PathBuf>,
     schema: String,
     title_opt: Option<String>,
+    filename_template: Option<String>,
     print_body: bool,
     dry_run: bool,
     edit: bool,
@@ -97,7 +99,22 @@ pub fn run(
         )
     };
     let body = render_template(body_raw, &id, &title);
-    let mut out_path = base.join(format!("{}.md", id));
+    // Compute target filename with optional template
+    fn sanitize_filename_component(s: &str) -> String {
+        let out = s.replace('/', "-").replace(['\n', '\r'], " ");
+        out.trim().to_string()
+    }
+    let initial_name = if let Some(tpl) = &filename_template {
+        let mut f = tpl.replace("{{id}}", &id).replace("{{title}}", &title);
+        f = sanitize_filename_component(&f);
+        if !f.ends_with(".md") {
+            f.push_str(".md");
+        }
+        f
+    } else {
+        format!("{}.md", id)
+    };
+    let mut out_path = base.join(&initial_name);
 
     if print_body {
         print!("{}", body);
@@ -146,7 +163,18 @@ pub fn run(
             loop {
                 n += 1;
                 let newid = format!("{}-{:03}", prefix, n);
-                let candidate = base.join(format!("{}.md", newid));
+                // Recompute filename if template provided
+                let cand_name = if let Some(tpl) = &filename_template {
+                    let mut f = tpl.replace("{{id}}", &newid).replace("{{title}}", &title);
+                    f = sanitize_filename_component(&f);
+                    if !f.ends_with(".md") {
+                        f.push_str(".md");
+                    }
+                    f
+                } else {
+                    format!("{}.md", newid)
+                };
+                let candidate = base.join(&cand_name);
                 if !candidate.exists() {
                     out_path = candidate;
                     break;
@@ -175,7 +203,17 @@ pub fn run(
             loop {
                 n += 1;
                 let newid = format!("{}-{:03}", prefix, n);
-                let candidate = base.join(format!("{}.md", newid));
+                let cand_name = if let Some(tpl) = &filename_template {
+                    let mut f = tpl.replace("{{id}}", &newid).replace("{{title}}", &title);
+                    f = sanitize_filename_component(&f);
+                    if !f.ends_with(".md") {
+                        f.push_str(".md");
+                    }
+                    f
+                } else {
+                    format!("{}.md", newid)
+                };
+                let candidate = base.join(&cand_name);
                 if !candidate.exists() {
                     out_path = candidate;
                     break;

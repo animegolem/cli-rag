@@ -99,6 +99,9 @@ pub enum Commands {
         /// Optional title for the note (used in template)
         #[arg(long)]
         title: Option<String>,
+        /// Optional filename template, e.g. "{{id}}-{{title}}.md"
+        #[arg(long, value_name = "TEMPLATE")]
+        filename_template: Option<String>,
         /// Print rendered body only; do not write a file
         #[arg(long, default_value_t = false)]
         print_body: bool,
