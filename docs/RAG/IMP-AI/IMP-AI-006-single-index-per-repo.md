@@ -1,4 +1,4 @@
----
+I s---
 node_id: IMP-AI-006
 tags:
   - index
@@ -30,9 +30,9 @@ Current implementation writes per-base indexes, while ADR-001’s direction favo
 ### **Implementation Plan**
 - [x] Decide index location semantics: path relative to project config dir; single file (e.g., `.cli-rag/index.json`).
 - [x] Writer: write the consolidated index at config root (in addition to current per-base writes to preserve compatibility).
-- [ ] Reader: prefer unified index if present; else per-base; else scan; emit deprecation warning for per-base.
+- [x] Reader: prefer unified index if present; else per-base; else scan; (deprecation note pending).
 - [x] Watch: update unified index on debounce cycles (uses config dir from resolved `--config`).
-- [ ] Doctor/Status: display unified index path/mode; counts sourced from unified index when present.
+- [x] Doctor/Status: prefer unified index; include `{path, mode}` of unified in report; counts sourced from the loaded source.
 - [ ] Tests: unified read/write; dual-mode fallback; migration behavior (warn once).
 
 ### **Acceptance Criteria**
@@ -43,4 +43,5 @@ Current implementation writes per-base indexes, while ADR-001’s direction favo
 
 ### **Takeaway**
 - Implemented unified index writer at the config root and integrated it into `validate` and `watch` while retaining per-base index writes for compatibility.
-- Next steps: update `load_docs` to prefer the unified index, enhance `doctor` reporting, and add migration/fallback tests.
+- Readers (search/topics/group/get/cluster/graph/path) now prefer the unified index; doctor prefers unified and reports its path/mode.
+- Next step: add explicit tests for unified read/fallback and (optionally) a per-base deprecation note.

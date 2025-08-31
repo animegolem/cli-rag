@@ -5,7 +5,7 @@ use anyhow::{Context, Result};
 use serde_json::Value;
 
 use crate::config::Config;
-use crate::discovery::{load_docs, load_docs_unified};
+use crate::discovery::{docs_with_source, load_docs, load_docs_unified};
 use std::fs;
 
 pub fn run(cfg: &Config, cfg_path: &Option<std::path::PathBuf>, format: &OutputFormat) -> Result<()> {
@@ -38,7 +38,8 @@ pub fn run(cfg: &Config, cfg_path: &Option<std::path::PathBuf>, format: &OutputF
         }
     }
     if !used_groups_file {
-        let docs = match load_docs_unified(cfg, cfg_path)? { Some(d) => d, None => load_docs(cfg)? };
+        let (docs, used_unified) = docs_with_source(cfg, cfg_path)?;
+        if !used_unified { eprintln!("Note: unified index not found; falling back to per-base/scan. Consider `cli-rag validate`."); }
         for d in docs {
             for g in d.groups {
                 *groups.entry(g).or_insert(0) += 1;

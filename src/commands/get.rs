@@ -4,7 +4,7 @@ use std::fs;
 use crate::cli::OutputFormat;
 use crate::commands::output::print_json;
 use crate::config::Config;
-use crate::discovery::{load_docs, load_docs_unified};
+use crate::discovery::{docs_with_source, load_docs, load_docs_unified};
 
 pub fn run(
     cfg: &Config,
@@ -13,7 +13,8 @@ pub fn run(
     id: String,
     include_dependents: bool,
 ) -> Result<()> {
-    let docs = match load_docs_unified(cfg, cfg_path)? { Some(d) => d, None => load_docs(cfg)? };
+    let (docs, used_unified) = docs_with_source(cfg, cfg_path)?;
+    if !used_unified { eprintln!("Note: unified index not found; falling back to per-base/scan. Consider `cli-rag validate`."); }
     let mut by_id = std::collections::HashMap::new();
     for d in &docs {
         if let Some(ref i) = d.id {

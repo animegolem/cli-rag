@@ -5,7 +5,7 @@ use anyhow::Result;
 use std::fs;
 
 use crate::config::Config;
-use crate::discovery::{load_docs, load_docs_unified};
+use crate::discovery::{docs_with_source, load_docs, load_docs_unified};
 
 pub fn run(
     cfg: &Config,
@@ -15,7 +15,8 @@ pub fn run(
     include_content: Option<bool>,
 ) -> Result<()> {
     let t = topic.to_lowercase();
-    let docs = match load_docs_unified(cfg, cfg_path)? { Some(d) => d, None => load_docs(cfg)? };
+    let (docs, used_unified) = docs_with_source(cfg, cfg_path)?;
+    if !used_unified { eprintln!("Note: unified index not found; falling back to per-base/scan. Consider `cli-rag validate`."); }
     let mut matches: Vec<crate::model::AdrDoc> = docs
         .into_iter()
         .filter(|d| d.groups.iter().any(|g| g.to_lowercase().contains(&t)))

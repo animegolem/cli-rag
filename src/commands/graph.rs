@@ -4,7 +4,7 @@ use std::collections::{BTreeMap, BTreeSet, HashMap};
 use crate::cli::GraphFormat;
 use crate::commands::output::print_json;
 use crate::config::Config;
-use crate::discovery::{load_docs, load_docs_unified};
+use crate::discovery::{docs_with_source, load_docs, load_docs_unified};
 use crate::graph::compute_cluster;
 use crate::model::AdrDoc;
 
@@ -76,7 +76,8 @@ pub fn run(
     depth: Option<usize>,
     include_bidirectional: Option<bool>,
 ) -> Result<()> {
-    let docs = match load_docs_unified(cfg, cfg_path)? { Some(d) => d, None => load_docs(cfg)? };
+    let (docs, used_unified) = docs_with_source(cfg, cfg_path)?;
+    if !used_unified { eprintln!("Note: unified index not found; falling back to per-base/scan. Consider `cli-rag validate`."); }
     let depth = depth.unwrap_or(cfg.defaults.depth);
     let include_bidirectional = include_bidirectional.unwrap_or(cfg.defaults.include_bidirectional);
     let mut by_id: HashMap<String, AdrDoc> = HashMap::new();

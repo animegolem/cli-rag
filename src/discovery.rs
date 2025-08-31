@@ -222,6 +222,18 @@ pub fn load_docs_unified(cfg: &Config, cfg_path: &Option<std::path::PathBuf>) ->
     Ok(Some(docs))
 }
 
+/// Helper to prefer unified index and indicate which path was used.
+pub fn docs_with_source(
+    cfg: &Config,
+    cfg_path: &Option<std::path::PathBuf>,
+) -> Result<(Vec<AdrDoc>, bool)> {
+    if let Some(d) = load_docs_unified(cfg, cfg_path)? {
+        Ok((d, true))
+    } else {
+        Ok((load_docs(cfg)?, false))
+    }
+}
+
 pub fn incremental_collect_docs(cfg: &Config, full_rescan: bool) -> Result<Vec<AdrDoc>> {
     let mut ig_builder = GlobSetBuilder::new();
     for pat in &cfg.ignore_globs {
