@@ -2,6 +2,7 @@ use anyhow::{anyhow, Context, Result};
 use regex::Regex;
 use std::fs;
 use std::path::PathBuf;
+use std::time::SystemTime;
 
 use crate::config::Config;
 use crate::discovery::docs_with_source;
@@ -101,35 +102,83 @@ pub fn run(
         println!("Preview:\n{}", body);
         return Ok(());
     }
-    // Ensure we don't overwrite an existing file; bump numeric suffix if needed
-    if out_path.exists() {
-        let prefix = schema;
-        let re = Regex::new(&format!(r"^{}-(\d+)$", regex::escape(&prefix))).unwrap();
-        let mut n: usize = 1;
-        if let Some(caps) = re.captures(&id) {
-            if let Some(m) = caps.get(1) {
-                n = m.as_str().parse::<usize>().unwrap_or(1);
-            }
-        }
-        loop {
-            n += 1;
-            let newid = format!("{}-{:03}", prefix, n);
-            let candidate = base.join(format!("{}.md", newid));
-            if !candidate.exists() {
-                out_path = candidate;
-                break;
-            }
-        }
-    }
-    if let Some(parent) = out_path.parent() {
-        fs::create_dir_all(parent).ok();
-    }
-    fs::write(&out_path, body).with_context(|| format!("writing note {:?}", out_path))?;
-    println!("Wrote {}", out_path.display());
     if edit {
-        if let Err(e) = try_open_editor(&out_path) {
+        // Edit in a temporary file first; only persist if the user saves
+        let mut tmp = std::env::temp_dir();
+        tmp.push(format!(".cli-rag-new-{}.md", id));
+        fs::write(&tmp, &body).with_context(|| format!("writing temp note {:?}", tmp))?;
+        let before_mtime: Option<SystemTime> = fs::metadata(&tmp).and_then(|m| m.modified()).ok();
+        if let Err(e) = try_open_editor(&tmp) {
             eprintln!("Note: could not open editor automatically: {}", e);
+            return Ok(());
         }
+        let after_mtime: Option<SystemTime> = fs::metadata(&tmp).and_then(|m| m.modified()).ok();
+        let edited = match (before_mtime, after_mtime) {
+            (Some(a), Some(b)) => b > a,
+            _ => false,
+        };
+        let final_body = fs::read_to_string(&tmp).unwrap_or_default();
+        // Decide whether to persist: if file content changed or mtime increased
+        if !edited && final_body == body {
+            // Treat as cancelled; do not create note
+            let _ = fs::remove_file(&tmp);
+            println!("Cancelled (no changes saved); not creating note");
+            return Ok(());
+        }
+        // Ensure we don't overwrite an existing file; bump numeric suffix if needed
+        if out_path.exists() {
+            let prefix = schema;
+            let re = Regex::new(&format!(r"^{}-(\d+)$", regex::escape(&prefix))).unwrap();
+            let mut n: usize = 1;
+            if let Some(caps) = re.captures(&id) {
+                if let Some(m) = caps.get(1) {
+                    n = m.as_str().parse::<usize>().unwrap_or(1);
+                }
+            }
+            loop {
+                n += 1;
+                let newid = format!("{}-{:03}", prefix, n);
+                let candidate = base.join(format!("{}.md", newid));
+                if !candidate.exists() {
+                    out_path = candidate;
+                    break;
+                }
+            }
+        }
+        if let Some(parent) = out_path.parent() {
+            fs::create_dir_all(parent).ok();
+        }
+        fs::write(&out_path, final_body).with_context(|| format!("writing note {:?}", out_path))?;
+        let _ = fs::remove_file(&tmp);
+        println!("Wrote {}", out_path.display());
+        Ok(())
+    } else {
+        // Non-edit path: write immediately
+        // Ensure we don't overwrite an existing file; bump numeric suffix if needed
+        if out_path.exists() {
+            let prefix = schema;
+            let re = Regex::new(&format!(r"^{}-(\d+)$", regex::escape(&prefix))).unwrap();
+            let mut n: usize = 1;
+            if let Some(caps) = re.captures(&id) {
+                if let Some(m) = caps.get(1) {
+                    n = m.as_str().parse::<usize>().unwrap_or(1);
+                }
+            }
+            loop {
+                n += 1;
+                let newid = format!("{}-{:03}", prefix, n);
+                let candidate = base.join(format!("{}.md", newid));
+                if !candidate.exists() {
+                    out_path = candidate;
+                    break;
+                }
+            }
+        }
+        if let Some(parent) = out_path.parent() {
+            fs::create_dir_all(parent).ok();
+        }
+        fs::write(&out_path, body).with_context(|| format!("writing note {:?}", out_path))?;
+        println!("Wrote {}", out_path.display());
+        Ok(())
     }
-    Ok(())
 }
