@@ -50,6 +50,12 @@ pub enum Commands {
         /// Do not open the config in an editor after creating or detecting it
         #[arg(long, default_value_t = false)]
         silent: bool,
+        /// Optional schema name to scaffold into the config
+        #[arg(long)]
+        schema: Option<String>,
+        /// Write schema to a separate file under .cli-rag/templates/ and add to import
+        #[arg(long, default_value_t = false)]
+        separate: bool,
     },
     Doctor {},
     Search {
