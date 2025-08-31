@@ -10,9 +10,9 @@ use crate::util::try_open_editor;
 fn render_template(mut s: String, id: &str, title: &str) -> String {
     s = s.replace("{{id}}", id);
     s = s.replace("{{title}}", title);
-    // Minimal placeholders for date/time without adding chrono clock feature
-    s = s.replace("{{date}}", "");
-    s = s.replace("{{time}}", "");
+    let now = chrono::Local::now();
+    s = s.replace("{{date}}", &now.format("%Y-%m-%d").to_string());
+    s = s.replace("{{time}}", &now.format("%H:%M").to_string());
     // Minimal LOC token: {{LOC|N}} -> N blank lines
     // We do a simple scan for patterns; non-greedy
     let re = Regex::new(r"\{\{LOC\|(\d+)\}\}").ok();
@@ -88,7 +88,7 @@ pub fn run(
         )
     };
     let body = render_template(body_raw, &id, &title);
-    let out_path = base.join(format!("{}.md", id));
+    let mut out_path = base.join(format!("{}.md", id));
 
     if print_body {
         print!("{}", body);
@@ -98,7 +98,28 @@ pub fn run(
         println!("Would write {}", out_path.display());
         println!("Id: {}", id);
         println!("Title: {}", title);
+        println!("Preview:\n{}", body);
         return Ok(());
+    }
+    // Ensure we don't overwrite an existing file; bump numeric suffix if needed
+    if out_path.exists() {
+        let prefix = schema;
+        let re = Regex::new(&format!(r"^{}-(\d+)$", regex::escape(&prefix))).unwrap();
+        let mut n: usize = 1;
+        if let Some(caps) = re.captures(&id) {
+            if let Some(m) = caps.get(1) {
+                n = m.as_str().parse::<usize>().unwrap_or(1);
+            }
+        }
+        loop {
+            n += 1;
+            let newid = format!("{}-{:03}", prefix, n);
+            let candidate = base.join(format!("{}.md", newid));
+            if !candidate.exists() {
+                out_path = candidate;
+                break;
+            }
+        }
     }
     if let Some(parent) = out_path.parent() {
         fs::create_dir_all(parent).ok();

@@ -73,3 +73,59 @@ fn new_dry_run_does_not_write() {
     base.child("IMP-001.md").assert(predicates::path::missing());
     temp.close().unwrap();
 }
+
+#[test]
+fn new_twice_increments_id() {
+    let temp = assert_fs::TempDir::new().unwrap();
+    let base = temp.child("notes");
+    base.create_dir_all().unwrap();
+    let _cfg = write_base_cfg(&temp, "notes");
+
+    // First note
+    Command::cargo_bin("cli-rag")
+        .unwrap()
+        .current_dir(temp.path())
+        .arg("new")
+        .arg("--schema")
+        .arg("ADR")
+        .assert()
+        .success();
+    // Second note
+    Command::cargo_bin("cli-rag")
+        .unwrap()
+        .current_dir(temp.path())
+        .arg("new")
+        .arg("--schema")
+        .arg("ADR")
+        .assert()
+        .success();
+
+    base.child("ADR-001.md").assert(predicates::path::exists());
+    base.child("ADR-002.md").assert(predicates::path::exists());
+    temp.close().unwrap();
+}
+
+#[test]
+fn new_print_body_prints() {
+    let temp = assert_fs::TempDir::new().unwrap();
+    let base = temp.child("notes");
+    base.create_dir_all().unwrap();
+    let _cfg = write_base_cfg(&temp, "notes");
+
+    let out = Command::cargo_bin("cli-rag")
+        .unwrap()
+        .current_dir(temp.path())
+        .arg("new")
+        .arg("--schema")
+        .arg("ADR")
+        .arg("--print-body")
+        .assert()
+        .success()
+        .get_output()
+        .stdout
+        .clone();
+    let s = String::from_utf8(out).unwrap();
+    assert!(s.contains("id: ADR-001"));
+    assert!(s.contains("# ADR-001:"));
+    temp.close().unwrap();
+}
