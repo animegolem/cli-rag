@@ -129,3 +129,41 @@ fn new_print_body_prints() {
     assert!(s.contains("# ADR-001:"));
     temp.close().unwrap();
 }
+
+#[test]
+fn new_injects_frontmatter_when_token_present() {
+    let temp = assert_fs::TempDir::new().unwrap();
+    let base = temp.child("notes");
+    base.create_dir_all().unwrap();
+    let cfg = write_base_cfg(&temp, "notes");
+
+    // Write a template that uses ((frontmatter)) token
+    let tmpl_dir = temp.child(".cli-rag/templates");
+    tmpl_dir.create_dir_all().unwrap();
+    let tmpl = tmpl_dir.child("ADR.md");
+    tmpl.write_str("---\n((frontmatter))\n---\n\n# {{id}}: {{title}}\n")
+        .unwrap();
+
+    // Create note
+    Command::cargo_bin("cli-rag")
+        .unwrap()
+        .current_dir(temp.path())
+        .arg("new")
+        .arg("--schema")
+        .arg("ADR")
+        .arg("--title")
+        .arg("Injected")
+        .assert()
+        .success();
+
+    let f = base.child("ADR-001.md");
+    f.assert(predicates::path::exists());
+    let s = std::fs::read_to_string(f.path()).unwrap();
+    assert!(s.contains("id: ADR-001"));
+    assert!(s.contains("tags: []"));
+    assert!(s.contains("status: draft"));
+    assert!(s.contains("depends_on: []"));
+    assert!(s.contains("# ADR-001: Injected"));
+    drop(cfg);
+    temp.close().unwrap();
+}

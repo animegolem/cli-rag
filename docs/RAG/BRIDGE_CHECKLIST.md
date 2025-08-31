@@ -11,7 +11,7 @@ This file captures a technical requirements bridge between the ADRs in `docs/ADR
 ### CLI Surface (ADR-003b, ADR-003c)
 - Present: `init`, `doctor`, `search`, `topics`, `group`, `get`, `cluster`, `graph`, `path`, `validate`, `watch`, `completions`.
 - Gaps:
-  - [ ] `new` command (templating, id generation, `--edit`, `--dry-run`, `--print-body`).
+  - [x] `new` command (templating, id generation, `--edit`, `--dry-run`, `--print-body`).
   - [ ] `get --format md|ai|json` (partial: `ai` format added; no `md` variant yet).
   - [ ] `get --depth N --include-bidirectional` (current: only immediate deps; `include_dependents` boolean).
   - [ ] `graph --graph-format ascii` and `--root none` (current: mermaid/dot/json only; requires id).
@@ -26,7 +26,7 @@ This file captures a technical requirements bridge between the ADRs in `docs/ADR
   - [x] Single top-level config enforcement with clear codes (E100) and unique schema names (E120).
   - [x] `import = [...]` for external schema files and enforcement that imports contain schemas only (E110).
   - [ ] Consistent env/flag naming and docs (`ADR_RAG_*` vs ADR naming); clarify `.cli-rag.toml` in docs (code uses `.cli-rag.toml` and `CLI_RAG_*`).
-  - [ ] Template scaffolds in `init --schema` (`--separate` option per ADR-003c).
+  - [x] Template scaffolds in `init --schema` (`--separate` option per ADR-003c).
   - [ ] Authoring knobs: `editor` default and `background_watch = true` wiring.
   - [ ] Index model: single index per repo (collapse groups + file index) and disallow multiple indexes; define final on-disk path (partial: unified index writer/reader present; per-base still written).
 
@@ -35,7 +35,7 @@ This file captures a technical requirements bridge between the ADRs in `docs/ADR
 - Gaps:
   - [ ] Uniform machine-readable error codes and shapes (E2xx/E24x etc.) wired through `validate --json|--ndjson` (partial: initial codes now emitted for common cases; stabilize and document numbering).
   - [x] File matches multiple schemas → error (priority/first-match policy) (E200).
-  - [ ] Cycle detection options per schema (warn/error) and DAG policy (partial: basic cycle detection emits warnings; no per-schema policy yet).
+  - [x] Cycle detection options per schema (warn/error/ignore) and DAG policy (done for `depends_on`; per-edge/DAG extensions remain).
   - [ ] Extensible graph edges: classify `graph_edges = [...]` that auto-validate as id refs (ADR-AI-003); not just hardcoded keys.
   - [ ] Filename uniqueness across graph when id generator used (ADR-001 note).
   - [ ] Better isolated/orphan analysis surfaced in `doctor/status` (currently only warning text from validation; formalize).
@@ -60,10 +60,10 @@ This file captures a technical requirements bridge between the ADRs in `docs/ADR
   - [ ] Adopt “single index per repo”: unify current per-base writes; derive groups view from index (partial: unified index written at config root; readers prefer unified; per-base remains for compatibility).
 
 ### Templates, Parsing, and `new` (ADR-001, ADR-011, ADR-010)
-- Present: None in code yet; config template includes examples.
+- Present: Basic templating + `new` flow; config template examples and `init --schema` scaffolds.
 - Gaps:
-  - [ ] Minimal templating engine: support tokens `{{id}}`, `{{title}}`, `((frontmatter))`, `{{LOC|N}}`, `{{date}}`, `{{time}}`.
-  - [ ] Id generator + filename template + variable precedence policy (e.g., `["system","frontmatter","computed"]`).
+  - [ ] Minimal templating engine: partial — supports `{{id}}`, `{{title}}`, `{{LOC|N}}`, `{{date}}`, `{{time}}`; `((frontmatter))` and merge rules pending.
+  - [ ] Id generator + filename template + variable precedence policy (partial — id generator implemented; filename template/precedence pending).
   - [ ] Limited frontmatter rendering and merging rules.
   - [ ] Lua escape hatch (validate/generate hooks) with sandboxed, deterministic API surfaces (spans; read-only note/frontmatter/headings/links; engine-provided `now`/`rand`/KV store); defer IO to engine.
   - [ ] Consider migration toward a Markdown AST (markdown-rs/oxide) for robust spans and inline token detection.
@@ -99,8 +99,8 @@ This file captures a technical requirements bridge between the ADRs in `docs/ADR
 
 1) Config & Validation Foundations
    - [x] Loader invariants: single config, unique schemas, imports-only schemas (E100/E110/E120).
-   - [ ] `config_version` + gentle warnings; `init --schema` scaffolds.
-   - [ ] Validation codes + multiple schema match error; cycle policy; validator knobs for frontmatter/body/edges (rules/unknown policy exist; codes/cycle/multi-match pending).
+   - [ ] `config_version` + gentle warnings (init schema scaffolds implemented).
+   - [ ] Validation codes + multiple schema match error; cycle policy; validator knobs for frontmatter/body/edges (partial — E200 and cycle policy implemented; codes/knobs stabilization pending).
    - [ ] Decide and implement single-index model and path (partial: unified index implemented; per-base still written).
 
 2) CLI Surface Lock-in (v1)
@@ -118,8 +118,8 @@ This file captures a technical requirements bridge between the ADRs in `docs/ADR
    - [ ] Disk cache layer and simple file lock; `--rebuild-cache` plumbing; background watch integration from config.
 
 5) Templates and `new`
-   - [ ] Minimal templating + id generation + frontmatter injection.
-   - [ ] `new --dry-run|--print-body|--edit` flow.
+   - [ ] Minimal templating + id generation + frontmatter injection (partial — templating/id gen done; frontmatter injection pending).
+   - [x] `new --dry-run|--print-body|--edit` flow.
 
 6) GTD/TODO (baseline)
    - [ ] Inline TODO extraction; `search --TODO`; basic agenda view.

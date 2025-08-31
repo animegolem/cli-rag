@@ -28,6 +28,14 @@ fn render_template(mut s: String, id: &str, title: &str) -> String {
             })
             .to_string();
     }
+    // Frontmatter injection token: ((frontmatter)) -> YAML key-value lines (no --- guards)
+    if s.contains("((frontmatter))") {
+        let fm = format!(
+            "id: {}\n{}{}{}",
+            id, "tags: []\n", "status: draft\n", "depends_on: []\n"
+        );
+        s = s.replace("((frontmatter))", &fm);
+    }
     s
 }
 
