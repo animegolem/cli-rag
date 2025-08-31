@@ -7,7 +7,7 @@ tags:
 kanban_status:
   - planned
 kanban_statusline: Add init --schema scaffolding with optional --separate to templates/.
-depends_on:
+depends_on:se
   - ADR-003c
   - ADR-001
 blocked_by: []

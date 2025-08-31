@@ -5,7 +5,7 @@ use anyhow::Result;
 use std::fs;
 
 use crate::config::Config;
-use crate::discovery::{docs_with_source, load_docs, load_docs_unified};
+use crate::discovery::docs_with_source;
 
 pub fn run(
     cfg: &Config,

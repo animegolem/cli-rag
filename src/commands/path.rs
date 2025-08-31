@@ -3,7 +3,7 @@ use anyhow::Result;
 use crate::cli::OutputFormat;
 use crate::commands::output::print_json;
 use crate::config::Config;
-use crate::discovery::{docs_with_source, load_docs, load_docs_unified};
+use crate::discovery::docs_with_source;
 use crate::graph::bfs_path;
 
 pub fn run(

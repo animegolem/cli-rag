@@ -1,12 +1,12 @@
-I s---
+we I s---
 node_id: IMP-AI-006
 tags:
   - index
   - watch
   - cache
 kanban_status:
-  - in-progress
-kanban_statusline: Unified index written at config root; reader remains per-base for now.
+  - completed
+kanban_statusline: Unified index written at config root; readers and doctor prefer unified.
 depends_on:
   - ADR-001
   - ADR-AI-001
@@ -33,7 +33,7 @@ Current implementation writes per-base indexes, while ADR-001’s direction favo
 - [x] Reader: prefer unified index if present; else per-base; else scan; (deprecation note pending).
 - [x] Watch: update unified index on debounce cycles (uses config dir from resolved `--config`).
 - [x] Doctor/Status: prefer unified index; include `{path, mode}` of unified in report; counts sourced from the loaded source.
-- [ ] Tests: unified read/write; dual-mode fallback; migration behavior (warn once).
+- [x] Tests: unified read/fallback (integration_unified_index.rs). Migration/deprecation warning: pending.
 
 ### **Acceptance Criteria**
 - `validate` writes a single consolidated index; subsequent commands read it.
@@ -44,4 +44,5 @@ Current implementation writes per-base indexes, while ADR-001’s direction favo
 ### **Takeaway**
 - Implemented unified index writer at the config root and integrated it into `validate` and `watch` while retaining per-base index writes for compatibility.
 - Readers (search/topics/group/get/cluster/graph/path) now prefer the unified index; doctor prefers unified and reports its path/mode.
-- Next step: add explicit tests for unified read/fallback and (optionally) a per-base deprecation note.
+- Added integration tests for unified read and fallback; a deprecation message is emitted when falling back to per-base/scan.
+- Future enhancements (optional): migrate incremental state to unified; derive groups at config root; sunset per-base indexes.

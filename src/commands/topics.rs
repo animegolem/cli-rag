@@ -5,7 +5,7 @@ use anyhow::{Context, Result};
 use serde_json::Value;
 
 use crate::config::Config;
-use crate::discovery::{docs_with_source, load_docs, load_docs_unified};
+use crate::discovery::docs_with_source;
 use std::fs;
 
 pub fn run(
