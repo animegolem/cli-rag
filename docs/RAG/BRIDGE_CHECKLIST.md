@@ -20,21 +20,21 @@ This file captures a technical requirements bridge between the ADRs in `docs/ADR
   - [ ] Cross-cutting: global `--json`/`--ndjson` coherence; align flags/names per ADR-003b/003c.
 
 ### Config & Loader (ADR-001, ADR-004, ADR-006)
-- Present: `.adr-rag.toml` load/discover; `bases`, `index_relative`, `groups_relative`, `file_patterns`, `ignore_globs`, `allowed_statuses`, defaults; `[[schema]]` with `required`, `unknown_policy`, `allowed_keys`, keyed `rules`.
+- Present: `.cli-rag.toml` load/discover; `bases` (alias: `filepaths`), `index_relative`, `groups_relative`, `file_patterns`, `ignore_globs`, `allowed_statuses`, defaults; `[[schema]]` with `required`, `unknown_policy`, `allowed_keys`, keyed `rules`.
 - Gaps:
   - [ ] `config_version` and versioned parsing/upgrade path.
-  - [ ] Single top-level config enforcement with clear codes (E100) and unique schema names (E120).
-  - [ ] `import = [...]` for external schema files and enforcement that imports contain schemas only (E110).
-  - [ ] Consistent env/flag naming and docs (`ADR_RAG_*` vs ADR naming in docs; clarify `.adr-rag.toml` vs `.cli-rag.toml`).
+  - [x] Single top-level config enforcement with clear codes (E100) and unique schema names (E120).
+  - [x] `import = [...]` for external schema files and enforcement that imports contain schemas only (E110).
+  - [ ] Consistent env/flag naming and docs (`ADR_RAG_*` vs ADR naming); clarify `.cli-rag.toml` in docs (code uses `.cli-rag.toml` and `CLI_RAG_*`).
   - [ ] Template scaffolds in `init --schema` (`--separate` option per ADR-003c).
   - [ ] Authoring knobs: `editor` default and `background_watch = true` wiring.
-  - [ ] Index model: single index per repo (collapse groups + file index) and disallow multiple indexes; define final on-disk path.
+  - [ ] Index model: single index per repo (collapse groups + file index) and disallow multiple indexes; define final on-disk path (partial: unified index writer/reader present; per-base still written).
 
 ### Validation Engine (ADR-006, ADR-007, ADR-AI-003)
 - Present: id required; global status allowlist (overridden by schema rule); duplicate/conflict detection; `depends_on`/`supersedes`/`superseded_by` existence; schema required/unknown/allowed-keys; rule types (array/date), `min_items`, `regex`; `refers_to_types` basic check.
 - Gaps:
   - [ ] Uniform machine-readable error codes and shapes (E2xx/E24x etc.) wired through `validate --json|--ndjson`.
-  - [ ] File matches multiple schemas → error (priority/first-match policy) (E200).
+  - [ ] File matches multiple schemas → error (priority/first-match policy) (E200) (current: first-match wins; no error).
   - [ ] Cycle detection options per schema (warn/error) and DAG policy.
   - [ ] Extensible graph edges: classify `graph_edges = [...]` that auto-validate as id refs (ADR-AI-003); not just hardcoded keys.
   - [ ] Filename uniqueness across graph when id generator used (ADR-001 note).
@@ -57,7 +57,7 @@ This file captures a technical requirements bridge between the ADRs in `docs/ADR
   - [ ] Three-layer cache (in-mem session, on-disk rebuildable, source-of-truth in notes) with simple file lock.
   - [ ] `validate --rebuild-cache` hook to force recomputation of expensive metadata.
   - [ ] `watch --json` NDJSON stream of events (for NVIM/TUI) with event kinds (`validated`, `index_written`, `groups_written`); option to write groups during watch.
-  - [ ] Adopt “single index per repo”: unify current per-base writes; derive groups view from index.
+  - [ ] Adopt “single index per repo”: unify current per-base writes; derive groups view from index (partial: unified index written at config root; readers prefer unified; per-base remains for compatibility).
 
 ### Templates, Parsing, and `new` (ADR-001, ADR-011, ADR-010)
 - Present: None in code yet; config template includes examples.
@@ -81,7 +81,7 @@ This file captures a technical requirements bridge between the ADRs in `docs/ADR
 ### NVIM/TUI Integration (ADR-002, ADR-011)
 - Present: None.
 - Gaps:
-  - [ ] Provide stable `--json`/`--ndjson` outputs, spans where applicable, to drive NVIM integration.
+  - [ ] Provide stable `--json`/`--ndjson` outputs, spans where applicable, to drive NVIM integration (partial: JSON/NDJSON surfaces exist for search/topics/group/validate/doctor; spans not implemented).
   - [ ] Plan for `nvim-oxi` plugin scaffolding consuming `watch --json`, `get --format json|ai`, `validate --json`; scenes: Agenda, Kanban, Vault (templates/notes), Graph nav.
   - [ ] Consider minibuffer-like quick edits or open-in-editor workflow; fuzzy finder over tracked notes.
 
@@ -98,10 +98,10 @@ This file captures a technical requirements bridge between the ADRs in `docs/ADR
 ## Proposed Implementation Order (Phased)
 
 1) Config & Validation Foundations
-   - [ ] Loader invariants: single config, unique schemas, imports-only schemas (E100/E110/E120).
+   - [x] Loader invariants: single config, unique schemas, imports-only schemas (E100/E110/E120).
    - [ ] `config_version` + gentle warnings; `init --schema` scaffolds.
-   - [ ] Validation codes + multiple schema match error; cycle policy; validator knobs for frontmatter/body/edges.
-   - [ ] Decide and implement single-index model and path.
+   - [ ] Validation codes + multiple schema match error; cycle policy; validator knobs for frontmatter/body/edges (rules/unknown policy exist; codes/cycle/multi-match pending).
+   - [ ] Decide and implement single-index model and path (partial: unified index implemented; per-base still written).
 
 2) CLI Surface Lock-in (v1)
    - [ ] Normalize global `--format` across commands; keep `graph`’s own `--graph-format`.
@@ -137,10 +137,10 @@ This file captures a technical requirements bridge between the ADRs in `docs/ADR
 - [ ] Add `config_version` support and surfaced warnings for deprecated versions.
 - [ ] Implement `[[schema]]`-driven `new` with id/filename templates.
 - [ ] Enforce filename uniqueness when id generator is active.
-- [ ] Support `import = [".adr-rag/templates/*.toml"]` for schemas.
+- [x] Support `import = [".adr-rag/templates/*.toml"]` for schemas.
  - [ ] Add validator knobs: frontmatter allow_unknown + per-field rules; body heading/LOC policies; edges required/min_in|min_out/cross-schema/cycle.
  - [ ] Authoring: `editor` default and `background_watch` wiring.
- - [ ] Adopt single index per repo and collapse groups view into index.
+ - [ ] Adopt single index per repo and collapse groups view into index (partial: unified index present; per-base still written).
 
 ### ADR-002 Visual Mode (NVIM/TUI)
 - [ ] Provide NDJSON event stream and JSON retrieval to power Magit/org-like UI.
@@ -192,11 +192,12 @@ This file captures a technical requirements bridge between the ADRs in `docs/ADR
  - [ ] Per-edge overrides (severity, cross-schema); cycle detection policy per schema.
 
 ## Current Implementation Snapshot (for orientation)
-- Config: see `src/config.rs` (defaults + schema rules).
+- Config: see `src/config/` (`loader.rs`, `schema.rs`, `defaults.rs`, `template.rs`).
 - Parsing: see `src/model.rs` (front matter + title); no AST yet.
 - Validation: see `src/validate.rs` (ids, status, refs, schema rules, unknown policy).
 - Graph: see `src/graph.rs` (BFS path, cluster); `src/commands/graph.rs` for renderers.
-- Index/Watch: see `src/index.rs`, `src/watch.rs` (incremental, debounce).
+- Discovery: see `src/discovery/` (`scan.rs`, `per_base.rs`, `unified.rs`).
+- Index/Watch: see `src/index.rs`, `src/watch.rs` (incremental, debounce; unified index writing at config root).
 - CLI Surface: see `src/cli.rs` and `src/commands/*`.
 
 ## Ticketization Hints
