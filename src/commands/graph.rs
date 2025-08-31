@@ -4,7 +4,7 @@ use std::collections::{BTreeMap, BTreeSet, HashMap};
 use crate::cli::GraphFormat;
 use crate::commands::output::print_json;
 use crate::config::Config;
-use crate::discovery::load_docs;
+use crate::discovery::{load_docs, load_docs_unified};
 use crate::graph::compute_cluster;
 use crate::model::AdrDoc;
 
@@ -70,12 +70,13 @@ pub(crate) fn render_dot(cluster: &BTreeMap<String, AdrDoc>) -> String {
 
 pub fn run(
     cfg: &Config,
+    cfg_path: &Option<std::path::PathBuf>,
     format: &GraphFormat,
     id: String,
     depth: Option<usize>,
     include_bidirectional: Option<bool>,
 ) -> Result<()> {
-    let docs = load_docs(cfg)?;
+    let docs = match load_docs_unified(cfg, cfg_path)? { Some(d) => d, None => load_docs(cfg)? };
     let depth = depth.unwrap_or(cfg.defaults.depth);
     let include_bidirectional = include_bidirectional.unwrap_or(cfg.defaults.include_bidirectional);
     let mut by_id: HashMap<String, AdrDoc> = HashMap::new();

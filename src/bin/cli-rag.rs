@@ -24,42 +24,42 @@ fn main() -> Result<()> {
             cli_rag::commands::completions::run_completions(cmd, shell);
         }
         Commands::Search { query } => {
-            let (cfg, _cfg_path) = load_config(&cli.config, &cli.base)?;
-            cli_rag::commands::search::run(&cfg, &cli.format, query)?;
+            let (cfg, cfg_path) = load_config(&cli.config, &cli.base)?;
+            cli_rag::commands::search::run(&cfg, &cfg_path, &cli.format, query)?;
         }
         Commands::Topics {} => {
-            let (cfg, _cfg_path) = load_config(&cli.config, &cli.base)?;
-            cli_rag::commands::topics::run(&cfg, &cli.format)?;
+            let (cfg, cfg_path) = load_config(&cli.config, &cli.base)?;
+            cli_rag::commands::topics::run(&cfg, &cfg_path, &cli.format)?;
         }
         Commands::Group {
             topic,
             include_content,
         } => {
-            let (cfg, _cfg_path) = load_config(&cli.config, &cli.base)?;
-            cli_rag::commands::group::run(&cfg, &cli.format, topic, include_content)?;
+            let (cfg, cfg_path) = load_config(&cli.config, &cli.base)?;
+            cli_rag::commands::group::run(&cfg, &cfg_path, &cli.format, topic, include_content)?;
         }
         Commands::Get {
             id,
             include_dependents,
         } => {
-            let (cfg, _cfg_path) = load_config(&cli.config, &cli.base)?;
-            cli_rag::commands::get::run(&cfg, &cli.format, id, include_dependents)?;
+            let (cfg, cfg_path) = load_config(&cli.config, &cli.base)?;
+            cli_rag::commands::get::run(&cfg, &cfg_path, &cli.format, id, include_dependents)?;
         }
         Commands::Cluster {
             id,
             depth,
             include_bidirectional,
         } => {
-            let (cfg, _cfg_path) = load_config(&cli.config, &cli.base)?;
-            cli_rag::commands::cluster::run(&cfg, &cli.format, id, depth, include_bidirectional)?;
+            let (cfg, cfg_path) = load_config(&cli.config, &cli.base)?;
+            cli_rag::commands::cluster::run(&cfg, &cfg_path, &cli.format, id, depth, include_bidirectional)?;
         }
         Commands::Path {
             from,
             to,
             max_depth,
         } => {
-            let (cfg, _cfg_path) = load_config(&cli.config, &cli.base)?;
-            cli_rag::commands::path::run(&cfg, &cli.format, from, to, max_depth)?;
+            let (cfg, cfg_path) = load_config(&cli.config, &cli.base)?;
+            cli_rag::commands::path::run(&cfg, &cfg_path, &cli.format, from, to, max_depth)?;
         }
         Commands::Graph {
             id,
@@ -67,8 +67,8 @@ fn main() -> Result<()> {
             include_bidirectional,
             format,
         } => {
-            let (cfg, _cfg_path) = load_config(&cli.config, &cli.base)?;
-            cli_rag::commands::graph::run(&cfg, &format, id, depth, include_bidirectional)?;
+            let (cfg, cfg_path) = load_config(&cli.config, &cli.base)?;
+            cli_rag::commands::graph::run(&cfg, &cfg_path, &format, id, depth, include_bidirectional)?;
         }
         Commands::Watch {
             full_rescan,

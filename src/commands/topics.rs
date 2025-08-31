@@ -5,10 +5,10 @@ use anyhow::{Context, Result};
 use serde_json::Value;
 
 use crate::config::Config;
-use crate::discovery::load_docs;
+use crate::discovery::{load_docs, load_docs_unified};
 use std::fs;
 
-pub fn run(cfg: &Config, format: &OutputFormat) -> Result<()> {
+pub fn run(cfg: &Config, cfg_path: &Option<std::path::PathBuf>, format: &OutputFormat) -> Result<()> {
     use std::collections::BTreeMap;
     let mut groups: BTreeMap<String, usize> = BTreeMap::new();
     let mut used_groups_file = false;
@@ -38,7 +38,7 @@ pub fn run(cfg: &Config, format: &OutputFormat) -> Result<()> {
         }
     }
     if !used_groups_file {
-        let docs = load_docs(cfg)?;
+        let docs = match load_docs_unified(cfg, cfg_path)? { Some(d) => d, None => load_docs(cfg)? };
         for d in docs {
             for g in d.groups {
                 *groups.entry(g).or_insert(0) += 1;

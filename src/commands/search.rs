@@ -4,11 +4,11 @@ use crate::protocol::SearchResult;
 use anyhow::Result;
 
 use crate::config::Config;
-use crate::discovery::load_docs;
+use crate::discovery::{load_docs, load_docs_unified};
 
-pub fn run(cfg: &Config, format: &OutputFormat, query: String) -> Result<()> {
+pub fn run(cfg: &Config, cfg_path: &Option<std::path::PathBuf>, format: &OutputFormat, query: String) -> Result<()> {
     let q = query.to_lowercase();
-    let docs = load_docs(cfg)?;
+    let docs = match load_docs_unified(cfg, cfg_path)? { Some(d) => d, None => load_docs(cfg)? };
     let mut hits: Vec<&crate::model::AdrDoc> = Vec::new();
     for d in &docs {
         let id = d.id.clone().unwrap_or_default();

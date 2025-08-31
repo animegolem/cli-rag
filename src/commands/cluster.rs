@@ -4,17 +4,18 @@ use crate::protocol::ClusterMember;
 use anyhow::Result;
 
 use crate::config::Config;
-use crate::discovery::load_docs;
+use crate::discovery::{load_docs, load_docs_unified};
 use crate::graph::compute_cluster;
 
 pub fn run(
     cfg: &Config,
+    cfg_path: &Option<std::path::PathBuf>,
     format: &OutputFormat,
     id: String,
     depth: Option<usize>,
     include_bidirectional: Option<bool>,
 ) -> Result<()> {
-    let docs = load_docs(cfg)?;
+    let docs = match load_docs_unified(cfg, cfg_path)? { Some(d) => d, None => load_docs(cfg)? };
     let depth = depth.unwrap_or(cfg.defaults.depth);
     let include_bidirectional = include_bidirectional.unwrap_or(cfg.defaults.include_bidirectional);
     let mut by_id = std::collections::HashMap::new();

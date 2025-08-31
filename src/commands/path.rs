@@ -3,17 +3,18 @@ use anyhow::Result;
 use crate::cli::OutputFormat;
 use crate::commands::output::print_json;
 use crate::config::Config;
-use crate::discovery::load_docs;
+use crate::discovery::{load_docs, load_docs_unified};
 use crate::graph::bfs_path;
 
 pub fn run(
     cfg: &Config,
+    cfg_path: &Option<std::path::PathBuf>,
     format: &OutputFormat,
     from: String,
     to: String,
     max_depth: usize,
 ) -> Result<()> {
-    let docs = load_docs(cfg)?;
+    let docs = match load_docs_unified(cfg, cfg_path)? { Some(d) => d, None => load_docs(cfg)? };
     let mut by_id = std::collections::HashMap::new();
     for d in &docs {
         if let Some(ref i) = d.id {
