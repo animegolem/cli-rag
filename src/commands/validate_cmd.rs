@@ -52,6 +52,51 @@ pub fn run(
         }
         Some((file, ToolCallLocation { path, line }))
     }
+    fn classify_code(message: &str, kind: &str) -> Option<String> {
+        let m = message;
+        // config loader codes may appear as E100/E110/E120 already
+        if m.contains("multiple schema matches") {
+            return Some("E200".into());
+        }
+        if m.contains("missing required") || m.contains("required '") {
+            return Some("E220".into());
+        }
+        if m.contains("invalid status") {
+            return Some("E212".into());
+        }
+        if m.contains("duplicate id") {
+            return Some("E213".into());
+        }
+        if m.contains("conflict for id") {
+            return Some("E214".into());
+        }
+        if m.contains("depends_on '") || m.contains("supersedes '") || m.contains("superseded_by '")
+        {
+            return Some("E230".into());
+        }
+        if m.contains("unknown keys") {
+            return Some(if kind == "warning" { "W221" } else { "E221" }.into());
+        }
+        if m.contains("should be array")
+            || m.contains("not a valid date")
+            || m.contains("value '")
+            || m.contains("contains disallowed")
+            || m.contains("must have at least")
+            || m.contains("does not match regex")
+        {
+            return Some("E225".into());
+        }
+        if m.contains("references") && m.contains("not in") {
+            return Some("E231".into());
+        }
+        if m.contains("cycle detected") {
+            return Some(if kind == "warning" { "W240" } else { "E240" }.into());
+        }
+        if m.contains("has no graph connections") {
+            return Some("W250".into());
+        }
+        None
+    }
     match format {
         OutputFormat::Json | OutputFormat::Ai => {
             let errors: Vec<ValidateIssue> = report
@@ -65,11 +110,12 @@ pub fn run(
                             line: None,
                         },
                     ));
+                    let code = classify_code(m, "error");
                     ValidateIssue {
                         kind: "error".into(),
                         file: if file.is_empty() { None } else { Some(file) },
                         message: m.clone(),
-                        code: None,
+                        code,
                         location: if location.path.as_os_str().is_empty() {
                             None
                         } else {
@@ -89,11 +135,12 @@ pub fn run(
                             line: None,
                         },
                     ));
+                    let code = classify_code(m, "warning");
                     ValidateIssue {
                         kind: "warning".into(),
                         file: if file.is_empty() { None } else { Some(file) },
                         message: m.clone(),
-                        code: None,
+                        code,
                         location: if location.path.as_os_str().is_empty() {
                             None
                         } else {
@@ -125,11 +172,12 @@ pub fn run(
                         line: None,
                     },
                 ));
+                let code = classify_code(m, "error");
                 ValidateIssue {
                     kind: "error".into(),
                     file: if file.is_empty() { None } else { Some(file) },
                     message: m.clone(),
-                    code: None,
+                    code,
                     location: if location.path.as_os_str().is_empty() {
                         None
                     } else {
@@ -145,11 +193,12 @@ pub fn run(
                         line: None,
                     },
                 ));
+                let code = classify_code(m, "warning");
                 ValidateIssue {
                     kind: "warning".into(),
                     file: if file.is_empty() { None } else { Some(file) },
                     message: m.clone(),
-                    code: None,
+                    code,
                     location: if location.path.as_os_str().is_empty() {
                         None
                     } else {

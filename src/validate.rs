@@ -1,6 +1,7 @@
 use crate::config::Config;
 use crate::model::AdrDoc;
 
+mod cycles;
 mod ids;
 mod isolation;
 mod refs;
@@ -19,6 +20,19 @@ pub fn validate_docs(cfg: &Config, docs: &Vec<AdrDoc>) -> ValidationReport {
     // Build id map and schema assignment
     let id_to_docs: HashMap<String, Vec<AdrDoc>> = ids::build_id_map(docs, &mut errors);
     let doc_schema: HashMap<String, String> = schema_match::compute_doc_schema(cfg, docs);
+    // Multi-schema match detection by file name patterns
+    {
+        let matches = schema_match::compute_file_schema_matches(cfg, docs);
+        for (path, names) in matches {
+            if names.len() > 1 {
+                errors.push(format!(
+                    "{}: multiple schema matches: [{}]",
+                    path.display(),
+                    names.join(", ")
+                ));
+            }
+        }
+    }
 
     // Status checks (only apply global list if no schema status rule exists)
     rules::check_statuses(cfg, docs, &doc_schema, &mut errors);
@@ -39,6 +53,32 @@ pub fn validate_docs(cfg: &Config, docs: &Vec<AdrDoc>) -> ValidationReport {
         &mut errors,
         &mut warnings,
     );
+
+    // Cycle detection (depends_on graph) — emit as warnings for now
+    {
+        use std::collections::HashMap as Map;
+        let mut adj: Map<String, Vec<String>> = Map::new();
+        for (id, lst) in &id_to_docs {
+            if let Some(d) = lst.first() {
+                adj.insert(id.clone(), d.depends_on.clone());
+            }
+        }
+        for cyc in cycles::find_cycles(&adj) {
+            if !cyc.is_empty() {
+                if let Some(first) = cyc.first() {
+                    if let Some(doc) = id_to_docs.get(first).and_then(|v| v.first()) {
+                        warnings.push(format!(
+                            "{}: cycle detected: {}",
+                            doc.file.display(),
+                            cyc.join(" -> ")
+                        ));
+                    } else {
+                        warnings.push(format!("cycle detected: {}", cyc.join(" -> ")));
+                    }
+                }
+            }
+        }
+    }
 
     // Isolation warnings
     isolation::warn_isolated(docs, &id_to_docs, &mut warnings);
