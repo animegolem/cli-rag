@@ -156,6 +156,32 @@ fn new_filename_template_creates_expected_file() {
 }
 
 #[test]
+fn new_normalize_title_changes_filename_when_template_used() {
+    let temp = assert_fs::TempDir::new().unwrap();
+    let base = temp.child("notes");
+    base.create_dir_all().unwrap();
+    let _cfg = write_base_cfg(&temp, "notes");
+
+    Command::cargo_bin("cli-rag")
+        .unwrap()
+        .current_dir(temp.path())
+        .arg("new")
+        .arg("--schema")
+        .arg("ADR")
+        .arg("--title")
+        .arg("hello world")
+        .arg("--filename-template")
+        .arg("{{id}}-{{title}}.md")
+        .arg("--normalize-title")
+        .assert()
+        .success();
+
+    base.child("ADR-001-Hello World.md")
+        .assert(predicates::path::exists());
+    temp.close().unwrap();
+}
+
+#[test]
 fn new_writes_to_specified_dest_base() {
     let temp = assert_fs::TempDir::new().unwrap();
     let base1 = temp.child("notes1");

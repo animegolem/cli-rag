@@ -105,6 +105,9 @@ pub enum Commands {
         /// Destination base directory to write the note (must match a configured base)
         #[arg(long, value_name = "PATH")]
         dest_base: Option<std::path::PathBuf>,
+        /// Normalize title to Title Case before rendering
+        #[arg(long, default_value_t = false)]
+        normalize_title: bool,
         /// Print rendered body only; do not write a file
         #[arg(long, default_value_t = false)]
         print_body: bool,

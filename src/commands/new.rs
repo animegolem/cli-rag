@@ -36,6 +36,31 @@ fn render_template(mut s: String, id: &str, title: &str) -> String {
         );
         s = s.replace("((frontmatter))", &fm);
     }
+    // Merge/ensure YAML frontmatter keys (between first pair of --- guards)
+    if s.starts_with("---\n") {
+        if let Some(end) = s.find("\n---\n") {
+            let fm_content = &s[4..end];
+            let rest = &s[end + 5..];
+            if let Ok(val) = serde_yaml::from_str::<serde_yaml::Value>(fm_content) {
+                use serde_yaml::{Mapping, Value};
+                let mut map = match val {
+                    Value::Mapping(m) => m,
+                    _ => Mapping::new(),
+                };
+                // System precedence: id always set to computed
+                map.insert(Value::String("id".into()), Value::String(id.into()));
+                map.entry(Value::String("tags".into()))
+                    .or_insert_with(|| Value::Sequence(vec![]));
+                map.entry(Value::String("status".into()))
+                    .or_insert_with(|| Value::String("draft".into()));
+                map.entry(Value::String("depends_on".into()))
+                    .or_insert_with(|| Value::Sequence(vec![]));
+                let yaml = serde_yaml::to_string(&Value::Mapping(map)).unwrap_or_default();
+                let front = format!("---\n{}---\n", yaml);
+                s = format!("{}{}", front, rest);
+            }
+        }
+    }
     s
 }
 
@@ -66,6 +91,7 @@ pub fn run(
     title_opt: Option<String>,
     filename_template: Option<String>,
     dest_base: Option<std::path::PathBuf>,
+    normalize_title: bool,
     print_body: bool,
     dry_run: bool,
     edit: bool,
@@ -98,7 +124,11 @@ pub fn run(
     };
     let (docs, _used_unified) = docs_with_source(cfg, cfg_path)?;
     let id = compute_next_id(&schema, &docs);
-    let title = title_opt.unwrap_or_else(|| id.clone());
+    let mut title = title_opt.unwrap_or_else(|| id.clone());
+    if normalize_title {
+        use heck::ToTitleCase;
+        title = title.to_title_case();
+    }
 
     // Find template under config dir if available
     let mut tmpl_path: Option<PathBuf> = None;
