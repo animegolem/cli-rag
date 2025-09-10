@@ -21,32 +21,25 @@ related_files:
 
 Present a concise "final" list of commands before full implementation. These tools are designed for either a human or an AI consumer.
 
-## Ideation 
-
-
-- There should probably/maybe be a top level GTD command? 
-	- update kanban 
-	- update due date 
-	- etc 
-
-There is a chance this is a more generic "update note" tool but it's not ultra obvious how you'd actually structure that feedback loop for an agent on some items. 
-
 ## Context
 <!-- What is the issue that we're seeing that is motivating this decision or change? -->
 
----
-
-
-- **Every command supports `--json`** for machine use; human pretty by default.  
-- **Idempotent reads, explicit writes.** Anything that mutates disk says so.
-- **Same nouns across CLI + NVIM** (note, schema, graph, index).
-- **Lua is policy, not parsing** Lua hooks run only in `new`/`validate`.
-
----
-
 ### Commands
 
-## `init`
+---
+
+#### Cross-cutting flags (all verbs)
+
+- `--json` machine output everywhere.
+- `--color auto|always|never`
+- `--cwd <path>` override working dir (great for NVIM/project roots).
+- `--editor <cmd>` and `--no-editor`.
+
+---
+
+#### Human Focused Commands
+
+##### `init`
 
 Create `.cli-rag.toml` (and optional `templates/`), and open the commented file in the default editor.
 
@@ -59,7 +52,7 @@ Create `.cli-rag.toml` (and optional `templates/`), and open the commented file 
 - `--print-template` print to stdout (no files).
 - `--json` machine summary of what was created.
 
-## `new`
+##### `new`
 
 Create a new note (runs Lua hooks for id/frontmatter/template fill). Optionally open in editor. **Human-oriented.**
 
@@ -72,7 +65,7 @@ Create a new note (runs Lua hooks for id/frontmatter/template fill). Optionally 
 * `--print-body` when used with `--dry-run`, include the body text
 * `--json` return `{path, id, schema, frontmatter}` (body omitted unless `--print-body`)
 
-## `get` (alias show)
+##### `get` (alias show)
 
 Resolve a note and (optionally) its neighborhood; print for humans or ai.
 
@@ -86,7 +79,7 @@ Resolve a note and (optionally) its neighborhood; print for humans or ai.
     - `ai`: compact JSON with `{frontmatter, text, neighbors: [...]}` optimized for LLM
     - `json`: full parse summary `{frontmatter, headings, wikilinks, md_links, code_fences, text}`
 
-## `validate`
+##### `validate`
 
 Run validators (TOML + Lua) and exit non-zero on any error.
 
@@ -98,7 +91,7 @@ Run validators (TOML + Lua) and exit non-zero on any error.
 - `--write-all` both
 - `--json` emits `{path, diagnostics:[{severity,code,msg,span,field}]}`
   
-## `watch`
+##### `watch`
 
 Incrementally indexes & validates while files change. Runs when the NVIM extension is open for live updating file changes. 
 
@@ -108,7 +101,7 @@ Incrementally indexes & validates while files change. Runs when the NVIM extensi
 - `--full-rescan`
 - `--json` stream structured events per change: `{"event":"validated","path":...,"diagnostics":[...]}`
 
-## `graph`
+##### `graph`
 
 Emit a local dependency graph for an ID (or whole repo with `--root none`).
 
@@ -118,7 +111,7 @@ Emit a local dependency graph for an ID (or whole repo with `--root none`).
 - `--graph-format ascii|mermaid|dot` (default `ascii`)
 - `--json` machine summary
 
-## `status`
+##### `status`
 
 Show resolved config, discovery mode, counts, and unknown-frontmatter stats.
 
@@ -127,7 +120,7 @@ Show resolved config, discovery mode, counts, and unknown-frontmatter stats.
 - `--verbose` include per-schema file lists
 - **Human mode**: use table output; color diagnostics
 
-## `search`
+##### `search`
 
 Fuzzy search ID/title; filter by schema or status.
 
@@ -141,7 +134,7 @@ Fuzzy search ID/title; filter by schema or status.
 - `--field` filter search by frontmatter content 
 - `--json`    
 
-## `path`
+##### `path`
 
 Shortest path between two IDs with edge kinds.
 
@@ -150,13 +143,11 @@ Shortest path between two IDs with edge kinds.
 - `--max-depth N`
 - `--json` includes `edges: [{from,to,kind,meta}]`
 
-
-**Human example**
-
+**Example**
 ADR-024 → IMP-006 (depends_on)
 IMP-006 → ADR-029 (mentions: `[[ADR-029]]` L42)
 
-## `groups`
+#### `groups`
 
 List notes by `groups` frontmatter (if enabled in schema).
 
@@ -165,11 +156,15 @@ List notes by `groups` frontmatter (if enabled in schema).
 - `--name <G>` show members of a group
 - `--json`
 
-## `ai` (JSON/NDJSON outputs)
+---
+
+### `ai` (JSON/NDJSON outputs)
 
 Agent workflow for two-phase creation with on-creation validation. Not intended for direct human use.
 
-### `ai draft start`
+#### `ai draft`
+
+##### `ai draft start`
 
 Begin an agent draft; reserves ID/filename and returns the section/LOC contract.
 
@@ -179,9 +174,7 @@ Begin an agent draft; reserves ID/filename and returns the section/LOC contract.
 - `--id <I>` (optional; engine may still assign)
 - `--json` (default)
 
----
-
-### `ai draft submit`
+##### `ai draft submit`
 
 Finalize a draft by submitting filled content **before** any file is written. Enforces `scan_policy = "on_creation"` (LOC per heading, heading rules, frontmatter enums/regex, Lua `validate`).
 
@@ -193,11 +186,8 @@ Finalize a draft by submitting filled content **before** any file is written. En
     - `--from-file <path.md>` (engine parses headings/sections)
 - `--allow-oversize` write even if LOC caps fail; marks `needs_attention=true`
 - `--json` (default)
-    
 
----
-
-### `ai draft cancel`
+##### `ai draft cancel`
 
 Abort and remove a pending draft; releases reserved ID/filename.
 
@@ -206,9 +196,7 @@ Abort and remove a pending draft; releases reserved ID/filename.
 - `--draft <DRAFT_ID>`
 - `--json` (default)
 
----
-
-### `ai draft list`
+##### `ai draft list`
 
 List active/stale drafts in the draft store.
 
@@ -216,10 +204,10 @@ List active/stale drafts in the draft store.
 
 - `--stale-days <N>` filter to drafts older than N days (default: show all)
 - `--json` (default)
+  
+#### `ai get`
 
----
-
-**Exit codes (ai subcommands)**
+#### **Exit codes (ai subcommands)**
 
 - `0` success
 - `2` validation failed (diagnostics returned)
@@ -228,13 +216,6 @@ List active/stale drafts in the draft store.
 - `5` IO/index lock error
 
 ---
-
-### Cross-cutting flags (all verbs)
-
-- `--json` machine output everywhere.
-- `--color auto|always|never`
-- `--cwd <path>` override working dir (great for NVIM/project roots).
-- `--editor <cmd>` and `--no-editor`.
 
 ## Notes 
 
@@ -396,6 +377,7 @@ Persist a small draft file: `.cli-rag/drafts/dft_7fb0c2.json`.
 
 In the same vein we could have an add dependency or supersede tool. the issue is keeping the abstractions universal. 
 
+in general i have a feeling as we build out [[ADR-009-GTD-ideation]] and [[ADR-AI-002-gtd-kanban-integration]] we will find the GTD command need to be restructured and maybe give a top level namespace. Maybe 'get upcoming?' there is space to rethink eventually. 
 
 ## Decision
 <!-- What is the change that we're proposing and/or doing? -->

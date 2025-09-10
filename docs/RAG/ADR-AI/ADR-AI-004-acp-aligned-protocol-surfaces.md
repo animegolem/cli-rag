@@ -6,13 +6,19 @@ tags:
   - integration
   - json
   - ndjson
-status: proposed
-depends_on: 
+status: complete
+depends_on:
   - ADR-002
   - ADR-008
 created_date: 2025-08-31
 last_modified: 2025-08-31
-related_files: [src/protocol.rs, src/watch.rs, src/commands/watch_cmd.rs, src/commands/get.rs, src/commands/path.rs, src/commands/doctor.rs]
+related_files:
+  - src/protocol.rs
+  - src/watch.rs
+  - src/commands/watch_cmd.rs
+  - src/commands/get.rs
+  - src/commands/path.rs
+  - src/commands/doctor.rs
 ---
 
 # ADR-AI-004-acp-aligned-protocol-surfaces
@@ -64,5 +70,5 @@ Tradeoffs:
 - Requires careful adherence to additive changes to preserve backward compatibility.
 
 ## Updates
-- None yet. Will be updated after implementation and integration tests are added.
+see [[IMP-AI-012-acp-alignment-surfaces]]
 

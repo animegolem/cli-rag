@@ -83,6 +83,11 @@ Our template manager presents various items to parse.
 				"""
 ```
 
+https://github.com/artempyanykh/marksman
+https://github.com/Feel-ix-343/markdown-oxide
+
+marksman seems like the more mature product  most likely. 
+
 ### something like...
 
 ```LLM
@@ -96,6 +101,7 @@ Our template manager presents various items to parse.
         
 3. **Validation** remains yours: run `validate --json` and surface diagnostics through Neovim’s `vim.diagnostic` (spans map 1:1).
 ```
+
 
 ### future... 
 

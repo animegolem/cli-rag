@@ -1,139 +1,3 @@
----
-id: ADR-001
-tags:
-  - config
-  - toml
-  - cli
-  - north-star
-status: accepted
-depends_on:
-created_date: 2025-08-24
-last_modified: 2025-08-30
-related_files:
-  - .cli-rag.toml
----
-
-# cli-rag.toml
-
-## Objective
-<!-- A concise statement explaining the goal of this decision. -->
-
-At the time of writing this document is **aspirational** and is not in line with the actual codebase. The intention of this effort is to create a north star that explains the UX vision for the application. 
-
-The .toml is designed to be very extensible but we will create a [[ADR-010-the-LUA-escape-hatch]] escape hatch for highly custom use-cases. 
-  
-## Context
-<!-- What is the issue that we're seeing that is motivating this decision or change? -->
-
-### Example `cli-rag.toml` Block 
-
-
-```TOML
-[[config]]
-#: =============================================================================
-#:                            # --- Version --- #
-#: =============================================================================
-#: Sets the config version for all top level rules. All imported notes inherit
-#: the same version.
-#: An individual `[[schema]`] can call this to remain on an older version
-config_version = 0.1
-
-#: =============================================================================
-#:                            # --- SCAN --- #
-#: =============================================================================
-#: Settings related to discovery, filepaths, and scan process
-[config.scan]
-#: The root directories that cli-rag will scan for notes.
-#: All paths must be relative to the location of this `.cli-rag.toml` file.
-#: Defaults to the current directory ["."] if left empty.
-filepaths = ["file/path", "file/other/path"]
-#: By default, an index will be created at '.cli-rag/rag-index.json'.
-#: This can be given an arbitrary override.
-#: File paths are relative to the location of this `.cli-rag.toml` file.
-index_path = "alternate/filepath/rag-index.json"
-#: `hash_mode` controls HOW the tool detects if a file has changed.
-#: Defaults to `mtime`.
-#: +-----------+-----------------------------------------------------------+
-#: |  `mtime`  |   Fast but less accurate.                                 |
-#: |           |   Compares the file's "last modified" timestamp.          |
-#: +-----------+-----------------------------------------------------------+
-#: | `content` |  100% Accurate but slower.                                |
-#: |           |  Computes a hash of the entire file's content.            |
-#: +-----------+-----------------------------------------------------------+
-hash_mode = "mtime"
-#: `index_strategy` controls what is stored in the index for search.
-#: Defaults to content.
-#: +------------+----------------------------------------------------------+
-#: | `metadata` | Fastest option. Stores only front matter and links.      |
-#: +------------+----------------------------------------------------------+
-#: | `content`  | (Full-Text Search) Stores all metadata AND the           |
-#: |            | full text of every note.                                 |
-#: +------------+----------------------------------------------------------+
-index_strategy = "content"
-#tuning for large repos
-# parallel_workers = 4
-# cache_strategy = "aggressive"
-#: Remove directories or patterns from scanning to improve speed.
-#: Patterns are relative to the location of this `.cli-rag.toml` file.
-ignore_globs = ["**/node_modules/**", "**/dist/**"]
-#: default true
-ignore_symlinks = false
-
-#: =============================================================================
-#:                            # --- AUTHORING --- #
-#: =============================================================================
-#: Settings related to creating and editing notes
-[config.authoring]
-#: The editor to launch for new or existing notes.
-#: Uses $EDITOR or $VISUAL if not set.
-editor = "neovim"
-#: runs the `watch` command as a background process for live updates when
-#: visual mode is open and active. default = true
-background_watch = true
-
-#: =============================================================================
-#:                             # --- GRAPH --- #
-#: =============================================================================
-#: Default settings for universal graph traversal commands (graph, path, ai get)
-[config.graph]
-#: Default depth for traversing dependencies. Default = 1.
-depth = 2
-#: Whether to include dependents (backlinks) in traversals. default = true.
-include_bidirectional = true
-
-[config.graph.ai]
-#: Defaults for graph focused `ai` sub commands.
-#: Default depth for traversing dependencies. default 1 (note and neighbors)
-depth = 1
-#: Maximum neighbors shown per node. Default 5.
-default_fanout = 5
-#: Maximum total nodes in returned output. default 50
-default_max_nodes = 50
-#: Whether to include dependents (backlinks) in traversals. default = true
-include-bidirectional = true
-#: Accepts full|outline|metadata. Default metadata.
-#: metadata: { id, title, schema, path, distance, discoveredFrom, edge, status?, tags?, kanbanStatusline?, lastModified?, score? }
-#: full: same as metadata + content: [{ type:"text", text, tokenEstimate? }]
-#: outline: same as metadata + contentOutline: [{ heading, firstLines: [string] }]
-neighbor_style = "outline"
-#: Only applies when `neighbor_style = "outline` is active.
-#: Number of lines per heading. Accepts ints. Default = 2
-outline-lines = 3
-
-#: =============================================================================
-#:                        # --- TEMPLATE MANAGEMENT --- #
-#: =============================================================================
-#: For a cleaner .`cli-rag.toml` it's advised to import an external schema.
-#: Alternatively one or more `[[schema]]` may be defined inline below
-[config.templates]
-import = [".cli-rag/templates/ADR.toml", ".cli-rag/templates/ARD-AI.toml",".cli-rag/templates/LOG-AI.toml", ".cli-rag/templates/IMP-AI.toml" ]
-```
-
-### Templates 
-
-#### ID Defined Schema(s)
-
-```toml
 #: =============================================================================
 #:                                # --- SCHEMA --- #
 #: =============================================================================
@@ -149,10 +13,7 @@ name = "ADR"
 
 #: =============================================================================
 #:                            # --- Version --- #
-#: =============================================================================
-#: Sets the config version for all top level rules.
-#: If not set this is inherited from `.cli-rag.toml`
-config_version = 0.1
+config_version = "0.1"
 
 #: =============================================================================
 #:                           # --- DISCOVERY --- #
@@ -204,7 +65,7 @@ file_patterns = [ "ADR-*.md" ]
 #: +-----------------------+--------------------------------------------------+
 [schema.new]
 #: Define the name template for the `new` command. unset = filename
-id_generator = { strategy = "increment", prefix = "ADR-" padding = "3" }
+id_generator = { strategy = "increment", prefix = "ADR-", padding = 3 }
 #: Options are ["increment", "datetime", "uuid"]
 #: Prefix is not mandatory if using the later two options
 filename_template = "{{id}}-{{title|kebab-case}}.md"
@@ -217,7 +78,7 @@ filename_template = "{{id}}-{{title|kebab-case}}.md"
 #:
 #:                       # --- TEMPLATE VARIABLES --- #
 #: +-----------------+---------------------------------------------------------+
-#: | {{id}}          | Inject the `ID` field as defined by `id_generator`. |
+#: | {{id}}          | Inject the `ID` field as defined by `id_generator`.     |
 #: |                 | Fallsback to filename.                                  |
 #: +-----------------+---------------------------------------------------------+
 #: | {{title}}       | Inject the title provided via the `--title <T>` flag    |
@@ -246,7 +107,7 @@ template = """
 
 [schema.new.template.note]
 template = """
-((frontmatter))
+{{frontmatter}}
 
 # {{title}}
 
@@ -296,11 +157,11 @@ template = """
 #: | `~.frontmatter.edges` | Define all tracked/labeled graph edges for the    |
 #: |                       | DAG. Will error if ID does not exist in index.    |
 #: +-----------------------+---------------------------------------------------+
-#: | `~.frontmatter.GTD`   | System frontmatter that triggers inclusion on     |
+#: | `~.frontmatter.gtd`   | System frontmatter that triggers inclusion on     |
 #: |                       | the main screen on neovim and the GTD command     |
 #: +-----------------------+---------------------------------------------------+
 [schema.frontmatter]
-# Regular user fields
+# Regular user defined fields. Cannot use `system_frontmatter` namespace.
 user_frontmatter = [
   "tags",
   "priority",
@@ -322,7 +183,6 @@ system_frontmatter = [
  "node_id",
  "created_date",
  "last_modified",
- "groups",
  ]
 
 #: =============================================================================
@@ -332,7 +192,7 @@ system_frontmatter = [
 #: |                    |  DAG. Will error if ID does not exist in index.      |
 #: +--------------------+------------------------------------------------------+
 [schema.frontmatter.edges]
-#: Graph edge fields - automatically added to frontmatter. `validate` will
+#: string[] of edge fields - automatically added to frontmatter. `validate` will
 #: ensure linked ID's exist.
 graph_edges = [
   "depends_on",
@@ -343,7 +203,7 @@ graph_edges = [
   ]
 
 #: =============================================================================
-#:                      # --- `~.frontmatter.GTD` --- #
+#:                      # --- `~.frontmatter.gtdGTD` --- #
 #: +-----------------+---------------------------------------------------------+
 #: | `kanban_status` | Define Kanban status. Dispalyed on the agenda           |
 #: |                 | screen. Provide a array of legal statuses.              |
@@ -354,7 +214,7 @@ graph_edges = [
 #: | `due_date`      | Set a due date. Appears on neovim agenda x days prior.  |
 #: |                 | true or false to enable.                                |
 #: +-----------------+---------------------------------------------------------+
-[schema.frontmatter.GTD]
+[schema.frontmatter.gtd]
 kanban_status = [
   "backlog",
   "planned",
@@ -403,8 +263,8 @@ severity = "error" # Default severity for all validate rules
 #: +---------------------------------+--------------------+---------------------+
 #: | ↳ [~.frontmatter.fields]        | Custom rules against `user_frontmatter`  |
 #: |                                 |------------------------------------------|
-#: |                                 | `regex`            | A single regex      |
-#: |                                 |                    | string.             |
+#: |                                 | `regex`            | Accepts standad     |
+#: |                                 |                    | regex.              |
 #: |                                 +--------------------+---------------------+
 #: |                                 | `enum`             | An array of exact   |
 #: |                                 |                    | string matches.     |
@@ -422,16 +282,16 @@ severity = "error" # Default severity for all validate rules
 #: +----------------------------------------------------------------------------+
 [schema.validate.frontmatter]
 [schema.validate.frontmatter.allow_unknown]
-#: Policy for fields not explicitly listed in `custom_frontmatter`
-#: or `validated_frontmatter`.
+#: Policy for fields not explicitly listed in `user_frontmatter`
+#: or `system_frontmatter`.
 #: default = true
 allow_unknown = true
 severity = "warning" # Overrides default
 #:  --- Field-specific Rules ---  :#
 [schema.validate.frontmatter.fields]
-id     = { regex = "^ADR-\\d{3}$" }
+node_id     = { regex = "^ADR-\\d{3}$" }
 tags   = { regex = "^[^\\n]*$", severity = "warning" }
-related_files = { regex = ["\\.exs?$", "\\.py$", "\\.js$", "\\.md$", "\\.toml$"] }
+related_files = {  globs = ["*.exs","*.py","*.js","*.md","*.toml"] }
 priority = { integer = { min = 0, max = 100 } }
 confidence_score = { float = { min = 0.0, max = 1.0 }, severity = "ignore" }
 
@@ -443,7 +303,7 @@ confidence_score = { float = { min = 0.0, max = 1.0 }, severity = "ignore" }
 #: | ↳ [~.body.headings]             | Various body Validation settings         |
 #: |                                 |------------------------------------------|
 #: |                                 | `heading_policy`   | How to check heads. |
-#: |                                 |                    | Options: "strict",  |
+#: |                                 |                    | Options: "exact",  |
 #: |                                 |                    | "missing_only",     |
 #: |                                 |                    | "ignore".           |
 #: |                                 |--------------------+---------------------+
@@ -463,7 +323,7 @@ confidence_score = { float = { min = 0.0, max = 1.0 }, severity = "ignore" }
 [schema.validate.body.headings]
 #: Policy for matching headings against the note template.
 #: Options: [
-#: "exact" (exact match), "missing_only" (template headings requiured
+#: "exact" (exact match), "missing_only" (template headings required
 #: + additional headings are allowed), "ignore"
 #: ]
 heading_check = "missing_only"
@@ -481,6 +341,7 @@ scan_policy = "on_creation"
 #: +----------------------------------------------------------------------------+
 #: | [schema.validate.edges]         | Top level most for all graph config      |
 #: |                                 |------------------------------------------|
+#: |                                 | `required_edges`   | Define if an edge   |
 #: |                                 |                    | is MUST be set      |
 #: +---------------------------------+--------------------+---------------------+
 #: | ↳ [~.edges.wikilinks]           | Rules covering [[obsidian style]] links  |
@@ -497,14 +358,14 @@ scan_policy = "on_creation"
 #: |                                 |                    |edges traverse schema|
 #: +----------------------------------------------------------------------------+
 [schema.validate.edges]
-#: Cycle Protection is optional. warn|error|ignore. Defaults to error.
+#: Cycle Protection is optional. "warn"|"error"|"ignore". Defaults to error.
 #: Weight influences results in the ai get, graph and search tools.
 #: Required fields will throw errors in `validate` if no value is set.
 #: accepts error|warn|ignore
-depends_on = { weight = 1.0, cycle_detection = "error", required = error }
-blocked_by = { weight = 0.9, cycle_detection = "ignore", required = ignore }
-supersedes = { weight = 0.7, cycle_detection = "ignore", required = ignore }
-implements = { weight = 0.5, cycle_detection = "ignore", required = ignore }
+depends_on = { weight = 1.0, cycle_detection = "error", required = "error" }
+blocked_by = { weight = 0.9, cycle_detection = "ignore", required = "ignore" }
+supersedes = { weight = 0.7, cycle_detection = "ignore", required = "ignore" }
+implements = { weight = 0.5, cycle_detection = "ignore", required = "ignore" }
 
 [schema.validate.edges.wikilinks]
 min_outgoing = 1
@@ -518,7 +379,7 @@ allowed_targets = ["ADR", "IMP-AI", "ADR-AI", "LOG-AI" ]
 #: =============================================================================
 #:                          # --- VALIDATOR: GTD --- #
 #: +----------------------------------------------------------------------------+
-#: | [schema.validate.GTD]           | Top level table for all GTD config       |
+#: | [schema.validate.gtd]           | Top level table for all GTD config       |
 #: |                                 |--------------------+---------------------|
 #: |                                 | `enable_TODO`      | Determine if TODO   |
 #: |                                 |                    | will be scanned on  |
@@ -540,7 +401,7 @@ allowed_targets = ["ADR", "IMP-AI", "ADR-AI", "LOG-AI" ]
 #: |                                 |                    | cycle detection.    |
 #: |                                 |                    | true or false.      |
 #: +----------------------------------------------------------------------------+
-[schema.validate.GTD]
+[schema.validate.gtd]
 # Determine if {TODO@high}: note content is tracked and added to the agenda
 enable_TODO = true
 # Determine if the kanban yaml is tracked and added to the agenda
@@ -550,70 +411,3 @@ enable_kanban_statusline = true
 # Items will be added to the agenda when due in X days. Accepts ints.
 due_date_warning = 5
 severity = "warning"
-```
-
-## Tech Details 
-
-### In-Scope 
-- we should aim to have all handles in the toml reflected in a lua accessible api. 
-- We can force Titles to the correct case using either `heck` or `convert_case`. 
-- We should ship with a folder with a few example schema's that users can modify or use directly before 1.0. This is the escape hatch so you can use the tool for a bit and decide if it's even worth setting up a config file.	  
-- for speed connections, backlinks etc need to be tracked in the index. The `ai index` commands write to the same. 
-- ~~the groups and file index have been collapsed to a single item vs the current codebase. We also no longer allow multiple indexes in a single repo.~~  the entire concept of groups has been replaced by ai index see [[ADR-003c-v1.2-locked-CLI-commands]]
-
-Normalization plan (so Lua sees a clean API)
-
-On load, build a resolved config object with:
-- Snake_case in and snake_case out for Lua
-- Provide a JSON-serializable view with camelCase for CLIs that surface config
-
-**Example resolved Lua table**:
-```lua
-cfg = {
-  scan = { filepaths = {...}, index_path = ".cli-rag/index.json", hash_mode = "mtime", index_strategy = "content", ignore_globs = {...}, ignore_symlinks = false },
-  authoring = { editor = "neovim", background_watch = true },
-  graph = {
-   depth = 1, include_bidirectional = true,
-   ai = { depth = 1, default_fanout = 5, default_max_nodes = 50, include_bidirectional = true, neighbor_style = "metadata", outline_lines = 2 }
-  },
-  templates = { import = { ".cli-rag/templates/ADR.toml", ... } },
-  schemas = { ... } -- loaded/merged schema blocks
-}
-```
-
-Engine responsibilities
-
-- Merge policy: Lua overlay deep-merges into TOML; hooks only add behavior.
-- Sandboxing: run repo Lua only when not disabled; expose a constrained ctx (no raw os.execute by default).
-- Stability: version the Lua API, e.g., ctx.api_version = 1; reject incompatible hooks.
-
-Baseline Needs
-
-- Loader precedence (defaults → TOML → .cli-rag.lua → user-local Lua).
-- --no-lua flag and an environment guard (e.g., CLI_RAG_NO_LUA=1) for CI.
-- Stable ctx for hooks: { schema, config, index, clock, fs, util }.
-- info --json shows: { config: { path, version }, lua: { repoLua: exists, userLua: exists, apiVersion }, capabilities: { aiGet: { retrievalVersion: 1 } } }.
-- init --lua scaffold for .cli-rag.lua.
-
-### Out Of Scope 
-
-if we see issues we can add an option to shard the index but i don't instantly think it's likely; 
-
-```toml
-[scan.index]
-strategy = "sharded"
-shard_by = "schema"  # Separate AIM-*, ADR-*, etc.
-max_shard_size_mb = 10
-```
-
-famous last words. 
-
-## Decision
-<!-- What is the change that we're proposing and/or doing? -->
-
-Tentatively adopt the above framework in full with WASM accepted but deferred as future scope. Exact details will be determined in implementation.  
-
-## Consequences
-<!-- What becomes easier or more difficult to do because of this change? -->
-
-A new implementation ticket will be created to capture the remedial work needed to align the codebase with the above "north star" in a form of configuration driven development.

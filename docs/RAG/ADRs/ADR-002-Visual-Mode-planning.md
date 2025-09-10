@@ -18,6 +18,7 @@ related_files: []
 ## Objective
 <!-- A concise statement explaining the goal of this decision. -->
 
+Determine a visual UI north star 
 
 ## Context
 <!-- What is the issue that we're seeing that is motivating this decision or change? -->

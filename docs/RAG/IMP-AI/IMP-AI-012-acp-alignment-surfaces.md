@@ -23,7 +23,7 @@ related_files:
 # IMP-AI-012-acp-alignment-surfaces
 
 ### Goal
-Implement the minimal ACP-aligned protocol surfaces described in ADR-AI-004: NDJSON watch stream, AI retrieval format, and capabilities exposure.
+Implement the minimal ACP-aligned protocol surfaces described in ADR-AI-004: NDJSON watch stream, AI retrieval format, and capabilities exposure. This will align us for [[ADR-002-Visual-Mode-planning]]
 
 ### Context
 Editors and agents can more easily consume cli-rag if our outputs follow the ACP shapes for content and updates. This work is additive and keeps existing JSON outputs unchanged.

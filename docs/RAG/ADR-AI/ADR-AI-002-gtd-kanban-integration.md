@@ -52,14 +52,14 @@ V Due_Dates
   - 2025-8-16: IMP-001 **OVERDUE!** # past due color coded red and gets a flag 
   - 2025-9-03: IMP-004 
 V **Kanban**
-	> Backlog
-	V In-Progress
-	  L IMP-004
-	  L IMP-002 
-	> Completed
-	> Cancelled 
+	> **Backlog**
+	V **In-Progress**
+	    L IMP-002 [Introduce config_version with deprecation warnings and an upgrade helper.] # defined by kanban_status and kandban_stausline frontmatter 
+	V **Completed**
+	    L IMP-004 [Completed — unified initial error codes; multi-schema E200; per-schema cycle policy; JSON/NDJSON codes + locations.]
+	> **Cancelled** 
 
-# Vault 
+# Bases
 v **Templates** 
 	1 - IMP-*  
 	2 - ADR-*

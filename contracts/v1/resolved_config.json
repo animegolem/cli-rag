@@ -1,0 +1,134 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "contracts/config/v1/resolved_config.schema.json",
+  "title": "ResolvedConfig v1",
+  "type": "object",
+  "required": ["protocolVersion", "configVersion", "projectRoot", "scan", "authoring", "graph"],
+  "properties": {
+    "protocolVersion": { "type": "integer", "minimum": 1 },
+    "configVersion": { "type": "string" },
+    "luaApiVersion": { "type": "integer" },
+    "projectRoot": { "type": "string" },
+    "scan": {
+      "type": "object",
+      "required": ["filepaths", "indexPath", "hashMode", "indexStrategy", "ignoreGlobs", "ignoreSymlinks"],
+      "properties": {
+        "filepaths": { "type": "array", "items": { "type": "string" } },
+        "indexPath": { "type": "string" },
+        "hashMode": { "type": "string", "enum": ["mtime", "content"] },
+        "indexStrategy": { "type": "string", "enum": ["metadata", "content"] },
+        "ignoreGlobs": { "type": "array", "items": { "type": "string" } },
+        "ignoreSymlinks": { "type": "boolean" }
+      },
+      "additionalProperties": true
+    },
+    "authoring": {
+      "type": "object",
+      "required": ["editor", "backgroundWatch"],
+      "properties": {
+        "editor": { "type": "string" },
+        "backgroundWatch": { "type": "boolean" }
+      },
+      "additionalProperties": true
+    },
+    "graph": {
+      "type": "object",
+      "required": ["depth", "includeBidirectional", "ai"],
+      "properties": {
+        "depth": { "type": "integer", "minimum": 0 },
+        "includeBidirectional": { "type": "boolean" },
+        "ai": {
+          "type": "object",
+          "required": ["depth", "defaultFanout", "includeBidirectional", "neighborStyle", "outlineLines"],
+          "properties": {
+            "depth": { "type": "integer", "minimum": 0 },
+            "defaultFanout": { "type": "integer", "minimum": 0 },
+            "defaultMaxNodes": { "type": "integer", "minimum": 0 },
+            "includeBidirectional": { "type": "boolean" },
+            "neighborStyle": { "type": "string", "enum": ["full", "outline", "metadata"] },
+            "outlineLines": { "type": "integer", "minimum": 0 }
+          },
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": true
+    },
+    "templates": {
+      "type": "object",
+      "properties": {
+        "import": { "type": "array", "items": { "type": "string" } }
+      },
+      "additionalProperties": true
+    },
+    "schemas": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "filePatterns"],
+        "properties": {
+          "name": { "type": "string" },
+          "configVersion": { "type": "string" },
+          "filePatterns": { "type": "array", "items": { "type": "string" } },
+          "new": {
+            "type": "object",
+            "properties": {
+              "idGenerator": {
+                "type": ["object", "null"],
+                "properties": {
+                  "strategy": { "type": "string", "enum": ["increment", "datetime", "uuid"] },
+                  "prefix": { "type": "string" },
+                  "padding": { "type": "integer", "minimum": 0 }
+                },
+                "additionalProperties": true
+              },
+              "filenameTemplate": { "type": "string" },
+              "template": {
+                "type": "object",
+                "properties": {
+                  "prompt": { "type": "string" },
+                  "note": { "type": "string" }
+                },
+                "additionalProperties": true
+              },
+              "luaGenerator": { "type": ["string", "null"] }
+            },
+            "additionalProperties": true
+          },
+          "frontmatter": {
+            "type": "object",
+            "properties": {
+              "user": { "type": "array", "items": { "type": "string" } },
+              "system": { "type": "array", "items": { "type": "string" } },
+              "edges": {
+                "type": "object",
+                "properties": {
+                  "graphEdges": { "type": "array", "items": { "type": "string" } }
+                },
+                "additionalProperties": true
+              },
+              "gtd": {
+                "type": "object",
+                "properties": {
+                  "kanbanStatus": { "type": "array", "items": { "type": "string" } },
+                  "kanbanStatusLine": { "type": "boolean" }
+                },
+                "additionalProperties": true
+              }
+            },
+            "additionalProperties": true
+          },
+          "validate": {
+            "type": "object",
+            "properties": {
+              "severity": { "type": "string", "enum": ["error", "warning", "ignore"] }
+            },
+            "additionalProperties": true
+          }
+        },
+        "additionalProperties": true
+      }
+    },
+    "capabilities": { "type": "object", "additionalProperties": true }
+  },
+  "additionalProperties": true
+}

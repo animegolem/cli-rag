@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "contracts/cli/v1/info.schema.json",
+  "title": "info v1",
+  "type": "object",
+  "required": ["protocolVersion", "config", "index", "cache", "capabilities"],
+  "properties": {
+    "protocolVersion": { "type": "integer" },
+    "config": {
+      "type": "object",
+      "required": ["path", "version", "deprecated"],
+      "properties": {
+        "path": { "type": "string" },
+        "version": { "type": "string" },
+        "deprecated": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    },
+    "index": {
+      "type": "object",
+      "required": ["path", "exists"],
+      "properties": {
+        "path": { "type": "string" },
+        "exists": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    },
+    "cache": {
+      "type": "object",
+      "required": ["aiIndexPath", "exists"],
+      "properties": {
+        "aiIndexPath": { "type": "string" },
+        "exists": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    },
+    "capabilities": {
+      "type": "object",
+      "properties": {
+        "watchNdjson": { "type": "boolean" },
+        "aiGet": {
+          "type": "object",
+          "properties": { "retrievalVersion": { "type": "integer" } },
+          "additionalProperties": true
+        },
+        "pathLocations": { "type": "boolean" },
+        "aiIndex": { "type": "boolean" },
+        "luaApiVersion": { "type": "integer" }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}

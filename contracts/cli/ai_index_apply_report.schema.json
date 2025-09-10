@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "contracts/cli/v1/ai_index_apply_report.schema.json",
+  "title": "ai index apply report v1",
+  "type": "object",
+  "required": ["ok", "written", "clustersApplied", "membersTagged", "warnings"],
+  "properties": {
+    "ok": { "type": "boolean" },
+    "written": {
+      "type": "object",
+      "required": ["cache", "frontmatter"],
+      "properties": {
+        "cache": { "type": "boolean" },
+        "frontmatter": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    },
+    "clustersApplied": { "type": "integer", "minimum": 0 },
+    "membersTagged": { "type": "integer", "minimum": 0 },
+    "warnings": { "type": "array", "items": { "type": "string" } }
+  },
+  "additionalProperties": false
+}

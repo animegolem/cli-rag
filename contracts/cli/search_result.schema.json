@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "contracts/cli/v1/search_result.schema.json",
+  "title": "search result v1",
+  "type": "object",
+  "required": ["results"],
+  "properties": {
+    "results": {
+      "type": "array",
+      "items": {
+        "oneOf": [
+          {
+            "type": "object",
+            "required": ["kind", "id", "title", "schema", "path"],
+            "properties": {
+              "kind": { "const": "note" },
+              "id": { "type": "string" },
+              "title": { "type": "string" },
+              "schema": { "type": "string" },
+              "path": { "type": "string" },
+              "tags": { "type": "array", "items": { "type": "string" } },
+              "status": { "type": ["string", "null"] },
+              "kanbanStatus": { "type": ["string", "null"] },
+              "score": { "type": ["number", "null"] },
+              "lastModified": { "type": ["string", "null"], "format": "date-time" },
+              "lastAccessed": { "type": ["string", "null"], "format": "date-time" }
+            },
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "required": ["kind", "id", "noteId", "schema", "path", "line", "text"],
+            "properties": {
+              "kind": { "const": "todo" },
+              "id": { "type": "string" },
+              "noteId": { "type": "string" },
+              "schema": { "type": "string" },
+              "path": { "type": "string" },
+              "line": { "type": "integer", "minimum": 1 },
+              "priority": { "type": ["string", "null"] },
+              "text": { "type": "string" },
+              "createdAt": { "type": ["string", "null"], "format": "date-time" },
+              "completedAt": { "type": ["string", "null"], "format": "date-time" }
+            },
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "required": ["kind", "id", "noteId", "schema", "path", "kanbanStatus"],
+            "properties": {
+              "kind": { "const": "kanban" },
+              "id": { "type": "string" },
+              "noteId": { "type": "string" },
+              "schema": { "type": "string" },
+              "path": { "type": "string" },
+              "kanbanStatus": { "type": "string" },
+              "kanbanStatusLine": { "type": ["string", "null"] },
+              "dueDate": { "type": ["string", "null"], "format": "date" }
+            },
+            "additionalProperties": false
+          }
+        ]
+      }
+    }
+  },
+  "additionalProperties": false
+}

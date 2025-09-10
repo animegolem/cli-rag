@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "contracts/cli/v1/ai_index_plan.schema.json",
+  "title": "ai index plan v1",
+  "type": "object",
+  "required": ["version", "generatedAt", "sourceIndexHash", "params", "clusters"],
+  "properties": {
+    "version": { "type": "integer" },
+    "generatedAt": { "type": "string", "format": "date-time" },
+    "sourceIndexHash": { "type": "string" },
+    "params": {
+      "type": "object",
+      "properties": {
+        "edges": { "type": "array", "items": { "type": "string" } },
+        "minClusterSize": { "type": "integer", "minimum": 1 },
+        "schema": { "type": ["string", "null"] }
+      },
+      "additionalProperties": false
+    },
+    "clusters": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["clusterId", "members", "metrics", "label", "summary", "tags"],
+        "properties": {
+          "clusterId": { "type": "string" },
+          "members": { "type": "array", "items": { "type": "string" } },
+          "representatives": { "type": "array", "items": { "type": "string" } },
+          "metrics": {
+            "type": "object",
+            "required": ["size", "density"],
+            "properties": {
+              "size": { "type": "integer", "minimum": 1 },
+              "density": { "type": "number", "minimum": 0, "maximum": 1 }
+            },
+            "additionalProperties": false
+          },
+          "label": { "type": "string" },
+          "summary": { "type": "string" },
+          "tags": { "type": "array", "items": { "type": "string" } }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

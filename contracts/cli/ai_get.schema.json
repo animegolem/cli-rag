@@ -1,0 +1,86 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "contracts/cli/v1/ai_get.schema.json",
+  "title": "ai get v1",
+  "type": "object",
+  "required": ["protocolVersion", "retrievalVersion", "id", "schema", "title", "file", "frontmatter", "content", "neighbors", "limits"],
+  "properties": {
+    "protocolVersion": { "type": "integer" },
+    "retrievalVersion": { "type": "integer" },
+    "id": { "type": "string" },
+    "schema": { "type": "string" },
+    "title": { "type": "string" },
+    "file": { "type": "string" },
+    "frontmatter": { "type": "object", "additionalProperties": true },
+    "content": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["type", "text"],
+        "properties": {
+          "type": { "type": "string", "const": "text" },
+          "text": { "type": "string" },
+          "tokenEstimate": { "type": "integer", "minimum": 0 }
+        },
+        "additionalProperties": false
+      }
+    },
+    "neighbors": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "title", "schema", "path", "distance", "discoveredFrom", "edge"],
+        "properties": {
+          "id": { "type": "string" },
+          "title": { "type": "string" },
+          "schema": { "type": "string" },
+          "path": { "type": "string" },
+          "distance": { "type": "integer", "minimum": 1 },
+          "discoveredFrom": { "type": "string" },
+          "edge": { "type": "string" },
+          "status": { "type": ["string", "null"] },
+          "tags": { "type": "array", "items": { "type": "string" } },
+          "kanbanStatusLine": { "type": ["string", "null"] },
+          "lastModified": { "type": ["string", "null"], "format": "date-time" },
+          "score": { "type": ["number", "null"] },
+          "content": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["type", "text"],
+              "properties": {
+                "type": { "type": "string", "const": "text" },
+                "text": { "type": "string" },
+                "tokenEstimate": { "type": "integer", "minimum": 0 }
+              },
+              "additionalProperties": false
+            }
+          },
+          "contentOutline": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["heading", "firstLines"],
+              "properties": {
+                "heading": { "type": "string" },
+                "firstLines": { "type": "array", "items": { "type": "string" } }
+              },
+              "additionalProperties": false
+            }
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "limits": {
+      "type": "object",
+      "required": ["depth", "maxFanout"],
+      "properties": {
+        "depth": { "type": "integer", "minimum": 0 },
+        "maxFanout": { "type": "integer", "minimum": 0 }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}

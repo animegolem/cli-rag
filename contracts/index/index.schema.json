@@ -1,0 +1,75 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "contracts/index/v1/index.schema.json",
+  "title": "Unified Index v1",
+  "type": "object",
+  "required": ["version", "generatedAt", "docCount", "nodes", "edges"],
+  "properties": {
+    "version": { "type": "integer" },
+    "generatedAt": { "type": "string", "format": "date-time" },
+    "docCount": { "type": "integer", "minimum": 0 },
+    "nodes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "schema", "title", "path", "frontmatter"],
+        "properties": {
+          "id": { "type": "string" },
+          "schema": { "type": "string" },
+          "title": { "type": "string" },
+          "path": { "type": "string" },
+          "frontmatter": { "type": "object", "additionalProperties": true },
+          "computed": {
+            "type": "object",
+            "properties": {
+              "degree": { "type": "integer", "minimum": 0 },
+              "tokenEstimate": { "type": "integer", "minimum": 0 },
+              "lastModified": { "type": "string", "format": "date-time" },
+              "lastAccessed": { "type": "string", "format": "date-time" },
+              "topics": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": ["label", "score"],
+                  "properties": {
+                    "label": { "type": "string" },
+                    "score": { "type": "number" }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            },
+            "additionalProperties": true
+          }
+        },
+        "additionalProperties": true
+      }
+    },
+    "edges": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["from", "to", "kind"],
+        "properties": {
+          "from": { "type": "string" },
+          "to": { "type": "string" },
+          "kind": { "type": "string" },
+          "locations": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["path", "line"],
+              "properties": {
+                "path": { "type": "string" },
+                "line": { "type": "integer", "minimum": 1 }
+              },
+              "additionalProperties": false
+            }
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

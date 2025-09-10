@@ -126,3 +126,5 @@ quest_requires: [ITEM-Sword, SKILL-Stealth]
 
 ## Updates
 <!-- Changes that happened when the rubber met the road -->
+
+This content has been updated to be reflected in [[ADR-001-cli-rag.toml]]

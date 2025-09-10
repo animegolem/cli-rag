@@ -1,0 +1,96 @@
+[config]
+#: =============================================================================
+#:                            # --- Version --- #
+#: =============================================================================
+#: Sets the config version for all top level rules. All imported notes inherit
+#: the same version.
+#: An individual `[[schema]`] can call this to remain on an older version
+config_version = "0.1"
+
+#: =============================================================================
+#:                            # --- SCAN --- #
+#: =============================================================================
+#: Settings related to discovery, filepaths, and scan process
+[config.scan]
+#: The root directories that cli-rag will scan for notes.
+#: All paths must be relative to the location of this `.cli-rag.toml` file.
+#: Defaults to the current directory ["."] if left empty.
+filepaths = ["file/path", "file/other/path"]
+#: By default, an index will be created at '.cli-rag/index.json'.
+#: This can be given an arbitrary override.
+#: File paths are relative to the location of this `.cli-rag.toml` file.
+index_path = "alternate/filepath/index.json"
+#: `hash_mode` controls HOW the tool detects if a file has changed.
+#: Defaults to `mtime`.
+#: +-----------+-----------------------------------------------------------+
+#: |  `mtime`  |   Fast but less accurate.                                 |
+#: |           |   Compares the file's "last modified" timestamp.          |
+#: +-----------+-----------------------------------------------------------+
+#: | `content` |  100% Accurate but slower.                                |
+#: |           |  Computes a hash of the entire file's content.            |
+#: +-----------+-----------------------------------------------------------+
+hash_mode = "mtime"
+#: `index_strategy` controls what is stored in the index for search.
+#: Defaults to content.
+#: +------------+----------------------------------------------------------+
+#: | `metadata` | Fastest option. Stores only front matter and links.      |
+#: +------------+----------------------------------------------------------+
+#: | `content`  | (Full-Text Search) Stores all metadata AND the           |
+#: |            | full text of every note.                                 |
+#: +------------+----------------------------------------------------------+
+index_strategy = "content"
+#tuning for large repos
+# parallel_workers = 4
+# cache_strategy = "aggressive"
+#: Remove directories or patterns from scanning to improve speed.
+#: Patterns are relative to the location of this `.cli-rag.toml` file.
+ignore_globs = ["**/node_modules/**", "**/dist/**"]
+#: default true
+ignore_symlinks = false
+
+#: =============================================================================
+#:                            # --- AUTHORING --- #
+#: =============================================================================
+#: Settings related to creating and editing notes
+[config.authoring]
+#: The editor to launch for new or existing notes.
+#: Uses $EDITOR or $VISUAL if not set.
+editor = "nvim"
+#: runs the `watch` command as a background process for live updates when
+#: visual mode is open and active. default = true
+background_watch = true
+
+#: =============================================================================
+#:                             # --- GRAPH --- #
+#: =============================================================================
+#: Default settings for universal graph traversal commands (graph, path, ai get)
+[config.graph]
+#: Default depth for traversing dependencies. Default = 1.
+depth = 1
+#: Whether to include dependents (backlinks) in traversals. default = true.
+include_bidirectional = true
+
+[config.graph.ai]
+#: Defaults for graph focused `ai` sub commands.
+#: Default depth for traversing dependencies. default 1 (note and neighbors)
+depth = 1
+#: Maximum neighbors shown per node. Default 5.
+default_fanout = 5
+#: Whether to include dependents (backlinks) in traversals. default = true
+include_bidirectional = true
+#: Accepts full|outline|metadata. Default metadata.
+#: metadata: { id, title, schema, path, distance, discoveredFrom, edge, status?, tags?, kanbanStatusline?, lastModified?, score? }
+#: full: same as metadata + content: [{ type:"text", text, tokenEstimate? }]
+#: outline: same as metadata + contentOutline: [{ heading, firstLines: [string] }]
+neighbor_style = "metadata"
+#: Only applies when `neighbor_style = "outline"` is active.
+#: Number of lines per heading. Accepts ints. Default = 2
+outline_lines = 2
+
+#: =============================================================================
+#:                        # --- TEMPLATE MANAGEMENT --- #
+#: =============================================================================
+#: For a cleaner .`cli-rag.toml` it's advised to import an external schema.
+#: Alternatively one or more `[[schema]]` may be defined inline below
+[config.templates]
+import = [ ".cli-rag/templates/EXAMPLE.toml" ]
