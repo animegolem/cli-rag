@@ -43,7 +43,6 @@
           "properties": {
             "depth": { "type": "integer", "minimum": 0 },
             "defaultFanout": { "type": "integer", "minimum": 0 },
-            "defaultMaxNodes": { "type": "integer", "minimum": 0 },
             "includeBidirectional": { "type": "boolean" },
             "neighborStyle": { "type": "string", "enum": ["full", "outline", "metadata"] },
             "outlineLines": { "type": "integer", "minimum": 0 }
@@ -120,7 +119,101 @@
           "validate": {
             "type": "object",
             "properties": {
-              "severity": { "type": "string", "enum": ["error", "warning", "ignore"] }
+              "severity": { "type": "string", "enum": ["error", "warning", "ignore"] },
+              "frontmatter": {
+                "type": "object",
+                "properties": {
+                  "allowUnknown": { "type": "boolean" },
+                  "severity": { "type": "string", "enum": ["error", "warning", "ignore"] },
+                  "fields": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "object",
+                      "properties": {
+                        "regex": { "type": "string" },
+                        "enum": { "type": "array", "items": { "type": "string" } },
+                        "globs": { "type": "array", "items": { "type": "string" } },
+                        "integer": {
+                          "type": "object",
+                          "properties": { "min": { "type": "integer" }, "max": { "type": "integer" } },
+                          "additionalProperties": false
+                        },
+                        "float": {
+                          "type": "object",
+                          "properties": { "min": { "type": "number" }, "max": { "type": "number" } },
+                          "additionalProperties": false
+                        },
+                        "severity": { "type": "string", "enum": ["error", "warning", "ignore"] }
+                      },
+                      "additionalProperties": true
+                    }
+                  }
+                },
+                "additionalProperties": true
+              },
+              "body": {
+                "type": "object",
+                "properties": {
+                  "headings": {
+                    "type": "object",
+                    "properties": {
+                      "headingPolicy": { "type": "string", "enum": ["exact", "missing_only", "ignore"] },
+                      "maxCount": { "type": "integer", "minimum": 0 }
+                    },
+                    "additionalProperties": true
+                  },
+                  "loc": {
+                    "type": "object",
+                    "properties": {
+                      "scanPolicy": { "type": "string", "enum": ["on_creation", "on_validate"] },
+                      "limits": { "type": "object", "additionalProperties": true }
+                    },
+                    "additionalProperties": true
+                  }
+                },
+                "additionalProperties": true
+              },
+              "edges": {
+                "type": "object",
+                "properties": {
+                  "wikilinks": {
+                    "type": "object",
+                    "properties": {
+                      "minOutgoing": { "type": "integer", "minimum": 0 },
+                      "minIncoming": { "type": "integer", "minimum": 0 },
+                      "severity": { "type": "string", "enum": ["error", "warning", "ignore"] }
+                    },
+                    "additionalProperties": true
+                  },
+                  "crossSchema": {
+                    "type": "object",
+                    "properties": {
+                      "allowedTargets": { "type": "array", "items": { "type": "string" } }
+                    },
+                    "additionalProperties": true
+                  }
+                },
+                "additionalProperties": {
+                  "type": "object",
+                  "properties": {
+                    "weight": { "type": "number" },
+                    "cycleDetection": { "type": "string", "enum": ["error", "warning", "ignore"] },
+                    "required": { "type": "string", "enum": ["error", "warning", "ignore"] }
+                  },
+                  "additionalProperties": true
+                }
+              },
+              "gtd": {
+                "type": "object",
+                "properties": {
+                  "enableTODO": { "type": "boolean" },
+                  "enableKanban": { "type": "boolean" },
+                  "enableKanbanStatusline": { "type": "boolean" },
+                  "dueDateWarning": { "type": "integer", "minimum": 0 },
+                  "severity": { "type": "string", "enum": ["error", "warning", "ignore"] }
+                },
+                "additionalProperties": true
+              }
             },
             "additionalProperties": true
           }

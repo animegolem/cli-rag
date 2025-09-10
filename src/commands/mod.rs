@@ -1,9 +1,9 @@
 pub mod cluster;
 pub mod completions;
-pub mod doctor;
 pub mod get;
 pub mod graph;
 pub mod group;
+pub mod info;
 pub mod init;
 pub mod new;
 pub mod output;

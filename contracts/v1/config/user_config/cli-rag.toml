@@ -46,7 +46,8 @@ index_strategy = "content"
 #: Patterns are relative to the location of this `.cli-rag.toml` file.
 ignore_globs = ["**/node_modules/**", "**/dist/**"]
 #: default true
-ignore_symlinks = false
+# default is true; override here if needed
+ignore_symlinks = true
 
 #: =============================================================================
 #:                            # --- AUTHORING --- #

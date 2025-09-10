@@ -17,9 +17,9 @@ fn main() -> Result<()> {
         } => {
             cli_rag::commands::init::run(path, force, print_template, silent, schema, separate)?;
         }
-        Commands::Doctor {} => {
+        Commands::Info {} => {
             let (cfg, cfg_path) = load_config(&cli.config, &cli.base)?;
-            cli_rag::commands::doctor::run(&cfg, &cfg_path, &cli.format)?;
+            cli_rag::commands::info::run(&cfg, &cfg_path, &cli.format)?;
         }
         Commands::Completions { shell } => {
             let cmd = Cli::command();

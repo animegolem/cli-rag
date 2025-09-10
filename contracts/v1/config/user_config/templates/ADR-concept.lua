@@ -12,7 +12,6 @@ include_bidirectional = true,
 ai = {
 depth = 1,
 default_fanout = 5,
-default_max_nodes = 50,
 include_bidirectional = true,
 neighbor_style = "metadata",
 outline_lines = 2,

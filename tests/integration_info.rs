@@ -3,7 +3,7 @@ use assert_fs::prelude::*;
 use std::process::Command;
 
 #[test]
-fn doctor_json_on_empty_base_reports_structure() {
+fn info_json_on_empty_base_reports_structure() {
     // Setup isolated temp repo with a minimal config and empty base
     let temp = assert_fs::TempDir::new().unwrap();
     let base = temp.child("notes");
@@ -13,10 +13,10 @@ fn doctor_json_on_empty_base_reports_structure() {
     cfg.write_str(&format!("bases = [\n  '{}'\n]\n", base.path().display()))
         .unwrap();
 
-    // Run `adr-rag doctor --format json --config <cfg>`
+    // Run `cli-rag info --format json --config <cfg>`
     let mut cmd = Command::cargo_bin("cli-rag").unwrap();
     let assert = cmd
-        .arg("doctor")
+        .arg("info")
         .arg("--format")
         .arg("json")
         .arg("--config")
@@ -24,18 +24,20 @@ fn doctor_json_on_empty_base_reports_structure() {
         .assert()
         .success();
 
-    // Parse JSON and assert a few stable fields
+    // Parse JSON and assert a few stable fields aligned to contracts
     let output = String::from_utf8(assert.get_output().stdout.clone()).unwrap();
     let v: serde_json::Value = serde_json::from_str(&output).unwrap();
-    assert!(v
-        .get("config")
-        .and_then(|x| x.as_str())
-        .unwrap()
-        .ends_with(".cli-rag.toml"));
-    assert_eq!(v["counts"]["docs"].as_u64().unwrap_or(999), 0);
-    let per_base = v["per_base"].as_array().unwrap();
-    assert_eq!(per_base.len(), 1);
-    assert_eq!(per_base[0]["mode"].as_str().unwrap(), "scan");
+    assert!(v["protocolVersion"].as_u64().unwrap() >= 1);
+    assert!(v["config"]["path"].as_str().unwrap().ends_with(".cli-rag.toml"));
+    assert!(v["index"]["path"].as_str().unwrap().contains(".cli-rag"));
+    assert!(v["index"]["exists"].is_boolean());
+    assert!(v["cache"]["aiIndexPath"].as_str().unwrap().contains(".cli-rag"));
+    assert!(
+        v["capabilities"]["aiGet"]["retrievalVersion"]
+            .as_u64()
+            .unwrap()
+            >= 1
+    );
 
     temp.close().unwrap();
 }

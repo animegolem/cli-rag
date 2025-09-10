@@ -203,12 +203,12 @@ graph_edges = [
   ]
 
 #: =============================================================================
-#:                      # --- `~.frontmatter.gtdGTD` --- #
+#:                      # --- `~.frontmatter.gtd` --- #
 #: +-----------------+---------------------------------------------------------+
-#: | `kanban_status` | Define Kanban status. Dispalyed on the agenda           |
+#: | `kanban_status` | Define Kanban status. Displayed on the agenda           |
 #: |                 | screen. Provide a array of legal statuses.              |
 #: +-----------------+---------------------------------------------------------+
-#: | `kanban_        | Define a status line that shows under the kanban staus  |
+#: | `kanban_        | Define a status line that shows under the kanban status |
 #: | statusline`     | on the agenda screen. true or false. `default = "false"`|
 #: +-----------------+---------------------------------------------------------+
 #: | `due_date`      | Set a due date. Appears on neovim agenda x days prior.  |
@@ -298,7 +298,7 @@ confidence_score = { float = { min = 0.0, max = 1.0 }, severity = "ignore" }
 #: =============================================================================
 #:                          # --- VALIDATOR: BODY --- #
 #: +----------------------------------------------------------------------------+
-#: | [schema.validate.body]          | Top most Table for body validation       |
+#: | [schema.validate.body]          | Top-most table for body validation       |
 #: +---------------------------------+--------------------+---------------------+
 #: | ↳ [~.body.headings]             | Various body Validation settings         |
 #: |                                 |------------------------------------------|
@@ -307,7 +307,7 @@ confidence_score = { float = { min = 0.0, max = 1.0 }, severity = "ignore" }
 #: |                                 |                    | "missing_only",     |
 #: |                                 |                    | "ignore".           |
 #: |                                 |--------------------+---------------------+
-#: |                                 | `max_count`        | INT.Maximum Nunmber |
+#: |                                 | `max_count`        | INT. Maximum Number |
 #: |                                 |                    | of headings allowed |
 #: |                                 |                    | in a document.      |
 #: +---------------------------------+--------------------+---------------------+

@@ -559,7 +559,7 @@ severity = "warning"
 - We can force Titles to the correct case using either `heck` or `convert_case`. 
 - We should ship with a folder with a few example schema's that users can modify or use directly before 1.0. This is the escape hatch so you can use the tool for a bit and decide if it's even worth setting up a config file.	  
 - for speed connections, backlinks etc need to be tracked in the index. The `ai index` commands write to the same. 
-- ~~the groups and file index have been collapsed to a single item vs the current codebase. We also no longer allow multiple indexes in a single repo.~~  the entire concept of groups has been replaced by ai index see [[ADR-003c-v1.2-locked-CLI-commands]]
+- ~~the groups and file index have been collapsed to a single item vs the current codebase. We also no longer allow multiple indexes in a single repo.~~  the entire concept of groups has been replaced by ai index see [[ADR-003d-v1.2-locked-CLI-commands]]
 
 Normalization plan (so Lua sees a clean API)
 

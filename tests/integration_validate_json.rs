@@ -30,9 +30,8 @@ fn validate_json_shape_and_writes_groups() {
 
     let v: serde_json::Value = serde_json::from_slice(&out).unwrap();
     assert!(v["ok"].as_bool().unwrap());
-    assert_eq!(v["doc_count"].as_u64().unwrap(), 0);
-    assert!(v["errors"].as_array().unwrap().is_empty());
-    assert!(v["warnings"].as_array().unwrap().is_empty());
+    assert_eq!(v["docCount"].as_u64().unwrap(), 0);
+    assert!(v["diagnostics"].as_array().unwrap().is_empty());
 
     // Groups file should exist (empty sections array)
     let groups_path = base.path().join("index/semantic-groups.json");

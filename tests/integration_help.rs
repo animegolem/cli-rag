@@ -9,5 +9,5 @@ fn cli_help_prints_usage() {
         .success()
         .stdout(predicates::str::contains("Usage"))
         .stdout(predicates::str::contains("validate"))
-        .stdout(predicates::str::contains("doctor"));
+        .stdout(predicates::str::contains("info"));
 }

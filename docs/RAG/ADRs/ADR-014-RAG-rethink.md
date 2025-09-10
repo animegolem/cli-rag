@@ -61,7 +61,7 @@ Search is the place a traditional vector rag could be usable. This is where trad
 
 The group command how has room for potential expansion. 
 
-### [{NOTE},{2025/9/8}: The groups command is no longer in the codebase. the general concepts have survived but are handled by the `ai index` sub commands in [[ADR-003c-v1.2-locked-CLI-commands]]]
+### [{NOTE},{2025/9/8}: The groups command is no longer in the codebase. the general concepts have survived but are handled by the `ai index` sub commands in [[ADR-003d-v1.2-locked-CLI-commands]]]
 
 Microsoft GraphRAG like so; 
 
@@ -124,8 +124,12 @@ Biggest issue is i'm still not really sure what I want or what the ai needs/woul
 ## Decision
 <!-- What is the change that we're proposing and/or doing? -->
 
+This served largely as ideation and the final form is ai index as seen in [[ADR-003d-v1.2-locked-CLI-commands]]
+
 ## Consequences
 <!-- What becomes easier or more difficult to do because of this change? -->
+
+accepted in principal but not specific. 
 
 ## Updates
 <!-- Changes that happened when the rubber met the road -->

@@ -15,5 +15,5 @@ You've found this way too early! Nothing here is ready for production. :) This w
 - `get --format ai` returns content blocks friendly to LLMs/editors:
   - `{ id, title, file, neighbors:{depends_on,dependents}, content:[ {type:"resource_link",uri}, {type:"text",text} ] }`
 
-- `doctor --format json` includes protocol metadata:
-  - `{ protocolVersion: 1, capabilities: { watchNdjson: true, getAi: true, pathLocations: true } }`
+- `info --format json` includes protocol metadata:
+  - `{ protocolVersion: 1, capabilities: { watchNdjson: true, aiGet: { retrievalVersion: 1 }, pathLocations: true } }`

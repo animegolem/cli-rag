@@ -4,6 +4,7 @@ tags:
   - TUI
   - NeoVIM
   - rataTUI
+  - Emacs
 status: draft
 depends_on:
   - ADR-01
@@ -18,18 +19,24 @@ related_files: []
 ## Objective
 <!-- A concise statement explaining the goal of this decision. -->
 
-Determine a visual UI north star 
+Determine a visual UI north star. This Document is not concerned with if this is implemented in TUI/Neovim/EMACS and is purely focused on defining the workflow.  
 
 ## Context
 <!-- What is the issue that we're seeing that is motivating this decision or change? -->
 
-### TUI/NeoVim Workflow Planning
+### AgendaView 
 
-1. The user opens a new repo and types `cli-rag init` which checks for a .cli-rag.toml and if not present opens their editor with a marked up config file. They can either save this or exit the process. 
-   
-   See [[ADR-001-cli-rag.toml]] for a full example. 
+The main dashboard for the KB and application. 
 
-2. Once the .cli-rag.toml is created it opens the TUI "master control" screen e.g. Magit/org style tab collapsible lists. This expands as tracked notes are added. 
+This screen 
+1. Presents current TODO's on tracked notes. These are created anywhere in a tracked note e.g. [{TODO}: Note that displays as a reminder]. A date inside a TODO in UTC formatting will be tracked on the agenda screen. 
+2. Presents any upcoming or past due due-dates. 
+3. Lists projects by status if the kanban_status and kanban_statusline front matter are active. 
+4. Lists tracked notes and templates. 
+
+The - [] todo items are live. If checked the application works like an LSP and updates the original instance in the linked note. ~~[{TODO}: Note that displays as a reminder]~~ 
+
+The date it's marked done is tracked in the index and it falls off the agenda screen either 24 hours later or per user setting in the toml.  
    
   ```bash 
 V ToDo ! 
@@ -42,8 +49,8 @@ V Due_Dates
 V **Kanban**
 	> Backlog
 	V In-Progress
-	  L IMP-004
-	  L IMP-002 
+	  L IMP-AI-004 | unified initial error codes; multi-schema E200; per-schema cycle policy; JSON/NDJSON codes + locations. 
+	  L IMP-AI-002 | Introduce config_version with deprecation warnings and an upgrade helper.
 	> Completed
 	> Cancelled 
  
@@ -52,113 +59,169 @@ v **Templates**
 	2 - ADR-*
 	3 - ADR-AI-*
 v **ADR** 
-	L ADR-001-my-first-plan
-	L ADR-002-my-happy-place
+	L ADR-001-cli-rag.toml
+	L ADR-002-Visual-Mode-planning
 > **ADR-AI** 
 v **IMP** 
-	L IMP-001-database-spike
-	L IMP-002-websocket-spike  
- 
-TAB: Collapse/Expand | RETURN: Select | SPACE+F: FuzzyFind | G: GraphView
+	L IMP-001-config-loader-invariants
+	L IMP-002-config-versioning-and-upgrade  
+
+======================================================================================== 
+TAB: Fold | RETURN: Select | SPACE+F: FuzzyFind | SPACE+G: GraphView | Space+E: EditView 
 ```
 
-- This may not be possible in neovim vs emacs but the ideal is being able unfold the note directly into an editable minibuffer or hit enter to open the full note.  
+### FuzzyView
 
-3.  The user can begin creating notes populated with expected (empty) frontmatter and template. Selecting a note or a template opens the editor for the user. When the close the editor the TUI catches the exit code and rebuilds the index and adds the new tracked notes to the master control screen. 
+A limited fuzzy finder scoped down to only files tracked by the project schema's. Selecting an item opens it in edit view. 
 
-4. Ideally we would have a simple fuzzy finder that is accessible in all windows with the same keystrokes. It only indexes tracked notes. This and the master control screen let you fly around the knowledge base. 
-   
-5. GraphView the leans on graphviz dot view's ability to render out ascii. Could use the search command and let the user navigate the graph by pulling different clusters 
-   
-```
-   An idea that keeps coming to mind is using the local `--include-bidirectional` graph as a navigation system in the TUI/NVIM. 
+We can lean on the Fuzzy Matcher crate https://github.com/skim-rs/fuzzy-matcher. 
 
-[Notably, graphiz directly supports ascii output.](https://graphviz.org/docs/outputs/ascii/) An imaginable workflow is we pull a local graph and append the ID's so it's 
+```bash
+docs/RAG/ADR-AI/ADR-AI-004-acp-aligned-protocol-surfaces.md
+docs/RAG/ADRs/ADR-007-general-error-codes-ideation.md
+docs/RAG/ADR-AI/ADR-AI-003-extensible-graph-edges.md
+docs/RAG/ADR-AI/ADR-AI-002-gtd-kanban-integration.md
+docs/RAG/ADRs/ADR-006-config-loader-error-codes.md
+docs/RAG/ADRs/ADR-001b-cli-rag.toml-(patch_1).md
+docs/RAG/ADRs/ADR-013-notebook-documentation.md
+docs/RAG/ADRs/ADR-004-toml-config-versioning.md
+docs/RAG/ADRs/ADR-003a-CLI-refactor-planning.md
+docs/RAG/ADRs/ADR-002-Visual-Mode-planning 1.md
+docs/RAG/ADR-AI/ADR-AI-001-three-layer-cache.md
+docs/RAG/ADRs/ADR-010-the-LUA-escape-hatch.md
+docs/RAG/ADRs/ADR-002-Visual-Mode-planning.md
+docs/RAG/ADRs/ADR-011-text-parsing-stack.md
+docs/RAG/ADRs/ADR-005-MCP-server-wrapper.md
+docs/RAG/ADRs/ADR-003c-v1.2-CLI-commands.md
+docs/RAG/ADRs/ADR-003c-v1.1-CLI-commands.md
+docs/RAG/ADRs/ADR-012-create-man-pages.md
+docs/RAG/ADRs/ADR-003b-v1-CLI-commands.md
+docs/RAG/ADRs/ADR-003d-CLIO-appendix.md
+docs/RAG/ADRs/ADR-009-GTD-ideation.md
+docs/RAG/ADRs/ADR-001-cli-rag.toml.md
+docs/RAG/ADRs/ADR-014-RAG-rethink.md
+docs/RAG/ADRs/ADR-008-ai-rag.toml.md
 
-1. ADR-001 
-2. ADR-002 
-   
-You are then shown a screen like this where you can with a single key press to fly around notes e.g. 
-
-
-     ┌−−−−−−−−−−−−−−−−−−−−−−−−−−−−−┐
-     ╎             adr             ╎
-     ╎                             ╎
-     ╎ ┌─────────┐     ┌─────────┐ ╎       ┌─────────┐
-  ┌─ ╎ │ ADR-001 │ ◀── │ ADR-000 │ ╎ ◀──   │  start  │
-  │  ╎ └─────────┘     └─────────┘ ╎       └─────────┘
-  │  ╎   │               ▲         ╎         │
-  │  ╎   │               │         ╎         │
-  │  ╎   │               │         ╎         ▼
-  │  ╎   │               │         ╎     ┌−−−−−−−−−−−−−┐
-  │  ╎   │               │         ╎     ╎     imp     ╎
-  │  ╎   ▼               │         ╎     ╎             ╎
-  │  ╎ ┌─────────┐       │         ╎     ╎ ┌─────────┐ ╎
-  │  ╎ │ ADR-002 │       │         ╎     ╎ │ IMP-001 │ ╎
-  │  ╎ └─────────┘       │         ╎     ╎ └─────────┘ ╎
-  │  ╎   │               │         ╎     ╎   │         ╎
-  │  ╎   │               │         ╎     ╎   │         ╎
-  │  ╎   │               │         ╎     ╎   ▼         ╎
-  │  ╎   │               │         ╎     ╎ ┌─────────┐ ╎
-  │  ╎   │               │         ╎     ╎ │ IMP-002 │ ╎
-  │  ╎   │               │         ╎     ╎ └─────────┘ ╎
-  │  ╎   │               │         ╎     ╎   │         ╎
-  │  ╎   │               │         ╎     ╎   │         ╎
-  │  ╎   │               │         ╎     ╎   ▼         ╎
-  │  ╎   │             ┌─────────┐ ╎     ╎ ┌─────────┐ ╎
-  │  ╎   └───────────▶ │ ADR-003 │ ╎ ◀── ╎ │ IMP-003 │ ╎
-  │  ╎                 └─────────┘ ╎     ╎ └─────────┘ ╎
-  │  ╎                             ╎     ╎   │         ╎
-  │  └−−−−−−−−−−−−−−−−−−−−−−−−−−−−−┘     ╎   │         ╎
-  │                      │               ╎   │         ╎
-  │                      │               ╎   │         ╎
-  │                      │               ╎   ▼         ╎
-  │                      │               ╎ ┌─────────┐ ╎
-  └──────────────────────┼─────────────▶ ╎ │ IMP-004 │ ╎
-                         │               ╎ └─────────┘ ╎
-                         │               ╎             ╎
-                         │               └−−−−−−−−−−−−−┘
-                         │                   │
-                         │                   │
-                         │                   ▼
-                         │                 ┌─────────┐
-                         └─────────────▶   │   end   │
-                                           └─────────┘
+26/126--------------------------------------------------------------------------------------------
+> ADR-
+===========================================================================  
+RETURN: Select | SPACE+A: AgendaView | SPACE+G: GraphView | Space+E: Editor 
 ```
 
+### GraphView
 
+A core navigation view based on exporting a graphviz ascii view. This is based on the graph cli command. 
+
+The individual notes should be tagged with some kind of leader so you can jump into notes via keyboard shortcut eg the alphabet. 
+
+
+```bash
+                                            ┌─────────────┐
+                                            │ J:AI-IMP-03 │
+                                            └─────────────┘
+                                              ▲
+                                              │
+                                              │
+                       ┌──────────────┐     ┌───────────────────────┐     ┌─────────────┐
+                       │ H:AI-IMP-01  │ ◀── │       A:ADR-01        │ ──▶ │ I:AI-IMP-02 │
+                       └──────────────┘     └───────────────────────┘     └─────────────┘
+                         │                    │              │
+                         │                    │              │
+                         ▼                    ▼              │
+     ┌───────────┐     ┌──────────────┐     ┌─────────────┐  │
+     │ E:IMP-01  │ ◀┐  │ I: AI-IMP-02 │  ┌─ │  B:ADR-02   │ ─┼────┐
+     └───────────┘  │  └──────────────┘  │  └─────────────┘  │    │
+       │            │    │               │    │              │    │
+       │            │    │               │    │              │    │
+       ▼            │    ▼               │    ▼              │    │
+     ┌───────────┐  │  ┌──────────────┐  │  ┌─────────────┐  │    │
+  ┌▶ │ F:IMP-05  │  │  │ J: AI-IMP-03 │  │  │  C:ADR-04   │  │    │
+  │  └───────────┘  │  └──────────────┘  │  └─────────────┘  │    │
+  │    │            │                    │    │              │    │
+  │    │            └────────────────────┘    │              │    │
+  │    ▼                                      ▼              │    │
+  │  ┌───────────┐                          ┌─────────────┐  │    │
+  │  │ G: IMP-12 │                          │  D:ADR-07   │  │    │
+  │  └───────────┘                          └─────────────┘  │    │
+  │                                           │              │    │
+  │                                           │              │    │
+  │                                           ▼              │    │
+  │                                         ┌─────────────┐  │    │
+  │                                         │  G:IMP-12   │ ◀┘    │
+  │                                         └─────────────┘       │
+  │                                                               │
+  └───────────────────────────────────────────────────────────────┘
+===========================================================================
+RETURN: Select | SPACE+A: AgendaView | SPACE+F: FuzzyView | Space+E: Editor 
+```
+
+### EditView 
+
+Selecting a not via the graph, agenda or fuzzyview all result in opening a note in the Editor. This is just an editor by default but you can open the local graph overlay in a second buffer with a leader key. 
+
+The editor has "simple" LSP functions. e.g.
+1. Invalid wikilinks and node_ID's result in syntax highlights
+2. tab completion for wikilinks/tags/ids etc 
+3. re-naming notes across the base when a tag/link/title etc is updated.  
    
-### Implementation Details 
-
-- RataTUI or neovim is the most likely front-end here. 
-- The `watch` command is active while the TUI is running unless toggled off via a .toml flag. 
-- the TUI fuzzy finder is not a full telescope redo --it's just a magit style wrapper of `search --query `
+The leader key can open the local graph and this is updated live as you edit the note and create new connections. 
    
-### The NeoVim Advantage
+```
+---							           |	                    ┌───────────┐     ┌──────────────────┐     ┌───────────┐
+id: ADR-01								   |	                    │ AI-IMP-01 │ ◀── │                  │ ──▶ │ AI-IMP-07 │
+tags:							           |	                    └───────────┘     │                  │     └───────────┘
+  - Toml								   |	                      │               │                  │
+status: in-progress			 	       |	                      │               │      ADR-01      │
+depends_on: none						   |	                      ▼               │                  │
+created_date: {{date}}					   |	                    ┌───────────┐     │                  │     ┌───────────┐
+last_modified: {{date}}		  	       |	                    │ AI-IMP-02 │ ◀── │                  │ ──▶ │  IMP-06   │
+related_files: []						   |	                    └───────────┘     └──────────────────┘     └───────────┘
+---		 							   |	                      │                 │         │
+# cli-rag.toml	       			       |	                      │                 │         │
+										   |	                      ▼                 ▼         │
+## Objective							   |	     ┌────────┐     ┌───────────┐     ┌────────┐  │
+At the time of writing...				   |	     │ IMP-01 │ ◀┐  │ AI-IMP-03 │  ┌─ │ ADR-02 │ ─┼────┐
+								           | 	     └────────┘  │  └───────────┘  │  └────────┘  │    │
+## Context								   |	       │         │                 │    │         │    │
+if we see issues we can...				   |	       │         └─────────────────┘    │         │    │
+										   |	       ▼                                ▼         │    │
+## Decision					           |	     ┌────────┐                       ┌────────┐  │    │
+Tentatively adopt the above...		       |	  ┌▶ │ IMP-05 │ ◀──────────────────── │ ADR-04 │  │    │
+						        		   |	  │  └────────┘                       └────────┘  │    │
+## Consequences			   		   |	  │    │                                │         │    │
+A new implementation ticket will be...	   |	  │    │                                │         │    │
+										   |	  │    │                                ▼         │    │
+## Updates								   |	  │    │                              ┌────────┐  │    │
+								    	   |	  │    │                              │ ADR-07 │  │    │
+										   |	  │    │                              └────────┘  │    │
+										   |	  │    │                                │         │    │
+										   | 	  │    │                                │         │    │
+										   |	  │    │                                ▼         │    │
+										   |	  │    │                              ┌────────┐  │    │
+										   | 	  │    └────────────────────────────▶ │ IMP-12 │ ◀┘    │
+										   |	  │                                   └────────┘       │
+										   |	  │                                                    │
+										   |	  └────────────────────────────────────────────────────┘
+===================================================================================================== 
+RETURN: Select | SPACE+A: AgendaView | SPACE+F: FuzzyView | SPACE+G: GraphView | CTRL+G: GraphOverlay 
+```
 
-All of the above can be much smoother in neovim. In theory we could 
+### Thoughts about form factors
 
-- Define a consistent naviation UI using a leader key. 
-- Lean on Existing fuzzy finding and implement less ourselves. 
-- Offer a first class editing experience. We could in theory parse our index and have tree-sitter powered live linting of valid id's and note names
-- make `[[links]]` and ID: ADR-005 directly navigable from the editor. 
+#### TUI
 
-This is ultimately inching much closer to a AI Co-Programmer friendly obsidian that lives in a repo without fuss. I'm not sure if that's a good or a bad thing. It would without a doubt be the most comfortable and fully featured version. 
+#### .nvim 
+
+#### .el
+
+Meaningfully I am typing this in emacs right now. It and obsidian are what i actually use. 
 
 ## Decision
 <!-- What is the change that we're proposing and/or doing? -->
 
-Prioritize neovim. While the TUI is nice and more universal the neovim community is the space that makes sense for a lua configured programmers tool. its likely to be 
-
-1. less work. 
-2. more powerful. 
-
-Also i want it to be fennel ))))))))))))))))))))))))))))))))))
 
 ## Consequences
 <!-- What becomes easier or more difficult to do because of this change? -->
-
-plan to adopt `nvim-oxi` and ensure our patterns do not contradict this future goal. It may be v1 or v1.1 but priority is fairly high. 
 
 ## Updates
 <!-- Changes that happened when the rubber met the road -->

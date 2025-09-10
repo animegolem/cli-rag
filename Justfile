@@ -32,8 +32,8 @@ run *args:
     cargo run --bin cli-rag -- {{args}}
 
 # Handy shortcuts
-doctor-json:
-    just run doctor --format json
+info-json:
+    just run info --format json
 
 init-dry:
     just run init --silent --force

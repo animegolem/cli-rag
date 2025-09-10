@@ -57,7 +57,7 @@ pub enum Commands {
         #[arg(long, default_value_t = false)]
         separate: bool,
     },
-    Doctor {},
+    Info {},
     Search {
         #[arg(long, short = 'q')]
         query: String,
