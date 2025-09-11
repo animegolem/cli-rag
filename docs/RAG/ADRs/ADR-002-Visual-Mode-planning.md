@@ -5,7 +5,7 @@ tags:
   - NeoVIM
   - rataTUI
   - Emacs
-status: draft
+status: planning
 depends_on:
   - ADR-01
   - ADR-003
@@ -34,15 +34,17 @@ This screen
 3. Lists projects by status if the kanban_status and kanban_statusline front matter are active. 
 4. Lists tracked notes and templates. 
 
-The - [] todo items are live. If checked the application works like an LSP and updates the original instance in the linked note. ~~[{TODO}: Note that displays as a reminder]~~ 
+The - [] todo items are live. see the `Thoughts about GTD shapes` section for further clarity. 
 
 The date it's marked done is tracked in the index and it falls off the agenda screen either 24 hours later or per user setting in the toml.  
    
   ```bash 
 V ToDo ! 
-	-[] TODO@HIGH: Critical parser bug | Note:[[IMP-005]] | Created: 2025-09-01 
-	-[] TODO@MED:  Refactor validation  | Note:[[IMP-005]] | Created: 2025-08-27
-	-[] TODO: Default priority task | Note:[[IMP-003]] | Created: 2025-09-03
+	-[] TODO@10: Critical parser bug | Note:[[IMP-005]] 
+	    -[] implement feature in code 
+	    -[] create unit tests 
+	-[] TODO@MED:  Refactor validation  | Note:[[IMP-005]] 
+	-[] TODO: Default priority task | Note:[[IMP-003]] 
 V Due_Dates
     - 2025-8-16: IMP-001 **OVERDUE!** # past due color coded red and gets a flag 
     - 2025-9-03: IMP-004 
@@ -206,13 +208,73 @@ A new implementation ticket will be...	   |	  │    │                        
 RETURN: Select | SPACE+A: AgendaView | SPACE+F: FuzzyView | SPACE+G: GraphView | CTRL+G: GraphOverlay 
 ```
 
+
+## Notes 
+
+### Thoughts about GTD shapes 
+
+#### Approach 1 
+
+The Current concept is a simple [bounded] box with : as a divider. Commands are in a [{curly brace}, {comma separated}: any text that should show up with the reminder goes here.] 
+
+The concept was it then shows up as a `- []` that can be filled on the agenda screen. In the event it's marked out the note would be updated like so;
+
+~~[{TODO@10}, {DATE}: any text that should show up with the reminder goes here.]~~ 
+
+1-10 being intensity. 
+or 'high, medium, low'
+
+You could imagine an expanded multi-line version eg:
+
+```
+[{TODO@10}: Implement the big new feature 
+- [ ] refactor the code 
+- [ ] implement the thing 
+- [ ] lots of tests
+]
+```
+
+This is however, not actually for most parsers valid markdown. 
+
+#### Approach 2
+
+Another approach is just having heading flags 
+
+```
+## Implement the new big feature 10 [@TODO:10]
+- [ ] refactor the code 
+- [ ] implement the thing 
+- [ ] lots of tests
+```
+
+This is dramatically less clear to parse but is arguably the most idiomatic markdown approach. It in theory does not really complicate the prior tagging and can support single item notes. when complete ~~[TODO:10]~~
+
+I dont know how ocd the average person is but im very specific in my headings and don't love adding extra ones in. But this is also the system most suited to "upgrading" an existing note. 
+
+#### Approach 3 
+
+The nuclear option if i'm going to be in emacs anyway is directly honor org syntax. I don't feel great about this option but it's /arguably/ the most standards compliant path in a very strange and very arguably sense. i
+
+The biggest single advantage of org's syntax is i've pinned a very narrow world of "commands" with defined logic where org is a much looser world where this is a lisp hook directly; 
+
+```lisp
+(setq org-todo-keywords
+      '((sequence "TODO" "FEEDBACK" "VERIFY" "|" "DONE" "DELEGATED")))
+```
+
+This could be handled with out a huge lift in the toml or lua configs but the question I think that need be asked is "what if anything does this get me that my style doesn't?"
+
+The raw tracking seems to mostly come down to the narrow extra nuance. This would be a very direct and simple LSP action to update. Potentially given it's a 1:1 swap even simpler than the "object" style of approach 1. These are not automatically mutually exclusive. 
+
+The ease in swapping is traded for the lowered clarity around the question of "what content is part of the note"
+
 ### Thoughts about form factors
 
 #### TUI
 
 #### .nvim 
 
-#### .el
+#10
 
 Meaningfully I am typing this in emacs right now. It and obsidian are what i actually use. 
 
@@ -221,7 +283,7 @@ Meaningfully I am typing this in emacs right now. It and obsidian are what i act
 
 
 ## Consequences
-<!-- What becomes easier or more difficult to do because of this change? -->
+<!-- Wha10es easier or more difficult to do because of this change? -->
 
 ## Updates
 <!-- Changes that happened when the rubber met the road -->

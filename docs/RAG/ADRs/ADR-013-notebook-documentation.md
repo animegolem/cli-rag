@@ -3,7 +3,7 @@ id: ADR-013
 tags:
   - documentation
   - aesthetics
-status: pending
+status: accepted
 depends_on: ADR-012
 created_date: 2025-08-29
 last_modified: 2025-08-29

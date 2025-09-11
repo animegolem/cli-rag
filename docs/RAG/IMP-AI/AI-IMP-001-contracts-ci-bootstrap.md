@@ -72,13 +72,15 @@ Unify index writing to single path `config.scan.index_path`; ensure edges carry 
 - `docs/RAG/BRIDGE_PLAN_V1.md`
 
 ### Implementation Checklist
-- [ ] Write only one authoritative index at `scan.index_path`.
-- [ ] Edges include `{from,to,kind}`; mention‑derived edges include `locations[{path,line}]`.
+- [x] Write only one authoritative index at `scan.index_path`.
+- [x] Edges include `{from,to,kind}`; mention‑derived edges include `locations[{path,line}]`.
 - [ ] Populate minimal `computed` fields per schema.
 
 ### Acceptance Criteria
 When I run non‑dry validate
 Then `.cli-rag/index.json` validates against `contracts/v1/index/index.schema.json`.
+
+Status: unified writer implemented; basic integration test ensures `depends_on` and `mentions` edges with locations are present.
 
 ## Issues Encountered
 N/A at ticket creation.

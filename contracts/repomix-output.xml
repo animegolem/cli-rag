@@ -1,0 +1,1542 @@
+This file is a merged representation of the entire codebase, combined into a single document by Repomix.
+
+<file_summary>
+This section contains a summary of this file.
+
+<purpose>
+This file contains a packed representation of the entire repository's contents.
+It is designed to be easily consumable by AI systems for analysis, code review,
+or other automated processes.
+</purpose>
+
+<file_format>
+The content is organized as follows:
+1. This summary section
+2. Repository information
+3. Directory structure
+4. Repository files (if enabled)
+5. Multiple file entries, each consisting of:
+  - File path as an attribute
+  - Full contents of the file
+</file_format>
+
+<usage_guidelines>
+- This file should be treated as read-only. Any changes should be made to the
+  original repository files, not this packed version.
+- When processing this file, use the file path to distinguish
+  between different files in the repository.
+- Be aware that this file may contain sensitive information. Handle it with
+  the same level of security as you would the original repository.
+</usage_guidelines>
+
+<notes>
+- Some files may have been excluded based on .gitignore rules and Repomix's configuration
+- Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
+- Files matching patterns in .gitignore are excluded
+- Files matching default ignore patterns are excluded
+- Files are sorted by Git change count (files with more changes are at the bottom)
+</notes>
+
+</file_summary>
+
+<directory_structure>
+v1/
+  cli/
+    ai_get.schema.json
+    ai_index_apply_report.schema.json
+    ai_index_plan.schema.json
+    graph.schema.json
+    info.schema.json
+    path.schema.json
+    search_result.schema.json
+    validate_result.schema.json
+  config/
+    user_config/
+      templates/
+        ADR-concept.fnl
+        ADR-concept.lua
+        ADR.toml
+      cli-rag.toml
+    resolved_config.json
+  index/
+    index.schema.json
+global-conventions.md
+</directory_structure>
+
+<files>
+This section contains the contents of the repository's files.
+
+<file path="v1/cli/ai_get.schema.json">
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "contracts/cli/v1/ai_get.schema.json",
+  "title": "ai get v1",
+  "type": "object",
+  "required": ["protocolVersion", "retrievalVersion", "id", "schema", "title", "file", "frontmatter", "content", "neighbors", "limits"],
+  "properties": {
+    "protocolVersion": { "type": "integer" },
+    "retrievalVersion": { "type": "integer" },
+    "id": { "type": "string" },
+    "schema": { "type": "string" },
+    "title": { "type": "string" },
+    "file": { "type": "string" },
+    "frontmatter": { "type": "object", "additionalProperties": true },
+    "content": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["type", "text"],
+        "properties": {
+          "type": { "type": "string", "const": "text" },
+          "text": { "type": "string" },
+          "tokenEstimate": { "type": "integer", "minimum": 0 }
+        },
+        "additionalProperties": false
+      }
+    },
+    "neighbors": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "title", "schema", "path", "distance", "discoveredFrom", "edge"],
+        "properties": {
+          "id": { "type": "string" },
+          "title": { "type": "string" },
+          "schema": { "type": "string" },
+          "path": { "type": "string" },
+          "distance": { "type": "integer", "minimum": 1 },
+          "discoveredFrom": { "type": "string" },
+          "edge": { "type": "string" },
+          "status": { "type": ["string", "null"] },
+          "tags": { "type": "array", "items": { "type": "string" } },
+          "kanbanStatusLine": { "type": ["string", "null"] },
+          "lastModified": { "type": ["string", "null"], "format": "date-time" },
+          "score": { "type": ["number", "null"] },
+          "content": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["type", "text"],
+              "properties": {
+                "type": { "type": "string", "const": "text" },
+                "text": { "type": "string" },
+                "tokenEstimate": { "type": "integer", "minimum": 0 }
+              },
+              "additionalProperties": false
+            }
+          },
+          "contentOutline": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["heading", "firstLines"],
+              "properties": {
+                "heading": { "type": "string" },
+                "firstLines": { "type": "array", "items": { "type": "string" } }
+              },
+              "additionalProperties": false
+            }
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "limits": {
+      "type": "object",
+      "required": ["depth", "maxFanout"],
+      "properties": {
+        "depth": { "type": "integer", "minimum": 0 },
+        "maxFanout": { "type": "integer", "minimum": 0 }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}
+</file>
+
+<file path="v1/cli/ai_index_apply_report.schema.json">
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "contracts/cli/v1/ai_index_apply_report.schema.json",
+  "title": "ai index apply report v1",
+  "type": "object",
+  "required": ["ok", "written", "clustersApplied", "membersTagged", "warnings"],
+  "properties": {
+    "ok": { "type": "boolean" },
+    "written": {
+      "type": "object",
+      "required": ["cache", "frontmatter"],
+      "properties": {
+        "cache": { "type": "boolean" },
+        "frontmatter": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    },
+    "clustersApplied": { "type": "integer", "minimum": 0 },
+    "membersTagged": { "type": "integer", "minimum": 0 },
+    "warnings": { "type": "array", "items": { "type": "string" } }
+  },
+  "additionalProperties": false
+}
+</file>
+
+<file path="v1/cli/ai_index_plan.schema.json">
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "contracts/cli/v1/ai_index_plan.schema.json",
+  "title": "ai index plan v1",
+  "type": "object",
+  "required": ["version", "generatedAt", "sourceIndexHash", "params", "clusters"],
+  "properties": {
+    "version": { "type": "integer" },
+    "generatedAt": { "type": "string", "format": "date-time" },
+    "sourceIndexHash": { "type": "string" },
+    "params": {
+      "type": "object",
+      "properties": {
+        "edges": { "type": "array", "items": { "type": "string" } },
+        "minClusterSize": { "type": "integer", "minimum": 1 },
+        "schema": { "type": ["string", "null"] }
+      },
+      "additionalProperties": false
+    },
+    "clusters": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["clusterId", "members", "metrics", "label", "summary", "tags"],
+        "properties": {
+          "clusterId": { "type": "string" },
+          "members": { "type": "array", "items": { "type": "string" } },
+          "representatives": { "type": "array", "items": { "type": "string" } },
+          "metrics": {
+            "type": "object",
+            "required": ["size", "density"],
+            "properties": {
+              "size": { "type": "integer", "minimum": 1 },
+              "density": { "type": "number", "minimum": 0, "maximum": 1 }
+            },
+            "additionalProperties": false
+          },
+          "label": { "type": "string" },
+          "summary": { "type": "string" },
+          "tags": { "type": "array", "items": { "type": "string" } }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}
+</file>
+
+<file path="v1/cli/graph.schema.json">
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "contracts/cli/v1/graph.schema.json",
+  "title": "graph v1",
+  "type": "object",
+  "required": ["root", "nodes", "edges"],
+  "properties": {
+    "root": {
+      "type": "object",
+      "required": ["id"],
+      "properties": { "id": { "type": "string" } },
+      "additionalProperties": true
+    },
+    "nodes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "schema"],
+        "properties": {
+          "id": { "type": "string" },
+          "title": { "type": ["string", "null"] },
+          "schema": { "type": "string" }
+        },
+        "additionalProperties": true
+      }
+    },
+    "edges": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["from", "to", "kind"],
+        "properties": {
+          "from": { "type": "string" },
+          "to": { "type": "string" },
+          "kind": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}
+</file>
+
+<file path="v1/cli/info.schema.json">
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "contracts/cli/v1/info.schema.json",
+  "title": "info v1",
+  "type": "object",
+  "required": ["protocolVersion", "config", "index", "cache", "capabilities"],
+  "properties": {
+    "protocolVersion": { "type": "integer" },
+    "config": {
+      "type": "object",
+      "required": ["path", "version", "deprecated"],
+      "properties": {
+        "path": { "type": "string" },
+        "version": { "type": "string" },
+        "deprecated": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    },
+    "index": {
+      "type": "object",
+      "required": ["path", "exists"],
+      "properties": {
+        "path": { "type": "string" },
+        "exists": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    },
+    "cache": {
+      "type": "object",
+      "required": ["aiIndexPath", "exists"],
+      "properties": {
+        "aiIndexPath": { "type": "string" },
+        "exists": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    },
+    "capabilities": {
+      "type": "object",
+      "properties": {
+        "watchNdjson": { "type": "boolean" },
+        "aiGet": {
+          "type": "object",
+          "properties": { "retrievalVersion": { "type": "integer" } },
+          "additionalProperties": true
+        },
+        "pathLocations": { "type": "boolean" },
+        "aiIndex": { "type": "boolean" },
+        "luaApiVersion": { "type": "integer" }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}
+</file>
+
+<file path="v1/cli/path.schema.json">
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "contracts/cli/v1/path.schema.json",
+  "title": "path v1",
+  "type": "object",
+  "required": ["ok", "path", "edges"],
+  "properties": {
+    "ok": { "type": "boolean" },
+    "path": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "schema"],
+        "properties": {
+          "id": { "type": "string" },
+          "title": { "type": ["string", "null"] },
+          "schema": { "type": "string" }
+        },
+        "additionalProperties": true
+      }
+    },
+    "edges": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["from", "to", "kind", "locations"],
+        "properties": {
+          "from": { "type": "string" },
+          "to": { "type": "string" },
+          "kind": { "type": "string" },
+          "locations": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["path", "line"],
+              "properties": {
+                "path": { "type": "string" },
+                "line": { "type": "integer", "minimum": 1 }
+              },
+              "additionalProperties": false
+            }
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}
+</file>
+
+<file path="v1/cli/search_result.schema.json">
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "contracts/cli/v1/search_result.schema.json",
+  "title": "search result v1",
+  "type": "object",
+  "required": ["results"],
+  "properties": {
+    "results": {
+      "type": "array",
+      "items": {
+        "oneOf": [
+          {
+            "type": "object",
+            "required": ["kind", "id", "title", "schema", "path"],
+            "properties": {
+              "kind": { "const": "note" },
+              "id": { "type": "string" },
+              "title": { "type": "string" },
+              "schema": { "type": "string" },
+              "path": { "type": "string" },
+              "tags": { "type": "array", "items": { "type": "string" } },
+              "status": { "type": ["string", "null"] },
+              "kanbanStatus": { "type": ["string", "null"] },
+              "score": { "type": ["number", "null"] },
+              "lastModified": { "type": ["string", "null"], "format": "date-time" },
+              "lastAccessed": { "type": ["string", "null"], "format": "date-time" }
+            },
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "required": ["kind", "id", "noteId", "schema", "path", "line", "text"],
+            "properties": {
+              "kind": { "const": "todo" },
+              "id": { "type": "string" },
+              "noteId": { "type": "string" },
+              "schema": { "type": "string" },
+              "path": { "type": "string" },
+              "line": { "type": "integer", "minimum": 1 },
+              "priority": { "type": ["string", "null"] },
+              "text": { "type": "string" },
+              "createdAt": { "type": ["string", "null"], "format": "date-time" },
+              "completedAt": { "type": ["string", "null"], "format": "date-time" }
+            },
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "required": ["kind", "id", "noteId", "schema", "path", "kanbanStatus"],
+            "properties": {
+              "kind": { "const": "kanban" },
+              "id": { "type": "string" },
+              "noteId": { "type": "string" },
+              "schema": { "type": "string" },
+              "path": { "type": "string" },
+              "kanbanStatus": { "type": "string" },
+              "kanbanStatusLine": { "type": ["string", "null"] },
+              "dueDate": { "type": ["string", "null"], "format": "date" }
+            },
+            "additionalProperties": false
+          }
+        ]
+      }
+    }
+  },
+  "additionalProperties": false
+}
+</file>
+
+<file path="v1/cli/validate_result.schema.json">
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "contracts/cli/v1/validate_result.schema.json",
+  "title": "validate result v1",
+  "type": "object",
+  "required": ["ok", "docCount", "diagnostics"],
+  "properties": {
+    "ok": { "type": "boolean" },
+    "docCount": { "type": "integer", "minimum": 0 },
+    "diagnostics": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["severity", "code", "msg"],
+        "properties": {
+          "severity": { "type": "string", "enum": ["error", "warning", "info"] },
+          "code": { "type": "string" },
+          "msg": { "type": "string" },
+          "path": { "type": "string" },
+          "span": {
+            "type": "array",
+            "items": { "type": "integer", "minimum": 0 },
+            "minItems": 2,
+            "maxItems": 2
+          },
+          "field": { "type": "string" },
+          "nodeId": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}
+</file>
+
+<file path="v1/config/user_config/templates/ADR-concept.fnl">
+;; Example overlay module (usable as .cli-rag.fnl or a template-specific Fennel)
+{
+ :scan {
+  :filepaths ["ADRs" "IMP"]
+  :index_path ".cli-rag/index.json"
+ }
+
+ :graph {
+  :depth 1
+  :include_bidirectional true
+  :ai {
+   :depth 1
+   :default_fanout 5
+   :include_bidirectional true
+   :neighbor_style "metadata"
+   :outline_lines 2
+  }
+ }
+
+ :hooks {
+  :id_generator (fn [ctx]
+    (let [n (. ctx.index :next_numeric_id "ADR")
+          id (string.format "ADR-%03d" n)
+          title (or (. ctx :request :title) "untitled")
+          filename (.. id "-" (ctx.util.kebab_case title) ".md")]
+      {:id id :filename filename}))
+
+  :render_frontmatter (fn [note ctx]
+    {
+     :id note.id
+     :status "draft"
+     :created_date (ctx.clock.today_iso)
+     :tags []
+    })
+
+  :validate (fn [note ctx]
+    (let [diags []
+          min_out (or (. ctx :schema :validate :edges :wikilinks :min_outgoing) 0)
+          link_count (length (. note :body :links))]
+      (when (< link_count min_out)
+        (table.insert diags {:severity "warning" :code "LINK_MIN" :msg "Add at least 1 wikilink"}))
+      {:diagnostics diags}))
+
+  :template_prompt (fn [ctx]
+    "# Instructions\nGenerate an ADR…")
+
+  :template_note (fn [ctx]
+    ;; Return full template text. Use TOML template by default; override here if needed.
+    nil)
+ }
+}
+</file>
+
+<file path="v1/config/user_config/templates/ADR-concept.lua">
+-- Example overlay module (usable as .cli-rag.lua or a template-specific Lua)
+local M = {}
+
+M.scan = {
+filepaths = { "ADRs", "IMP" },
+index_path = ".cli-rag/index.json",
+}
+
+M.graph = {
+depth = 1,
+include_bidirectional = true,
+ai = {
+depth = 1,
+default_fanout = 5,
+include_bidirectional = true,
+neighbor_style = "metadata",
+outline_lines = 2,
+}
+}
+
+M.hooks = {
+id_generator = function(ctx)
+local n = ctx.index:next_numeric_id("ADR")
+local id = string.format("ADR-%03d", n)
+local title = (ctx.request and ctx.request.title) or "untitled"
+local filename = string.format("%s-%s.md", id, ctx.util.kebab_case(title))
+return { id = id, filename = filename }
+end,
+
+render_frontmatter = function(note, ctx)
+return {
+id = note.id,
+status = "draft",
+created_date = ctx.clock.today_iso(),
+tags = {},
+}
+end,
+
+validate = function(note, ctx)
+local diags = {}
+local min_out = (((ctx.schema or {}).validate or {}).edges or {}).wikilinks and (((ctx.schema.validate.edges.wikilinks or {}).min_outgoing) or 0) or 0
+local link_count = #(note.body.links or {})
+if link_count < min_out then
+table.insert(diags, { severity = "warning", code = "LINK_MIN", msg = "Add at least 1 wikilink" })
+end
+return { diagnostics = diags }
+end,
+
+template_prompt = function(ctx)
+return "# Instructions\nGenerate an ADR…"
+end,
+
+template_note = function(ctx)
+-- Return full template text. Use TOML template by default; override here if needed.
+return nil
+end,
+}
+
+return M
+</file>
+
+<file path="v1/config/user_config/templates/ADR.toml">
+#: =============================================================================
+#:                                # --- SCHEMA --- #
+#: =============================================================================
+#: 1. Define `[[schema]]` blocks to create a note type. Assign a `name`.
+#: 2. (Optional) Pin a `config_version` to prevent breaking changes.
+#: 3. Set one or more `file_patterns` for discovery.
+#: 4. Define the rules for filename generation.
+#: 5. Use `template` to define the full structure of the final note.
+#: 6. Define the custom and system frontmatter if present.
+#: 7. Define custom validation rules using `schema.validate`.
+[[schema]]
+name = "ADR"
+
+#: =============================================================================
+#:                            # --- Version --- #
+config_version = "0.1"
+
+#: =============================================================================
+#:                           # --- DISCOVERY --- #
+#: =============================================================================
+#: Set discovery rules for notes types. Accepts globs/regex.
+#: Notes must be under your defined filepaths in `.cli-rag.toml` to be discovered.
+file_patterns = [ "ADR-*.md" ]
+
+#: =============================================================================
+#:                     # --- TEMPLATES & GENERATION --- #
+#: =============================================================================
+#: The `[schema.new]` block configures the `new` command and defines how
+#: notes are generated.
+#: This block configures both how the note is tracked and what template is used.
+#: If no `id_generator`is defined the note will be tracked by filename.
+#: The `filename_template` defines the structure for the output filename.
+#:
+#:                    #--- FILENAME TEMPLATE BUILDER --- #
+#:   Advanced rules for creating custom titles when using the 'new' command
+#: +-------------------+-------------------------------------------------------+
+#: |        Filter     |                   Description                         |
+#: +-------------------+-------------------------------------------------------+
+#: | `{{title}}`       |  Injects the string from the --title flag.            |
+#: +-------------------+-------------------------------------------------------+
+#: | `{{id}}`          |  Injects the stable ID from the id_generator.         |
+#: |                   |  Use only if the `id_generator` is defined.           |
+#: +-------------------+-------------------------------------------------------+
+#: | `{{schema.name}}` |  Injects the name of the schema. Used as-is.          |
+#: +-------------------+-------------------------------------------------------+
+#: | `{{now}}`         |  Injects system time. Default = ISO 8601              |
+#: +-------------------+-------------------------------------------------------+
+#:
+#:                       # --- Modifier Rules --- #
+#: +-----------------------+--------------------------------------------------+
+#: |        Filter         |                    Example                       |
+#: +-----------------------+--------------------------------------------------+
+#: |` kebab-case `         | {{title|kebab-case}} --> "my-new-feature"        |
+#: +-----------------------+--------------------------------------------------+
+#: | `snake_case`          | {{title|snake_case}} --> "my_new_feature"        |
+#: +-----------------------+--------------------------------------------------+
+#: | `SCREAMING_SNAKE_CASE`| {{title|SCREAMING_SNAKE_CASE}} -->               |
+#: |                       | "MY_NEW_FEATURE"                                 |
+#: +-----------------------+--------------------------------------------------+
+#: | `camelCase`           | {{title|camelCase}} --> "myNewFeature"           |
+#: +-----------------------+--------------------------------------------------+
+#: | `PascalCase`          | {{title|PascalCase}} --> "MyNewFeature"          |
+#: +-----------------------+--------------------------------------------------+
+#: | `date:"<strftime>"`   | {{now \| date:"%Y-%m-%d"}} -> "2025-08-26"       |
+#: +-----------------------+--------------------------------------------------+
+[schema.new]
+#: Define the name template for the `new` command. unset = filename
+id_generator = { strategy = "increment", prefix = "ADR-", padding = 3 }
+#: Options are ["increment", "datetime", "uuid"]
+#: Prefix is not mandatory if using the later two options
+filename_template = "{{id}}-{{title|kebab-case}}.md"
+
+#: =============================================================================
+#:                           # --- TEMPLATES --- #
+#: =============================================================================
+#: Manually defined frontmatter via the template are not tracked by `validate`.
+#: The variables listed below are injected by the `new` command.
+#:
+#:                       # --- TEMPLATE VARIABLES --- #
+#: +-----------------+---------------------------------------------------------+
+#: | {{id}}          | Inject the `ID` field as defined by `id_generator`.     |
+#: |                 | Fallsback to filename.                                  |
+#: +-----------------+---------------------------------------------------------+
+#: | {{title}}       | Inject the title provided via the `--title <T>` flag    |
+#: |                 | on the `new` command.                                   |
+#: +-----------------+---------------------------------------------------------+
+#: | {{frontmatter}} | Inject items within the `schema.frontmatter` table into |
+#: |                 | the template                                            |
+#: +-----------------+---------------------------------------------------------+
+#: | {{LOC|100}}     | Set the maximum number of lines per heading.            |
+#: +-----------------+---------------------------------------------------------+
+#: | {{date}}        | Today's date. **Default format:** `YYYY-MM-DD`.         |
+#: +-----------------+---------------------------------------------------------+
+#: | {{time}}        | Current time. **Default format:** `HH:mm`.              |
+#: +-----------------+---------------------------------------------------------+
+[schema.new.template]
+[schema.new.template.prompt]
+template = """
+# Instructions
+**Generate an Architectural Decision Record based on the user's request.**
+- Fill out the template below exactly as provided.
+- For the 'status' field, you MUST use one of the following values:
+- [draft, proposed, accepted, superseded, cancelled].
+- For the 'tags' field, provide a comma-separated list of relevant technical tags.
+- Fill in the content for each heading (Objective, Context, etc.) based on the user's goal.
+"""
+
+[schema.new.template.note]
+template = """
+{{frontmatter}}
+
+# {{title}}
+
+## Objective
+<!-- A concise statement explaining the goal of this decision. -->
+{{LOC|50}}
+
+## Context
+<!-- What is the issue that we're seeing that is motivating this decision or change? -->
+{{LOC|300}}
+
+## Decision
+<!-- What is the change that we're proposing and/or doing? -->
+{{LOC|50}}
+
+## Consequences
+<!-- What becomes easier or more difficult to do because of this change? -->
+{{LOC|50}}
+
+## Updates
+<!-- Changes that happened when the rubber met the road -->
+{{LOC|100}}
+"""
+
+#: =============================================================================
+#:            # --- ADVANCED: CUSTOM TEMPLATE GENERATOR --- #
+#: =============================================================================
+#: Use the OpenAPI contract to write a custom lua template manager. Buyer Beware.
+# lua_generator = "path/to/script.lua"
+
+#: =============================================================================
+#:                        # --- ~.FRONTMATTER  --- #
+#: =============================================================================
+#: Frontmatter can be "System" or "User".
+#: Named Graph edges can be defined as well.
+#: Only frontmatter defined below will be tracked by the `validate` command.
+#:
+#: =============================================================================
+#:                      # --- FRONT MATTER SYLES --- #
+#: +-----------------------+---------------------------------------------------+
+#: | `user_frontmatter`    | Define arbitrary YAML frontmatter. Validation     |
+#: |                       | logic can be created via String, Glob or regex.   |
+#: +-----------------------+---------------------------------------------------+
+#: | `system_frontmatter`  | Runs pre-configured logic against YAML            |
+#: |                       | frontmatter. See table below.                     |
+#: +-----------------------+---------------------------------------------------+
+#: | `~.frontmatter.edges` | Define all tracked/labeled graph edges for the    |
+#: |                       | DAG. Will error if ID does not exist in index.    |
+#: +-----------------------+---------------------------------------------------+
+#: | `~.frontmatter.gtd`   | System frontmatter that triggers inclusion on     |
+#: |                       | the main screen on neovim and the GTD command     |
+#: +-----------------------+---------------------------------------------------+
+[schema.frontmatter]
+# Regular user defined fields. Cannot use `system_frontmatter` namespace.
+user_frontmatter = [
+  "tags",
+  "priority",
+  "confidence_score"
+  ]
+
+#: =============================================================================
+#:                       # --- SYSTEM_FRONTMATTER --- #
+#: +-----------------+---------------------------------------------------------+
+#: | `node_id`       | Defines the note on the DAG using `id_generator`.       |
+#: +-----------------+---------------------------------------------------------+
+#: | `created_date`   | Updates the note with system time when using `new`     |
+#: +-----------------+---------------------------------------------------------+
+#: | `last_modified` | if `watch` is active the note will be updated with a    |
+#: |                 | new modified time on edit                               |
+#: +-----------------+---------------------------------------------------------+
+#: Explicitly defined system fields with special behavior
+system_frontmatter = [
+ "node_id",
+ "created_date",
+ "last_modified",
+ ]
+
+#: =============================================================================
+#:                      # --- `~.frontmatter.edges` --- #
+#: +--------------------+------------------------------------------------------+
+#: | `graph_edges`      |  Define all tracked/labeled graph edges for the      |
+#: |                    |  DAG. Will error if ID does not exist in index.      |
+#: +--------------------+------------------------------------------------------+
+[schema.frontmatter.edges]
+#: string[] of edge fields - automatically added to frontmatter. `validate` will
+#: ensure linked ID's exist.
+graph_edges = [
+  "depends_on",
+  "blocked_by",
+  "supersedes",
+  "implements",
+  # Additional edges can be defined freely.
+  ]
+
+#: =============================================================================
+#:                      # --- `~.frontmatter.gtd` --- #
+#: +-----------------+---------------------------------------------------------+
+#: | `kanban_status` | Define Kanban status. Displayed on the agenda           |
+#: |                 | screen. Provide a array of legal statuses.              |
+#: +-----------------+---------------------------------------------------------+
+#: | `kanban_        | Define a status line that shows under the kanban status |
+#: | statusline`     | on the agenda screen. true or false. `default = "false"`|
+#: +-----------------+---------------------------------------------------------+
+#: | `due_date`      | Set a due date. Appears on neovim agenda x days prior.  |
+#: |                 | true or false to enable.                                |
+#: +-----------------+---------------------------------------------------------+
+[schema.frontmatter.gtd]
+kanban_status = [
+  "backlog",
+  "planned",
+  "in-progress",
+  "completed",
+  "cancelled"
+  ]
+kanban_statusline = true
+
+
+#: =============================================================================
+#:                   # --- ADVANCED: CUSTOM VALIDATOR --- #
+#: =============================================================================
+#: Use the OpenAPI contract to write a custom lua validator. Buyer Beware.
+# lua_validator = "path/to/script.lua"
+
+#: =============================================================================
+#:                           # --- VALIDATION --- #
+#: =============================================================================
+#: These blocks configure the `validate` command largely using globs and regex.
+#: Construct your configuration using the options below.
+
+#: =============================================================================
+#:                         # --- VALIDATORS KEYS --- #
+#: +----------------------------------------------------------------------------+
+#: | Validator Table                 | Configuration Key  | Description/Options |
+#: +---------------------------------+--------------------+---------------------+
+#: | [schema.validate]               | Top level config inherited to all tables |
+#: |                                 |--------------------+---------------------|
+#: |                                 | `severity`         | accepts "error"     |
+#: |                                 |  (all tables)      | "warning", "ignore" |
+#: +----------------------------------------------------------------------------+
+[schema.validate]
+severity = "error" # Default severity for all validate rules
+
+#: =============================================================================
+#:                       # --- VALIDATOR: FRONTMATTER --- #
+#: +----------------------------------------------------------------------------+
+#: | ↳ [~.frontmatter.allow_unknown] | Determine behavior for undefined         |
+#: |                                 | frontmatter                              |
+#: |                                 |--------------------+---------------------|
+#: |                                 | `allow_unknown`    | Policy for extra    |
+#: |                                 |                    | fields.             |
+#: |                                 |                    | Options: "true",    |
+#: |                                 |                    | "false",            |
+#: +---------------------------------+--------------------+---------------------+
+#: | ↳ [~.frontmatter.fields]        | Custom rules against `user_frontmatter`  |
+#: |                                 |------------------------------------------|
+#: |                                 | `regex`            | Accepts standad     |
+#: |                                 |                    | regex.              |
+#: |                                 +--------------------+---------------------+
+#: |                                 | `enum`             | An array of exact   |
+#: |                                 |                    | string matches.     |
+#: |                                 +--------------------+---------------------+
+#: |                                 | `globs`            | An array of glob    |
+#: |                                 |                    | patterns.           |
+#: |                                 +--------------------+---------------------+
+#: |                                 | `float`            | A table with        |
+#: |                                 |                    | optional `min` and  |
+#: |                                 |                    | `max` float values. |
+#: |                                 +--------------------+---------------------+
+#: |                                 | `integer`          | A table with        |
+#: |                                 |                    | optional `min` and  |
+#: |                                 |                    | `max` float values. |
+#: +----------------------------------------------------------------------------+
+[schema.validate.frontmatter]
+[schema.validate.frontmatter.allow_unknown]
+#: Policy for fields not explicitly listed in `user_frontmatter`
+#: or `system_frontmatter`.
+#: default = true
+allow_unknown = true
+severity = "warning" # Overrides default
+#:  --- Field-specific Rules ---  :#
+[schema.validate.frontmatter.fields]
+node_id     = { regex = "^ADR-\\d{3}$" }
+tags   = { regex = "^[^\\n]*$", severity = "warning" }
+related_files = {  globs = ["*.exs","*.py","*.js","*.md","*.toml"] }
+priority = { integer = { min = 0, max = 100 } }
+confidence_score = { float = { min = 0.0, max = 1.0 }, severity = "ignore" }
+
+#: =============================================================================
+#:                          # --- VALIDATOR: BODY --- #
+#: +----------------------------------------------------------------------------+
+#: | [schema.validate.body]          | Top-most table for body validation       |
+#: +---------------------------------+--------------------+---------------------+
+#: | ↳ [~.body.headings]             | Various body Validation settings         |
+#: |                                 |------------------------------------------|
+#: |                                 | `heading_policy`   | How to check heads. |
+#: |                                 |                    | Options: "exact",  |
+#: |                                 |                    | "missing_only",     |
+#: |                                 |                    | "ignore".           |
+#: |                                 |--------------------+---------------------+
+#: |                                 | `max_count`        | INT. Maximum Number |
+#: |                                 |                    | of headings allowed |
+#: |                                 |                    | in a document.      |
+#: +---------------------------------+--------------------+---------------------+
+#: | ↳ [~.body.line_count]           | Prevents the LLM from outputting over    |
+#: |                                 | `x` LOC                                  |
+#: |                                 |--------------------+---------------------|
+#: |                                 | `scan_policy`      | When to run check.  |
+#: |                                 |                    | Options:            |
+#: |                                 |                    | "on_creation",      |
+#: |                                 |                    | "on_validate".      |
+#: +----------------------------------------------------------------------------+
+[schema.validate.body]
+[schema.validate.body.headings]
+#: Policy for matching headings against the note template.
+#: Options: [
+#: "exact" (exact match), "missing_only" (template headings required
+#: + additional headings are allowed), "ignore"
+#: ]
+heading_check = "missing_only"
+max_count = 10
+severity = "warning" # Override default
+[schema.validate.body.line_count]
+#: When to perform this check.
+#: define using {{LOC|`X`}} in the template manager.
+#: This set the number of lines **per heading**
+#: Options: "on_creation", "on_validate".
+scan_policy = "on_creation"
+
+#: =============================================================================
+#:                         # --- VALIDATOR: EDGES --- #
+#: +----------------------------------------------------------------------------+
+#: | [schema.validate.edges]         | Top level most for all graph config      |
+#: |                                 |------------------------------------------|
+#: |                                 | `required_edges`   | Define if an edge   |
+#: |                                 |                    | is MUST be set      |
+#: +---------------------------------+--------------------+---------------------+
+#: | ↳ [~.edges.wikilinks]           | Rules covering [[obsidian style]] links  |
+#: |                                 |------------------------------------------|
+#: |                                 | `min_outgoing`     | Int. Min required   |
+#: |                                 |                    | [[wikilinks]] out.  |
+#: |                                 |--------------------+---------------------+
+#: |                                 | `min_incoming`     | Int. Min required   |
+#: |                                 |                    | [[wikilinks]] in.   |
+#: +---------------------------------+--------------------+---------------------+
+#: | ↳ [~.edges.cross_schema]        | Rules for mutli schema DAGs.             |
+#: |                                 |------------------------------------------|
+#: |                                 | `allowed_targets`  | Define if graph     |
+#: |                                 |                    |edges traverse schema|
+#: +----------------------------------------------------------------------------+
+[schema.validate.edges]
+#: Cycle Protection is optional. "warn"|"error"|"ignore". Defaults to error.
+#: Weight influences results in the ai get, graph and search tools.
+#: Required fields will throw errors in `validate` if no value is set.
+#: accepts error|warn|ignore
+depends_on = { weight = 1.0, cycle_detection = "error", required = "error" }
+blocked_by = { weight = 0.9, cycle_detection = "ignore", required = "ignore" }
+supersedes = { weight = 0.7, cycle_detection = "ignore", required = "ignore" }
+implements = { weight = 0.5, cycle_detection = "ignore", required = "ignore" }
+
+[schema.validate.edges.wikilinks]
+min_outgoing = 1
+min_incoming = 0
+severity = "warning"
+
+[schema.validate.edges.cross_schema]
+# Define schema's that may be be set as a DAG edge.
+allowed_targets = ["ADR", "IMP-AI", "ADR-AI", "LOG-AI" ]
+
+#: =============================================================================
+#:                          # --- VALIDATOR: GTD --- #
+#: +----------------------------------------------------------------------------+
+#: | [schema.validate.gtd]           | Top level table for all GTD config       |
+#: |                                 |--------------------+---------------------|
+#: |                                 | `enable_TODO`      | Determine if TODO   |
+#: |                                 |                    | will be scanned on  |
+#: |                                 |                    | notes. true/false   |
+#: |                                 |--------------------+---------------------|
+#: |                                 | `enable_kanban`    | Determine if Kanban |
+#: |                                 |                    | will be scanned on  |
+#: |                                 |                    | notes. true/false   |
+#: |                                 |--------------------+---------------------|
+#: |                                 | `enable_kanban     | Determine if Kanban |
+#: |                                 | statusline`        | status will be used |
+#: |                                 |                    | for the agenda. T/F |
+#: |                                 |--------------------+---------------------|
+#: |                                 | `due_date_warning` | due dates will show |
+#: |                                 |                    | on the agenda screen|
+#: |                                 |                    | when due in X days. |
+#: |                                 |--------------------+---------------------|
+#: |                                 | `detect_cycles`    | enable or disable   |
+#: |                                 |                    | cycle detection.    |
+#: |                                 |                    | true or false.      |
+#: +----------------------------------------------------------------------------+
+[schema.validate.gtd]
+# Determine if {TODO@high}: note content is tracked and added to the agenda
+enable_TODO = true
+# Determine if the kanban yaml is tracked and added to the agenda
+enable_kanban = true
+# Determine if statusline is added to agenda, if present.
+enable_kanban_statusline = true
+# Items will be added to the agenda when due in X days. Accepts ints.
+due_date_warning = 5
+severity = "warning"
+</file>
+
+<file path="v1/config/user_config/cli-rag.toml">
+[config]
+#: =============================================================================
+#:                            # --- Version --- #
+#: =============================================================================
+#: Sets the config version for all top level rules. All imported notes inherit
+#: the same version.
+#: An individual `[[schema]`] can call this to remain on an older version
+config_version = "0.1"
+
+#: =============================================================================
+#:                            # --- SCAN --- #
+#: =============================================================================
+#: Settings related to discovery, filepaths, and scan process
+[config.scan]
+#: The root directories that cli-rag will scan for notes.
+#: All paths must be relative to the location of this `.cli-rag.toml` file.
+#: Defaults to the current directory ["."] if left empty.
+filepaths = ["file/path", "file/other/path"]
+#: By default, an index will be created at '.cli-rag/index.json'.
+#: This can be given an arbitrary override.
+#: File paths are relative to the location of this `.cli-rag.toml` file.
+index_path = "alternate/filepath/index.json"
+#: `hash_mode` controls HOW the tool detects if a file has changed.
+#: Defaults to `mtime`.
+#: +-----------+-----------------------------------------------------------+
+#: |  `mtime`  |   Fast but less accurate.                                 |
+#: |           |   Compares the file's "last modified" timestamp.          |
+#: +-----------+-----------------------------------------------------------+
+#: | `content` |  100% Accurate but slower.                                |
+#: |           |  Computes a hash of the entire file's content.            |
+#: +-----------+-----------------------------------------------------------+
+hash_mode = "mtime"
+#: `index_strategy` controls what is stored in the index for search.
+#: Defaults to content.
+#: +------------+----------------------------------------------------------+
+#: | `metadata` | Fastest option. Stores only front matter and links.      |
+#: +------------+----------------------------------------------------------+
+#: | `content`  | (Full-Text Search) Stores all metadata AND the           |
+#: |            | full text of every note.                                 |
+#: +------------+----------------------------------------------------------+
+index_strategy = "content"
+#tuning for large repos
+# parallel_workers = 4
+# cache_strategy = "aggressive"
+#: Remove directories or patterns from scanning to improve speed.
+#: Patterns are relative to the location of this `.cli-rag.toml` file.
+ignore_globs = ["**/node_modules/**", "**/dist/**"]
+#: default true
+# default is true; override here if needed
+ignore_symlinks = true
+
+#: =============================================================================
+#:                            # --- AUTHORING --- #
+#: =============================================================================
+#: Settings related to creating and editing notes
+[config.authoring]
+#: The editor to launch for new or existing notes.
+#: Uses $EDITOR or $VISUAL if not set.
+editor = "nvim"
+#: runs the `watch` command as a background process for live updates when
+#: visual mode is open and active. default = true
+background_watch = true
+
+#: =============================================================================
+#:                             # --- GRAPH --- #
+#: =============================================================================
+#: Default settings for universal graph traversal commands (graph, path, ai get)
+[config.graph]
+#: Default depth for traversing dependencies. Default = 1.
+depth = 1
+#: Whether to include dependents (backlinks) in traversals. default = true.
+include_bidirectional = true
+
+[config.graph.ai]
+#: Defaults for graph focused `ai` sub commands.
+#: Default depth for traversing dependencies. default 1 (note and neighbors)
+depth = 1
+#: Maximum neighbors shown per node. Default 5.
+default_fanout = 5
+#: Whether to include dependents (backlinks) in traversals. default = true
+include_bidirectional = true
+#: Accepts full|outline|metadata. Default metadata.
+#: metadata: { id, title, schema, path, distance, discoveredFrom, edge, status?, tags?, kanbanStatusline?, lastModified?, score? }
+#: full: same as metadata + content: [{ type:"text", text, tokenEstimate? }]
+#: outline: same as metadata + contentOutline: [{ heading, firstLines: [string] }]
+neighbor_style = "metadata"
+#: Only applies when `neighbor_style = "outline"` is active.
+#: Number of lines per heading. Accepts ints. Default = 2
+outline_lines = 2
+
+#: =============================================================================
+#:                        # --- TEMPLATE MANAGEMENT --- #
+#: =============================================================================
+#: For a cleaner .`cli-rag.toml` it's advised to import an external schema.
+#: Alternatively one or more `[[schema]]` may be defined inline below
+[config.templates]
+import = [ ".cli-rag/templates/EXAMPLE.toml" ]
+</file>
+
+<file path="v1/config/resolved_config.json">
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "contracts/config/v1/resolved_config.schema.json",
+  "title": "ResolvedConfig v1",
+  "type": "object",
+  "required": ["protocolVersion", "configVersion", "projectRoot", "scan", "authoring", "graph"],
+  "properties": {
+    "protocolVersion": { "type": "integer", "minimum": 1 },
+    "configVersion": { "type": "string" },
+    "luaApiVersion": { "type": "integer" },
+    "projectRoot": { "type": "string" },
+    "scan": {
+      "type": "object",
+      "required": ["filepaths", "indexPath", "hashMode", "indexStrategy", "ignoreGlobs", "ignoreSymlinks"],
+      "properties": {
+        "filepaths": { "type": "array", "items": { "type": "string" } },
+        "indexPath": { "type": "string" },
+        "hashMode": { "type": "string", "enum": ["mtime", "content"] },
+        "indexStrategy": { "type": "string", "enum": ["metadata", "content"] },
+        "ignoreGlobs": { "type": "array", "items": { "type": "string" } },
+        "ignoreSymlinks": { "type": "boolean" }
+      },
+      "additionalProperties": true
+    },
+    "authoring": {
+      "type": "object",
+      "required": ["editor", "backgroundWatch"],
+      "properties": {
+        "editor": { "type": "string" },
+        "backgroundWatch": { "type": "boolean" }
+      },
+      "additionalProperties": true
+    },
+    "graph": {
+      "type": "object",
+      "required": ["depth", "includeBidirectional", "ai"],
+      "properties": {
+        "depth": { "type": "integer", "minimum": 0 },
+        "includeBidirectional": { "type": "boolean" },
+        "ai": {
+          "type": "object",
+          "required": ["depth", "defaultFanout", "includeBidirectional", "neighborStyle", "outlineLines"],
+          "properties": {
+            "depth": { "type": "integer", "minimum": 0 },
+            "defaultFanout": { "type": "integer", "minimum": 0 },
+            "includeBidirectional": { "type": "boolean" },
+            "neighborStyle": { "type": "string", "enum": ["full", "outline", "metadata"] },
+            "outlineLines": { "type": "integer", "minimum": 0 }
+          },
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": true
+    },
+    "templates": {
+      "type": "object",
+      "properties": {
+        "import": { "type": "array", "items": { "type": "string" } }
+      },
+      "additionalProperties": true
+    },
+    "schemas": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "filePatterns"],
+        "properties": {
+          "name": { "type": "string" },
+          "configVersion": { "type": "string" },
+          "filePatterns": { "type": "array", "items": { "type": "string" } },
+          "new": {
+            "type": "object",
+            "properties": {
+              "idGenerator": {
+                "type": ["object", "null"],
+                "properties": {
+                  "strategy": { "type": "string", "enum": ["increment", "datetime", "uuid"] },
+                  "prefix": { "type": "string" },
+                  "padding": { "type": "integer", "minimum": 0 }
+                },
+                "additionalProperties": true
+              },
+              "filenameTemplate": { "type": "string" },
+              "template": {
+                "type": "object",
+                "properties": {
+                  "prompt": { "type": "string" },
+                  "note": { "type": "string" }
+                },
+                "additionalProperties": true
+              },
+              "luaGenerator": { "type": ["string", "null"] }
+            },
+            "additionalProperties": true
+          },
+          "frontmatter": {
+            "type": "object",
+            "properties": {
+              "user": { "type": "array", "items": { "type": "string" } },
+              "system": { "type": "array", "items": { "type": "string" } },
+              "edges": {
+                "type": "object",
+                "properties": {
+                  "graphEdges": { "type": "array", "items": { "type": "string" } }
+                },
+                "additionalProperties": true
+              },
+              "gtd": {
+                "type": "object",
+                "properties": {
+                  "kanbanStatus": { "type": "array", "items": { "type": "string" } },
+                  "kanbanStatusLine": { "type": "boolean" }
+                },
+                "additionalProperties": true
+              }
+            },
+            "additionalProperties": true
+          },
+          "validate": {
+            "type": "object",
+            "properties": {
+              "severity": { "type": "string", "enum": ["error", "warning", "ignore"] },
+              "frontmatter": {
+                "type": "object",
+                "properties": {
+                  "allowUnknown": { "type": "boolean" },
+                  "severity": { "type": "string", "enum": ["error", "warning", "ignore"] },
+                  "fields": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "object",
+                      "properties": {
+                        "regex": { "type": "string" },
+                        "enum": { "type": "array", "items": { "type": "string" } },
+                        "globs": { "type": "array", "items": { "type": "string" } },
+                        "integer": {
+                          "type": "object",
+                          "properties": { "min": { "type": "integer" }, "max": { "type": "integer" } },
+                          "additionalProperties": false
+                        },
+                        "float": {
+                          "type": "object",
+                          "properties": { "min": { "type": "number" }, "max": { "type": "number" } },
+                          "additionalProperties": false
+                        },
+                        "severity": { "type": "string", "enum": ["error", "warning", "ignore"] }
+                      },
+                      "additionalProperties": true
+                    }
+                  }
+                },
+                "additionalProperties": true
+              },
+              "body": {
+                "type": "object",
+                "properties": {
+                  "headings": {
+                    "type": "object",
+                    "properties": {
+                      "headingPolicy": { "type": "string", "enum": ["exact", "missing_only", "ignore"] },
+                      "maxCount": { "type": "integer", "minimum": 0 }
+                    },
+                    "additionalProperties": true
+                  },
+                  "loc": {
+                    "type": "object",
+                    "properties": {
+                      "scanPolicy": { "type": "string", "enum": ["on_creation", "on_validate"] },
+                      "limits": { "type": "object", "additionalProperties": true }
+                    },
+                    "additionalProperties": true
+                  }
+                },
+                "additionalProperties": true
+              },
+              "edges": {
+                "type": "object",
+                "properties": {
+                  "wikilinks": {
+                    "type": "object",
+                    "properties": {
+                      "minOutgoing": { "type": "integer", "minimum": 0 },
+                      "minIncoming": { "type": "integer", "minimum": 0 },
+                      "severity": { "type": "string", "enum": ["error", "warning", "ignore"] }
+                    },
+                    "additionalProperties": true
+                  },
+                  "crossSchema": {
+                    "type": "object",
+                    "properties": {
+                      "allowedTargets": { "type": "array", "items": { "type": "string" } }
+                    },
+                    "additionalProperties": true
+                  }
+                },
+                "additionalProperties": {
+                  "type": "object",
+                  "properties": {
+                    "weight": { "type": "number" },
+                    "cycleDetection": { "type": "string", "enum": ["error", "warning", "ignore"] },
+                    "required": { "type": "string", "enum": ["error", "warning", "ignore"] }
+                  },
+                  "additionalProperties": true
+                }
+              },
+              "gtd": {
+                "type": "object",
+                "properties": {
+                  "enableTODO": { "type": "boolean" },
+                  "enableKanban": { "type": "boolean" },
+                  "enableKanbanStatusline": { "type": "boolean" },
+                  "dueDateWarning": { "type": "integer", "minimum": 0 },
+                  "severity": { "type": "string", "enum": ["error", "warning", "ignore"] }
+                },
+                "additionalProperties": true
+              }
+            },
+            "additionalProperties": true
+          }
+        },
+        "additionalProperties": true
+      }
+    },
+    "capabilities": { "type": "object", "additionalProperties": true }
+  },
+  "additionalProperties": true
+}
+</file>
+
+<file path="v1/index/index.schema.json">
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "contracts/index/v1/index.schema.json",
+  "title": "Unified Index v1",
+  "type": "object",
+  "required": ["version", "generatedAt", "docCount", "nodes", "edges"],
+  "properties": {
+    "version": { "type": "integer" },
+    "generatedAt": { "type": "string", "format": "date-time" },
+    "docCount": { "type": "integer", "minimum": 0 },
+    "nodes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "schema", "title", "path", "frontmatter"],
+        "properties": {
+          "id": { "type": "string" },
+          "schema": { "type": "string" },
+          "title": { "type": "string" },
+          "path": { "type": "string" },
+          "frontmatter": { "type": "object", "additionalProperties": true },
+          "computed": {
+            "type": "object",
+            "properties": {
+              "degree": { "type": "integer", "minimum": 0 },
+              "tokenEstimate": { "type": "integer", "minimum": 0 },
+              "lastModified": { "type": "string", "format": "date-time" },
+              "lastAccessed": { "type": "string", "format": "date-time" },
+              "topics": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": ["label", "score"],
+                  "properties": {
+                    "label": { "type": "string" },
+                    "score": { "type": "number" }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            },
+            "additionalProperties": true
+          }
+        },
+        "additionalProperties": true
+      }
+    },
+    "edges": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["from", "to", "kind"],
+        "properties": {
+          "from": { "type": "string" },
+          "to": { "type": "string" },
+          "kind": { "type": "string" },
+          "locations": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["path", "line"],
+              "properties": {
+                "path": { "type": "string" },
+                "line": { "type": "integer", "minimum": 1 }
+              },
+              "additionalProperties": false
+            }
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}
+</file>
+
+<file path="global-conventions.md">
+# Locked conventions v1
+
+## Project-wide naming and casing
+- TOML: snake_case keys. No hyphens in keys.
+- Lua: snake_case for keys and hook names. Module returns table with fields mirroring TOML (snake_case).
+- JSON outputs: camelCase keys. Exception: edge kind names and schema names are emitted as-is (e.g., "depends_on", "ADR").
+- Frontmatter (YAML): snake_case keys.
+
+### IDs, dates, times
+- Note IDs: schema-specific; recommended regex default ^[A-Z]{2,5}-\d{3,}$ unless overridden.
+- Date-only: YYYY-MM-DD.
+- Timestamps: RFC 3339/ISO 8601 UTC, e.g., 2025-09-08T12:14:00Z.
+
+### Text positions and locations
+- Line numbers are 1-based.
+- Byte/char spans in diagnostics are half-open [start, end). If only line/col are available, include a minimal span or the line number.
+
+### Deterministic ordering
+- search: score desc → lastModified desc → id asc
+- neighbors (ai get): distance asc → score desc → lastModified desc → id asc
+- graph/path: stable id asc for nodes at same depth; edges sorted by from,id,to,id,kind
+
+### Exit codes
+- 0 success
+- 1 unexpected error
+- 2 validation/contract failure (bad plan, failed checks, policy violations)
+- 3 draft not found/expired (ai new only)
+- 4 schema/config error
+- 5 IO/index lock error
+
+### Version signaling
+- All top-level JSON responses include protocolVersion.
+- ai get includes retrievalVersion.
+- info includes luaApiVersion and configVersion (string).
+- TOML config_version is a string (e.g., "0.1").
+
+### Template system
+- Variables: {{id}}, {{title}}, {{schema.name}}, {{now | date:"%Y-%m-%d"}}
+- Directives: ((frontmatter)) injects generated/system/user frontmatter. {{LOC|N}} caps lines per heading.
+- filename_template uses same variable filters (| kebab-case, | snake_case, etc.).
+- Headings policy labels: exact | missing_only | ignore.
+
+### Validation semantics
+- Severity: "error" | "warning" | "ignore".
+- Frontmatter field rules:
+  - regex: single string
+  - globs: array of strings
+  - enum: array of strings
+  - integer/float: { min?, max? }
+- Edges:
+  - required: "error" | "warning" | "ignore".
+  - cycle_detection: "error" | "warning" | "ignore".
+  - wikilinks: min_outgoing, min_incoming (ints).
+  - cross_schema.allowed_targets: array of schema names.
+
+### Graph/AI defaults
+- config.graph: { depth: 1, include_bidirectional: true }
+- config.graph.ai: { depth: 1, default_fanout: 5, include_bidirectional: true, neighbor_style: "metadata", outline_lines: 2 }
+- ai get policy:
+  - If neighbor_style=full and depth>1 → exit 2 (NEIGHBORS_FULL_DEPTH_GT1), or require explicit override if you later add one.
+
+### Watch/streaming
+- NDJSON watch: first event must be {"event":"watch_start","protocolVersion":1}.
+- Subsequent events include event type and minimal payload.
+
+### Path/edges
+- edges.locations.line is 1-based.
+- Edge kind names are case-sensitive strings; prefer snake_case.
+
+### Casing map (TOML → JSON)
+- index_path → indexPath
+- include_bidirectional → includeBidirectional
+- default_fanout → defaultFanout
+- neighbor_style → neighborStyle
+- outline_lines → outlineLines
+- last_modified (frontmatter) → lastModified (computed/index)
+- kanban_statusline (frontmatter) → kanbanStatusLine (JSON outputs)
+
+## Lua hook API v1 (stable signatures)
+- All hooks optional. Use snake_case names.
+
+### Signatures
+- id_generator(ctx) → { id, filename }
+- render_frontmatter(note, ctx) → table
+- template_prompt(ctx) → string|nil
+- template_note(ctx) → string|nil
+- validate(note, ctx) → { diagnostics: Diagnostic[] }
+
+### Context (read-only)
+- ctx.schema: resolved schema definition (table)
+- ctx.config: resolved config (table)
+- ctx.index: index handle with helpers (e.g., next_numeric_id(prefix): int)
+- ctx.request: { title?: string, id?: string }
+- ctx.util: { kebab_case(s), snake_case(s), pascal_case(s) }
+- ctx.clock: { today_iso(), now_iso() }
+- ctx.fs (optional, sandboxed): { exists(path): bool, read_file(path): string }
+
+### Diagnostic
+- { severity: "error"|"warning"|"info", code: string, msg: string, path?: string, span?: [number, number], field?: string, nodeId?: string }
+
+## TOML → JSON/ResolvedConfig mapping notes
+- Load order: defaults → TOML → repo Lua overlay (.cli-rag.lua) → user-local Lua (~/.config/cli-rag/config.lua), with a --no-lua switch to disable overlays.
+- Normalize TOML snake_case to JSON camelCase when emitting ResolvedConfig or CLI outputs.
+- Persist a resolved snapshot at .cli-rag/resolved.json after validate for editor/adapters.
+</file>
+
+</files>

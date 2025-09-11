@@ -6,7 +6,7 @@ tags:
   - configuration
   - template
   - validators
-status: draft
+status: accepted 
 depends_on: 
   - ADR-001
   - ADR-002
@@ -126,3 +126,5 @@ Proceed with implementing the limited escape hatch. Do not foreclose the chance 
 
 ## Updates
 <!-- Changes that happened when the rubber met the road -->
+
+# While this was accepted in theory the ultimate shape has moved a bit and the shapes in contracts should be considered authoritative. 

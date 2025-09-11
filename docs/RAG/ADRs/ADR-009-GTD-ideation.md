@@ -7,7 +7,7 @@ tags:
   - tasklist
   - GTD
   - NeoVIM
-status: pending
+status: superseded
 depends_on: 
   - ADR-002
   - ADR-001
@@ -22,6 +22,8 @@ related_files: [.cli-rag.toml]
 
 # GTD-ideation
 
+## **CRITICAL!: See [[ADR-AI-002-gtd-kanban-integration]] and [[💾 Software Development/🖳 CLI-RAG/🗃️ RAG/ADRs/ADR-002-Visual-Mode-planning|ADR-002-Visual-Mode-planning]] for more updated and full context.** 
+
 ## Objective
 <!-- A concise statement explaining the goal of this decision. -->
 
@@ -34,7 +36,7 @@ Creating an interactive kanban in the TUI that edits the front matter as you mak
 ## Context
 <!-- What is the issue that we're seeing that is motivating this decision or change? -->
 
-### **CRITICAL!: See [[ADR-AI-002-gtd-kanban-integration]] for full context.** 
+
 
 Straightforward project tool that allows setting a tracked priority field. This should be functionally a validator on a schema that allows you to track any tag for date/etc and add it to GTD. 
 

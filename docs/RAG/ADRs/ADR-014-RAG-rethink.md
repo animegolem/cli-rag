@@ -3,7 +3,7 @@ node_id: ADR-014
 tags:
   - RAG
   - retrieval 
-status: draft
+status: superseded 
 depends_on:
   - ADR-003c
 created_date: 2025-09-01
@@ -124,7 +124,7 @@ Biggest issue is i'm still not really sure what I want or what the ai needs/woul
 ## Decision
 <!-- What is the change that we're proposing and/or doing? -->
 
-This served largely as ideation and the final form is ai index as seen in [[ADR-003d-v1.2-locked-CLI-commands]]
+This served largely as ideation and the final form is ai index as seen in the revised [[ADR-003d-v1.2-locked-CLI-commands]]
 
 ## Consequences
 <!-- What becomes easier or more difficult to do because of this change? -->

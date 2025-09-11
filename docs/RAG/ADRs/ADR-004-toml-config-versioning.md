@@ -5,7 +5,7 @@ tags:
   - config
   - versioning
   - future_proof
-status: draft
+status: accepted
 depends_on: [ADR-001]
 created_date: 2025-08-25
 last_modified: 2025-08-25
@@ -18,6 +18,8 @@ related_files: [.cli-rag.toml]
 <!-- A concise statement explaining the goal of this decision. -->
 
 As we change schema processing we need a way to support and deprecate older config versions. 
+
+see examples in contracts or (less updated) [[ADR-001-cli-rag.toml]]
 
 ## Context
 <!-- What is the issue that we're seeing that is motivating this decision or change? -->

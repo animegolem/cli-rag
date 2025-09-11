@@ -3,7 +3,7 @@ id: ADR-007
 tags:
   - errors
   - error_codes
-status: draft
+status: accepted
 depends_on: ADR-001, AD-003b
 created_date: 2025-08-27
 last_modified: 2025-08-27

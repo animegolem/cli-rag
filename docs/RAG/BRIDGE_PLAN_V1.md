@@ -15,7 +15,7 @@ Purpose: contracts‑first master checklist (supersedes IMP-* tickets). Tracks c
 
 ## CLI Surfaces
 
-- info
+- info [[AI-IMP-001-contracts-ci-bootstrap]]
   - Contract: `contracts/cli/info.schema.json`
   - Status: TODO verify fields (`protocolVersion`, `config.version`, `deprecated`, `cache.aiIndexPath`, capabilities with `aiGet.retrievalVersion`, `luaApiVersion`)
   - Gaps: rename doctor→info; ensure camelCase; add `protocolVersion`
