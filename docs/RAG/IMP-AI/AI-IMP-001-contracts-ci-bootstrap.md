@@ -85,5 +85,20 @@ Then the unified index at `config.index_relative` validates against `contracts/v
 
 Status: unified writer implemented with computed fields; integration test ensures `depends_on` and `mentions` edges with locations are present. CI validates unified index schema.
 
+## Completion & Demo
+
+- Commands
+  - `cli-rag info --format json` → validates against `contracts/v1/cli/info.schema.json` (includes `protocolVersion`, `config`, `index`, `cache`, `capabilities`).
+  - `cli-rag validate --format json --dry-run` → validates against `contracts/v1/cli/validate_result.schema.json` with `{ ok, docCount, diagnostics[] }`.
+  - `cli-rag validate --format json` → writes `.cli-rag/resolved.json` per `contracts/v1/config/resolved_config.json` and unified index at `index/adr-index.json` per `contracts/v1/index/index.schema.json`.
+
+- Exit codes
+  - Validation failures exit with code 2; unsupported shell for completions exits 2; generic/unexpected remains 1.
+
+- CI
+  - Contracts job validates info, validate(dry), resolved.json, and unified index JSON against schemas.
+
+This ticket is ready to be marked complete.
+
 ## Issues Encountered
 N/A at ticket creation.

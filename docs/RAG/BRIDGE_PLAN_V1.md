@@ -16,16 +16,16 @@ Purpose: contracts‑first master checklist (supersedes IMP-* tickets). Tracks c
 ## CLI Surfaces
 
 - info [[AI-IMP-001-contracts-ci-bootstrap]]
-  - Contract: `contracts/cli/info.schema.json`
-  - Status: TODO verify fields (`protocolVersion`, `config.version`, `deprecated`, `cache.aiIndexPath`, capabilities with `aiGet.retrievalVersion`, `luaApiVersion`)
-  - Gaps: rename doctor→info; ensure camelCase; add `protocolVersion`
-  - Priority: High
+  - Contract: `contracts/v1/cli/info.schema.json`
+  - Status: Complete (protocolVersion, config/index/cache, capabilities)
+  - Gaps: None for Phase 1
+  - Priority: High (done)
 
 - validate
-  - Contract: `contracts/cli/validate_result.schema.json`
-  - Status: JSON shape needs `{ ok, docCount, diagnostics[] }`
-  - Gaps: unify errors/warnings into diagnostics; include optional span/field/nodeId
-  - Priority: High
+  - Contract: `contracts/v1/cli/validate_result.schema.json`
+  - Status: Complete (`{ ok, docCount, diagnostics[] }`, exit 2 on failure)
+  - Gaps: Optional span/field/nodeId as future enrichment
+  - Priority: High (done)
 
 - search
   - Contract: `contracts/cli/search_result.schema.json`
@@ -34,40 +34,40 @@ Purpose: contracts‑first master checklist (supersedes IMP-* tickets). Tracks c
   - Priority: Medium
 
 - graph
-  - Contract: `contracts/cli/graph.schema.json`
-  - Status: uses `members` and lacks edge `kind`
+  - Contract: `contracts/v1/cli/graph.schema.json`
+  - Status: Pending (current uses members; lacks `kind`)
   - Gaps: output `root`, `nodes`, `edges[{from,to,kind}]`
   - Priority: Medium
 
 - path
-  - Contract: `contracts/cli/path.schema.json`
-  - Status: lacks `ok`, node objects, and edge kinds/locations shape
+  - Contract: `contracts/v1/cli/path.schema.json`
+  - Status: Pending (missing `ok`, nodes, edge `kind`/`locations`)
   - Gaps: align to contract; include `locations`
   - Priority: Medium
 
 - ai get
-  - Contract: `contracts/cli/ai_get.schema.json`
+  - Contract: `contracts/v1/cli/ai_get.schema.json`
   - Status: ensure `protocolVersion`, `retrievalVersion`, neighbors ordering/limits
   - Gaps: implement `neighborStyle` variants; enforce depth/fanout policies
   - Priority: Medium
 
 - ai index (plan/apply)
-  - Contracts: `contracts/cli/ai_index_plan.schema.json`, `contracts/cli/ai_index_apply_report.schema.json`
+  - Contracts: `contracts/v1/cli/ai_index_plan.schema.json`, `contracts/v1/cli/ai_index_apply_report.schema.json`
   - Status: plan/apply wiring TBD; cache shape in ADR aligns
   - Gaps: hashing of source index; tag write policy
   - Priority: Low
 
 ## ResolvedConfig (camelCase)
-- Contract: `contracts/v1/resolved_config.json`
+- Contract: `contracts/v1/config/resolved_config.json`
 - Status: Updated to enumerate `validate.frontmatter|body|edges|gtd`; `defaultMaxNodes` removed
 - Gaps: None major; implementation to follow (Lua overlay/versioning)
 - Priority: High (loader + emitter)
 
 ## Unified Index
-- Contract: `contracts/index/index.schema.json`
-- Status: Ensure single authoritative index at `config.scan.index_path`
-- Gaps: edge `kind` and `locations` for mentions; computed fields population
-- Priority: High
+- Contract: `contracts/v1/index/index.schema.json`
+- Status: Complete (single index at `config.index_relative`, edges.kind, mentions.locations)
+- Gaps: Additional computed fields optional (tokenEstimate, topics)
+- Priority: High (done)
 
 ## Watch (NDJSON)
 - Contract reference: `contracts/global-conventions.md`
@@ -100,30 +100,25 @@ Purpose: contracts‑first master checklist (supersedes IMP-* tickets). Tracks c
 - Phase 1 (ResolvedConfig + Info/Validate)
   - Impl: emit `.cli-rag/resolved.json` snapshot; align `info` and `validate` to schemas.
   - CI gates:
-    - Validate `info --format json` → `contracts/cli/info.schema.json`.
-    - Validate `validate --format json --dry-run` → `contracts/cli/validate_result.schema.json`.
-    - Validate `.cli-rag/resolved.json` → `contracts/v1/resolved_config.json`.
+    - Validate `info --format json` → `contracts/v1/cli/info.schema.json`.
+    - Validate `validate --format json --dry-run` → `contracts/v1/cli/validate_result.schema.json`.
+    - Validate `.cli-rag/resolved.json` → `contracts/v1/config/resolved_config.json`.
 
-- Phase 2 (Unified Index)
-  - Impl: write single unified index at `config.scan.index_path` with `edges.kind` and `locations`.
+- Phase 2 (Graph/Path)
+  - Impl: align `graph --format json` and `path --format json` to contracts (`v1/cli/graph.schema.json`, `v1/cli/path.schema.json`).
   - CI gates:
-    - After non‑dry validate, check `.cli-rag/index.json` against `contracts/index/index.schema.json`.
+    - Validate `graph` output on a small fixture.
+    - Validate `path` output on a small fixture.
 
-- Phase 3 (Graph/Path)
-  - Impl: align `graph --format json` and `path --format json` to contracts.
-  - CI gates:
-    - Validate `graph` output → `contracts/cli/graph.schema.json`.
-    - Validate `path` output → `contracts/cli/path.schema.json`.
-
-- Phase 4 (Search)
+- Phase 3 (Search)
   - Impl: envelope `{results:[...]}` with typed items and deterministic ordering.
-  - CI gate: validate `search --format json` → `contracts/cli/search_result.schema.json`.
+  - CI gate: validate `search --format json` → `contracts/v1/cli/search_result.schema.json`.
 
-- Phase 5 (AI surfaces)
-  - Impl: `get --format ai` neighbors/style policies; `ai index plan/apply` basics.
-  - CI gates: validate outputs against `ai_get`, `ai_index_plan`, `ai_index_apply_report` schemas on small fixtures.
+- Phase 4 (AI surfaces)
+  - Impl: `ai get` neighbors/style policies; `ai index plan/apply` basics.
+  - CI gates: validate outputs against `contracts/v1/cli/ai_get.schema.json`, `contracts/v1/cli/ai_index_plan.schema.json`, `contracts/v1/cli/ai_index_apply_report.schema.json` on small fixtures.
 
-- Phase 6 (Watch)
+- Phase 5 (Watch)
   - Impl: NDJSON handshake first event and event envelopes.
   - CI gate: spawn short watch session; assert first line handshake, then terminate.
 
