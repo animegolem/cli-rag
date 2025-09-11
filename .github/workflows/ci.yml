@@ -181,11 +181,8 @@ jobs:
           echo "workdir=$WORKDIR" >> $GITHUB_OUTPUT
           mkdir -p "$WORKDIR/notes"
           # minimal config using the fixture base
-          cat > "$WORKDIR/.cli-rag.toml" <<EOF
-bases = [
-  "${WORKDIR}/notes"
-]
-EOF
+          BASE="$WORKDIR/notes"
+          printf "bases = [\n  '%s'\n]\n" "$BASE" > "$WORKDIR/.cli-rag.toml"
       - name: Validate info JSON matches schema
         run: |
           SCHEMA="contracts/v1/cli/info.schema.json"
