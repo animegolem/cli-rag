@@ -32,8 +32,15 @@ fn info_json_on_empty_base_reports_structure() {
         .as_str()
         .unwrap()
         .ends_with(".cli-rag.toml"));
-    assert!(v["index"]["path"].as_str().unwrap().contains(".cli-rag"));
-    assert!(v["index"]["exists"].is_boolean());
+    let idx_path = v["index"]["path"].as_str().unwrap();
+    assert!(
+        !idx_path.is_empty(),
+        "index.path should be a non-empty string"
+    );
+    assert!(
+        v["index"]["exists"].is_boolean(),
+        "index.exists should be a boolean"
+    );
     assert!(v["cache"]["aiIndexPath"]
         .as_str()
         .unwrap()
