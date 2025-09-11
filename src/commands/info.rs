@@ -72,11 +72,7 @@ pub fn run(cfg: &Config, cfg_path: &Option<PathBuf>, format: &OutputFormat) -> R
             if let Some(index) = j.get("index").and_then(|v| v.as_object()) {
                 println!(
                     "Index: {} (exists: {})",
-                    index
-                        .get("path")
-                        .and_then(|v| v.as_str())
-                        .unwrap_or("")
-                        .to_string(),
+                    index.get("path").and_then(|v| v.as_str()).unwrap_or(""),
                     index
                         .get("exists")
                         .and_then(|v| v.as_bool())

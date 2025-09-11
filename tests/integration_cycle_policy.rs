@@ -38,12 +38,9 @@ fn cycles_warn_by_default_or_warn_policy() {
         .clone();
     let v: serde_json::Value = serde_json::from_slice(&out).unwrap();
     assert!(v["ok"].as_bool().unwrap(), "should be ok (warning only)");
-    let warns = v["warnings"].as_array().unwrap();
-    assert!(warns.iter().any(|w| w["code"] == "W240"
-        || w["message"]
-            .as_str()
-            .unwrap_or("")
-            .contains("cycle detected")));
+    let diags = v["diagnostics"].as_array().unwrap();
+    assert!(diags.iter().any(|d| d["severity"] == "warning"
+        && (d["code"] == "W240" || d["msg"].as_str().unwrap_or("").contains("cycle detected"))));
 
     temp.close().unwrap();
 }
@@ -77,12 +74,9 @@ fn cycles_error_with_error_policy() {
         .clone();
     let v: serde_json::Value = serde_json::from_slice(&out).unwrap();
     assert!(!v["ok"].as_bool().unwrap(), "should fail (error on cycle)");
-    let errs = v["errors"].as_array().unwrap();
-    assert!(errs.iter().any(|e| e["code"] == "E240"
-        || e["message"]
-            .as_str()
-            .unwrap_or("")
-            .contains("cycle detected")));
+    let diags = v["diagnostics"].as_array().unwrap();
+    assert!(diags.iter().any(|d| d["severity"] == "error"
+        && (d["code"] == "E240" || d["msg"].as_str().unwrap_or("").contains("cycle detected"))));
 
     temp.close().unwrap();
 }
