@@ -227,3 +227,19 @@ jobs:
           validate(instance=data, schema=schema)
           print("resolved.json OK")
           PY
+      - name: Validate unified index JSON matches schema
+        run: |
+          WORKDIR="${{ steps.fx.outputs.workdir }}"
+          INDEX_PATH="$WORKDIR/index/adr-index.json"
+          test -f "$INDEX_PATH"
+          SCHEMA="contracts/v1/index/index.schema.json"
+          python - "$SCHEMA" "$INDEX_PATH" <<'PY'
+          import sys, json
+          from jsonschema import validate, Draft202012Validator
+          schema_path, index_path = sys.argv[1], sys.argv[2]
+          schema = json.load(open(schema_path))
+          data = json.load(open(index_path))
+          Draft202012Validator.check_schema(schema)
+          validate(instance=data, schema=schema)
+          print("unified index OK")
+          PY

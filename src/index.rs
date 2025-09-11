@@ -1,9 +1,10 @@
 use anyhow::{Context, Result};
-use chrono::Utc;
+use chrono::{DateTime, Utc};
 use regex::Regex;
 use serde_json::json;
+use std::collections::HashMap;
 use std::fs;
-// no direct std::time imports needed here
+//
 
 use crate::config::{build_schema_sets, Config};
 use crate::model::AdrDoc;
@@ -44,10 +45,19 @@ pub fn write_indexes(
             .to_string()
     };
 
-    // Nodes
-    let mut nodes: Vec<serde_json::Value> = Vec::new();
-    // Edges (FM-derived)
+    // Collect node info, edges, and degree
+    struct NodeInfo {
+        id: String,
+        schema: String,
+        title: String,
+        path: String,
+        frontmatter: serde_json::Value,
+        last_modified: Option<String>,
+    }
+    let mut nodes_info: Vec<NodeInfo> = Vec::new();
+    // Edges (FM-derived and mentions)
     let mut edges: Vec<serde_json::Value> = Vec::new();
+    let mut degree: HashMap<String, usize> = HashMap::new();
 
     // Mentions regex: [[ID]] where ID has at least one dash
     let mention_re: Regex = Regex::new(r"\[\[([A-Za-z]+-[0-9A-Za-z_-]+)\]\]").unwrap();
@@ -70,24 +80,39 @@ pub fn write_indexes(
             fm_obj.insert(k.clone(), jv);
         }
         let frontmatter = serde_json::Value::Object(fm_obj);
-        nodes.push(json!({
-            "id": id,
-            "schema": schema,
-            "title": d.title,
-            "path": path_str,
-            "frontmatter": frontmatter,
-        }));
+        // lastModified from file metadata if available
+        let last_modified = fs::metadata(&d.file)
+            .and_then(|md| md.modified())
+            .ok()
+            .map(|st| {
+                let dt: DateTime<Utc> = st.into();
+                dt.to_rfc3339()
+            });
+        nodes_info.push(NodeInfo {
+            id: id.clone(),
+            schema,
+            title: d.title.clone(),
+            path: path_str.clone(),
+            frontmatter,
+            last_modified,
+        });
 
         // depends_on edges
         if let Some(from) = &d.id {
             for dep in &d.depends_on {
                 edges.push(json!({"from": from, "to": dep, "kind": "depends_on"}));
+                *degree.entry(from.clone()).or_default() += 1;
+                *degree.entry(dep.clone()).or_default() += 1;
             }
             for s in &d.supersedes {
                 edges.push(json!({"from": from, "to": s, "kind": "supersedes"}));
+                *degree.entry(from.clone()).or_default() += 1;
+                *degree.entry(s.clone()).or_default() += 1;
             }
             for sb in &d.superseded_by {
                 edges.push(json!({"from": from, "to": sb, "kind": "superseded_by"}));
+                *degree.entry(from.clone()).or_default() += 1;
+                *degree.entry(sb.clone()).or_default() += 1;
             }
         }
 
@@ -108,6 +133,8 @@ pub fn write_indexes(
                                 "kind": "mentions",
                                 "locations": [{"path": path_str, "line": line_no}]
                             }));
+                            *degree.entry(id.clone()).or_default() += 1;
+                            *degree.entry(target).or_default() += 1;
                         }
                     }
                 }
@@ -116,6 +143,27 @@ pub fn write_indexes(
     }
 
     // Root object
+    // Build nodes JSON with computed fields (degree, lastModified)
+    let nodes: Vec<serde_json::Value> = nodes_info
+        .into_iter()
+        .map(|n| {
+            let mut computed = serde_json::Map::new();
+            let deg = *degree.get(&n.id).unwrap_or(&0);
+            computed.insert("degree".into(), json!(deg));
+            if let Some(ts) = n.last_modified.clone() {
+                computed.insert("lastModified".into(), json!(ts));
+            }
+            json!({
+                "id": n.id,
+                "schema": n.schema,
+                "title": n.title,
+                "path": n.path,
+                "frontmatter": n.frontmatter,
+                "computed": computed,
+            })
+        })
+        .collect();
+
     let out = json!({
         "version": 1,
         "generatedAt": Utc::now().to_rfc3339(),

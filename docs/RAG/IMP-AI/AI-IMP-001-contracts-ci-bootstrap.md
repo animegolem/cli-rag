@@ -74,13 +74,16 @@ Unify index writing to single path `config.scan.index_path`; ensure edges carry 
 ### Implementation Checklist
 - [x] Write only one authoritative index at `scan.index_path`.
 - [x] Edges include `{from,to,kind}`; mention‑derived edges include `locations[{path,line}]`.
-- [ ] Populate minimal `computed` fields per schema.
+- [x] Populate minimal `computed` fields per schema (degree, lastModified).
 
 ### Acceptance Criteria
 When I run non‑dry validate
-Then `.cli-rag/index.json` validates against `contracts/v1/index/index.schema.json`.
+Then the unified index at `config.index_relative` validates against `contracts/v1/index/index.schema.json` and includes:
+- Nodes with `{id,schema,title,path,frontmatter}`
+- Edges with `{from,to,kind}` for `depends_on|supersedes|superseded_by`
+- Edges with `{kind: "mentions", locations: [{path,line}]}` for wikilinks in bodies
 
-Status: unified writer implemented; basic integration test ensures `depends_on` and `mentions` edges with locations are present.
+Status: unified writer implemented with computed fields; integration test ensures `depends_on` and `mentions` edges with locations are present. CI validates unified index schema.
 
 ## Issues Encountered
 N/A at ticket creation.
