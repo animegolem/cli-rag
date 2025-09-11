@@ -267,7 +267,8 @@ pub fn run(
         write_groups_config(cfg, &docs)?;
     }
     if !report.ok {
-        std::process::exit(1);
+        // Exit code 2: validation failed (per contracts/global conventions)
+        std::process::exit(2);
     }
     Ok(())
 }

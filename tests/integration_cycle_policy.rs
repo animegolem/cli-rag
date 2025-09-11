@@ -68,7 +68,7 @@ fn cycles_error_with_error_policy() {
         .arg("--format")
         .arg("json")
         .assert()
-        .failure() // exit 1 on not ok
+        .failure() // non-zero on not ok (exit 2: validation failed)
         .get_output()
         .stdout
         .clone();
