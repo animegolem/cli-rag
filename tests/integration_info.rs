@@ -28,10 +28,16 @@ fn info_json_on_empty_base_reports_structure() {
     let output = String::from_utf8(assert.get_output().stdout.clone()).unwrap();
     let v: serde_json::Value = serde_json::from_str(&output).unwrap();
     assert!(v["protocolVersion"].as_u64().unwrap() >= 1);
-    assert!(v["config"]["path"].as_str().unwrap().ends_with(".cli-rag.toml"));
+    assert!(v["config"]["path"]
+        .as_str()
+        .unwrap()
+        .ends_with(".cli-rag.toml"));
     assert!(v["index"]["path"].as_str().unwrap().contains(".cli-rag"));
     assert!(v["index"]["exists"].is_boolean());
-    assert!(v["cache"]["aiIndexPath"].as_str().unwrap().contains(".cli-rag"));
+    assert!(v["cache"]["aiIndexPath"]
+        .as_str()
+        .unwrap()
+        .contains(".cli-rag"));
     assert!(
         v["capabilities"]["aiGet"]["retrievalVersion"]
             .as_u64()

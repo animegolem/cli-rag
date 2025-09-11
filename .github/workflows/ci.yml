@@ -187,40 +187,43 @@ jobs:
         run: |
           SCHEMA="contracts/v1/cli/info.schema.json"
           OUT=$(./target/release/cli-rag --config "${{ steps.fx.outputs.workdir }}/.cli-rag.toml" info --format json)
-          python - <<PY
-import sys, json
-from jsonschema import validate, Draft202012Validator
-schema = json.load(open("$SCHEMA"))
-data = json.loads("""$OUT""")
-Draft202012Validator.check_schema(schema)
-validate(instance=data, schema=schema)
-print("info.json OK")
-PY
+          python - "$SCHEMA" "$OUT" <<'PY'
+          import sys, json
+          from jsonschema import validate, Draft202012Validator
+          schema_path, data_str = sys.argv[1], sys.argv[2]
+          schema = json.load(open(schema_path))
+          data = json.loads(data_str)
+          Draft202012Validator.check_schema(schema)
+          validate(instance=data, schema=schema)
+          print("info.json OK")
+          PY
       - name: Validate validate --dry-run JSON matches schema
         run: |
           SCHEMA="contracts/v1/cli/validate_result.schema.json"
           OUT=$(./target/release/cli-rag --config "${{ steps.fx.outputs.workdir }}/.cli-rag.toml" validate --format json --dry-run)
-          python - <<PY
-import sys, json
-from jsonschema import validate, Draft202012Validator
-schema = json.load(open("$SCHEMA"))
-data = json.loads("""$OUT""")
-Draft202012Validator.check_schema(schema)
-validate(instance=data, schema=schema)
-print("validate(dry).json OK")
-PY
+          python - "$SCHEMA" "$OUT" <<'PY'
+          import sys, json
+          from jsonschema import validate, Draft202012Validator
+          schema_path, data_str = sys.argv[1], sys.argv[2]
+          schema = json.load(open(schema_path))
+          data = json.loads(data_str)
+          Draft202012Validator.check_schema(schema)
+          validate(instance=data, schema=schema)
+          print("validate(dry).json OK")
+          PY
       - name: Validate resolved config snapshot
         run: |
           WORKDIR="${{ steps.fx.outputs.workdir }}"
           ./target/release/cli-rag --config "$WORKDIR/.cli-rag.toml" validate --format json >/dev/null
           test -f "$WORKDIR/.cli-rag/resolved.json"
           SCHEMA="contracts/v1/config/resolved_config.json"
-          python - <<PY
-import sys, json
-from jsonschema import validate, Draft202012Validator
-schema = json.load(open("$SCHEMA"))
-data = json.load(open("${{ steps.fx.outputs.workdir }}/.cli-rag/resolved.json"))
-Draft202012Validator.check_schema(schema)
-validate(instance=data, schema=schema)
-print("resolved.json OK")
-PY
+          python - "$SCHEMA" "$WORKDIR/.cli-rag/resolved.json" <<'PY'
+          import sys, json
+          from jsonschema import validate, Draft202012Validator
+          schema_path, resolved_path = sys.argv[1], sys.argv[2]
+          schema = json.load(open(schema_path))
+          data = json.load(open(resolved_path))
+          Draft202012Validator.check_schema(schema)
+          validate(instance=data, schema=schema)
+          print("resolved.json OK")
+          PY
