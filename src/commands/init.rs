@@ -49,8 +49,8 @@ fn write_separate_schema(cfg_path: &Path, name: &str, force: bool) -> Result<()>
             .with_context(|| format!("writing note stub {:?}", body_path))?;
     }
     // Update import list in the main config
-    let rel = Path::new(".cli-rag/templates").join(format!("{}.toml", name));
-    let rel_str = rel.to_string_lossy().to_string();
+    // Normalize to forward slashes for portability across OSes (TOML config is platform-independent)
+    let rel_str = format!(".cli-rag/templates/{}.toml", name);
     let s = fs::read_to_string(cfg_path).with_context(|| format!("reading {:?}", cfg_path))?;
     let mut tv: toml::Value =
         toml::from_str(&s).with_context(|| format!("parsing TOML {:?}", cfg_path))?;

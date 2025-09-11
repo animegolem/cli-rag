@@ -10,5 +10,10 @@ cargo clippy --all-targets --all-features -- -D warnings
 echo "[pre-commit] Running line-length guard..."
 scripts/line_guard.sh
 
-echo "[pre-commit] OK"
+echo "[pre-commit] Running tests (unit+integration)..."
+# Run the test suite to catch regressions locally. Use PRECOMMIT_SKIP_TESTS=1 to skip.
+if [ "${PRECOMMIT_SKIP_TESTS:-0}" != "1" ]; then
+  cargo test --tests --quiet
+fi
 
+echo "[pre-commit] OK"
