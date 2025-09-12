@@ -23,17 +23,16 @@ Update contracts to normalize kanban casing and enrich TODO/ai_get shapes.
 - `contracts/changelog.md`
 
 ### Implementation Checklist
-- [ ] search_result: add `kanbanStatusLine?` on note; ensure kanban item uses `kanbanStatusLine` casing.
-- [ ] search_result (todo): add `dueDate?`, `source? (body|frontmatter)`, `span? [start,end]`, `priorityScore? (1–10)`.
-- [ ] ai_get (neighbors): add optional `kanbanStatus`, `dueDate`.
-- [ ] ai_get (root): add optional `kanbanStatus`, `kanbanStatusLine`, `dueDate`.
-- [ ] info (capabilities): add optional `gtdTasks`, `kanban` booleans.
-- [ ] conventions: document kebab-case CLI flags; keep JSON camelCase, TOML/Lua/frontmatter snake_case.
-- [ ] Update `contracts/changelog.md` with entry for this change.
+- [x] search_result: add `kanbanStatusLine?` on note; ensure kanban item uses `kanbanStatusLine` casing.
+- [x] search_result (todo): add `dueDate?`, `source? (body|frontmatter)`, `span? [start,end]`, `priorityScore? (1–10)`.
+- [x] ai_get (neighbors): add optional `kanbanStatus`, `dueDate`.
+- [x] ai_get (root): add optional `kanbanStatus`, `kanbanStatusLine`, `dueDate`.
+- [x] info (capabilities): add optional `gtdTasks`, `kanban` booleans.
+- [x] conventions: document kebab-case CLI flags; keep JSON camelCase, TOML/Lua/frontmatter snake_case.
+- [x] Update `contracts/changelog.md` with entry for this change.
 
 ### Acceptance Criteria
 `jsonschema` validates example payloads reflecting the new optional fields; existing payloads without new fields still validate.
 
 ## Issues Encountered
 N/A at ticket creation.
-

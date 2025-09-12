@@ -61,6 +61,18 @@ pub enum Commands {
     Search {
         #[arg(long, short = 'q')]
         query: String,
+        /// Filter by item kind (note,todo,kanban)
+        #[arg(long, value_delimiter = ',')]
+        kind: Option<Vec<String>>,
+        /// Filter by schema name(s)
+        #[arg(long, value_delimiter = ',')]
+        schema: Option<Vec<String>>,
+        /// Filter by status value(s)
+        #[arg(long, value_delimiter = ',')]
+        status: Option<Vec<String>>,
+        /// Filter by tag(s)
+        #[arg(long, value_delimiter = ',')]
+        tag: Option<Vec<String>>,
     },
     Topics {},
     Group {

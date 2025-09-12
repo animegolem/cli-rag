@@ -25,9 +25,24 @@ fn main() -> Result<()> {
             let cmd = Cli::command();
             cli_rag::commands::completions::run_completions(cmd, shell);
         }
-        Commands::Search { query } => {
+        Commands::Search {
+            query,
+            kind,
+            schema,
+            status,
+            tag,
+        } => {
             let (cfg, cfg_path) = load_config(&cli.config, &cli.base)?;
-            cli_rag::commands::search::run(&cfg, &cfg_path, &cli.format, query)?;
+            cli_rag::commands::search::run(
+                &cfg,
+                &cfg_path,
+                &cli.format,
+                query,
+                kind,
+                schema,
+                status,
+                tag,
+            )?;
         }
         Commands::Topics {} => {
             let (cfg, cfg_path) = load_config(&cli.config, &cli.base)?;

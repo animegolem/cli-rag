@@ -5,11 +5,16 @@ use anyhow::Result;
 use crate::config::{build_schema_sets, Config};
 use crate::discovery::docs_with_source;
 
+#[allow(clippy::too_many_arguments)]
 pub fn run(
     cfg: &Config,
     cfg_path: &Option<std::path::PathBuf>,
     format: &OutputFormat,
     query: String,
+    kind: Option<Vec<String>>,          // note|todo|kanban
+    schema_filter: Option<Vec<String>>, // schema names
+    status_filter: Option<Vec<String>>, // status strings
+    tag_filter: Option<Vec<String>>,    // tags
 ) -> Result<()> {
     let q = query.to_lowercase();
     let (docs, used_unified) = docs_with_source(cfg, cfg_path)?;
@@ -23,7 +28,17 @@ pub fn run(
             hits.push(d);
         }
     }
-    // Deterministic ordering: (score desc placeholder=0) -> lastModified desc -> id asc
+    // Normalize filters
+    let kinds: Option<Vec<String>> =
+        kind.map(|v| v.into_iter().map(|s| s.to_lowercase()).collect());
+    let schema_set: Option<std::collections::BTreeSet<String>> =
+        schema_filter.map(|v| v.into_iter().collect());
+    let status_set: Option<std::collections::BTreeSet<String>> =
+        status_filter.map(|v| v.into_iter().collect());
+    let tag_set: Option<std::collections::BTreeSet<String>> =
+        tag_filter.map(|v| v.into_iter().collect());
+
+    // Deterministic ordering: (score desc) -> lastModified desc -> id asc
     // Compute lastModified timestamps and schema names for emitters; also extract GTD items
     let schema_sets = build_schema_sets(cfg);
     let infer_schema = |path: &std::path::Path| -> String {
@@ -36,6 +51,13 @@ pub fn run(
         "UNKNOWN".into()
     };
     let mut enriched: Vec<serde_json::Value> = Vec::new();
+    // Prepare query tokens for simple scoring
+    let tokens: Vec<String> = q
+        .split_whitespace()
+        .filter(|s| !s.is_empty())
+        .map(|s| s.to_string())
+        .collect();
+
     for d in hits {
         let Some(id) = d.id.as_ref() else { continue };
         let schema = infer_schema(&d.file);
@@ -56,75 +78,135 @@ pub fn run(
         if let Some(v) = d.fm.get("kanban_status").and_then(|v| v.as_str()) {
             kanban_status = Some(v.to_string());
         }
-        enriched.push(serde_json::json!({
-            "kind": "note",
-            "id": id,
-            "title": d.title,
-            "schema": schema,
-            "path": path_str,
-            "tags": d.tags,
-            "status": d.status,
-            "kanbanStatusLine": kanban_status_line,
-            "kanbanStatus": kanban_status,
-            "score": serde_json::Value::Null,
-            "lastModified": last_modified,
-            "lastAccessed": serde_json::Value::Null,
-        }));
+        // Compute simple score for note
+        let mut score: f64 = 0.0;
+        for t in &tokens {
+            if id.to_lowercase() == *t {
+                score += 1.0;
+            }
+            if d.title.to_lowercase().contains(t) {
+                score += 0.5;
+            }
+            if d.tags.iter().any(|tag| tag.to_lowercase() == *t) {
+                score += 0.25;
+            }
+        }
 
-        // Kanban item (optional) if frontmatter has kanban_status
-        if let Some(status) = d.fm.get("kanban_status").and_then(|v| v.as_str()) {
-            let due_date =
-                d.fm.get("due_date")
-                    .and_then(|v| v.as_str())
-                    .map(|s| s.to_string());
-            let ksl =
-                d.fm.get("kanban_statusline")
-                    .and_then(|v| v.as_str())
-                    .map(|s| s.to_string());
+        // Filter helpers
+        let schema_ok = schema_set
+            .as_ref()
+            .map(|s| s.contains(&schema))
+            .unwrap_or(true);
+        let status_ok = status_set
+            .as_ref()
+            .map(|s| d.status.as_ref().map(|x| s.contains(x)).unwrap_or(false))
+            .unwrap_or(true);
+        let tag_ok = tag_set
+            .as_ref()
+            .map(|s| d.tags.iter().any(|t| s.contains(t)))
+            .unwrap_or(true);
+
+        let allow_note = kinds
+            .as_ref()
+            .map(|k| k.iter().any(|x| x == "note"))
+            .unwrap_or(true);
+        let allow_todo = kinds
+            .as_ref()
+            .map(|k| k.iter().any(|x| x == "todo"))
+            .unwrap_or(true);
+        let allow_kanban = kinds
+            .as_ref()
+            .map(|k| k.iter().any(|x| x == "kanban"))
+            .unwrap_or(true);
+
+        // Note item
+        if schema_ok && status_ok && tag_ok && allow_note {
             enriched.push(serde_json::json!({
-                "kind": "kanban",
-                "id": format!("{}-KANBAN", id),
-                "noteId": id,
+                "kind": "note",
+                "id": id,
+                "title": d.title,
                 "schema": schema,
                 "path": path_str,
-                "kanbanStatus": status,
-                "kanbanStatusLine": ksl,
-                "dueDate": due_date,
+                "tags": d.tags,
+                "status": d.status,
+                "kanbanStatusLine": kanban_status_line,
+                "kanbanStatus": kanban_status,
+                "score": score,
+                "lastModified": last_modified,
+                "lastAccessed": serde_json::Value::Null,
             }));
         }
 
-        // TODO items in body: lines with Markdown checkboxes - [ ] or - [x]
-        if let Ok(content) = std::fs::read_to_string(&d.file) {
-            for (i, line) in content.lines().enumerate() {
-                let trimmed = line.trim_start();
-                let is_todo = trimmed.starts_with("- [ ] ")
-                    || trimmed.starts_with("- [x] ")
-                    || trimmed.starts_with("- [X] ");
-                if !is_todo {
-                    continue;
-                }
-                let text = trimmed.chars().skip(6).collect::<String>();
+        // Kanban item (optional) if frontmatter has kanban_status
+        if allow_kanban && schema_ok && status_ok && tag_ok {
+            if let Some(status) = d.fm.get("kanban_status").and_then(|v| v.as_str()) {
+                let due_date =
+                    d.fm.get("due_date")
+                        .and_then(|v| v.as_str())
+                        .map(|s| s.to_string());
+                let ksl =
+                    d.fm.get("kanban_statusline")
+                        .and_then(|v| v.as_str())
+                        .map(|s| s.to_string());
                 enriched.push(serde_json::json!({
-                    "kind": "todo",
-                    "id": format!("{}#L{}", id, i+1),
+                    "kind": "kanban",
+                    "id": format!("{}-KANBAN", id),
                     "noteId": id,
                     "schema": schema,
                     "path": path_str,
-                    "line": (i+1) as i64,
-                    "priority": serde_json::Value::Null,
-                    "priorityScore": serde_json::Value::Null,
-                    "text": text,
-                    "dueDate": serde_json::Value::Null,
-                    "source": "body",
-                    "span": serde_json::Value::Null,
-                    "createdAt": serde_json::Value::Null,
-                    "completedAt": serde_json::Value::Null,
+                    "kanbanStatus": status,
+                    "kanbanStatusLine": ksl,
+                    "dueDate": due_date,
                 }));
             }
         }
+
+        // TODO items in body: lines with Markdown checkboxes - [ ] or - [x]
+        if allow_todo && schema_ok && status_ok && tag_ok {
+            if let Ok(content) = std::fs::read_to_string(&d.file) {
+                for (i, line) in content.lines().enumerate() {
+                    let trimmed = line.trim_start();
+                    let is_todo = trimmed.starts_with("- [ ] ")
+                        || trimmed.starts_with("- [x] ")
+                        || trimmed.starts_with("- [X] ");
+                    if !is_todo {
+                        continue;
+                    }
+                    let text = trimmed.chars().skip(6).collect::<String>();
+                    enriched.push(serde_json::json!({
+                        "kind": "todo",
+                        "id": format!("{}#L{}", id, i+1),
+                        "noteId": id,
+                        "schema": schema,
+                        "path": path_str,
+                        "line": (i+1) as i64,
+                        "priority": serde_json::Value::Null,
+                        "priorityScore": serde_json::Value::Null,
+                        "text": text,
+                        "dueDate": serde_json::Value::Null,
+                        "source": "body",
+                        "span": serde_json::Value::Null,
+                        "createdAt": serde_json::Value::Null,
+                        "completedAt": serde_json::Value::Null,
+                    }));
+                }
+            }
+        }
     }
-    // sort by lastModified desc then id asc
+    // sort by score desc, then lastModified desc then id asc
     enriched.sort_by(|a, b| {
+        let sc_a = a
+            .get("score")
+            .and_then(|v| v.as_f64())
+            .unwrap_or(f64::NEG_INFINITY);
+        let sc_b = b
+            .get("score")
+            .and_then(|v| v.as_f64())
+            .unwrap_or(f64::NEG_INFINITY);
+        let ord = sc_b.partial_cmp(&sc_a).unwrap_or(std::cmp::Ordering::Equal);
+        if ord != std::cmp::Ordering::Equal {
+            return ord;
+        }
         let lm_a = a.get("lastModified").and_then(|v| v.as_str());
         let lm_b = b.get("lastModified").and_then(|v| v.as_str());
         match (lm_a, lm_b) {
