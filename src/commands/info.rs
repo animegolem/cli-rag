@@ -47,7 +47,9 @@ fn info_json(cfg: &Config, cfg_path: &Option<PathBuf>) -> serde_json::Value {
             "aiGet": { "retrievalVersion": 1 },
             "pathLocations": true,
             "aiIndex": true,
-            "luaApiVersion": 1
+            "luaApiVersion": 1,
+            "gtdTasks": true,
+            "kanban": true
         }
     });
     obj
