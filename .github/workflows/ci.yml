@@ -244,6 +244,66 @@ jobs:
           print("unified index OK")
           PY
 
+      - name: Validate search JSON matches schema (note)
+        run: |
+          WORKDIR="${{ steps.fx.outputs.workdir }}"
+          NOTES="$WORKDIR/notes"
+          CFG="$WORKDIR/.cli-rag.toml"
+          # Write a simple ADR to search for
+          printf "---\nid: ADR-100\ntags: [x]\nstatus: draft\ndepends_on: []\n---\n\n# ADR-100: Title\n" > "$NOTES/ADR-100.md"
+          # Append schema mapping
+          printf "\n[[schema]]\nname = \"ADR\"\nfile_patterns = [\"ADR-*.md\"]\nunknown_policy = \"ignore\"\n" >> "$CFG"
+          OUT=$(./target/release/cli-rag --config "$CFG" search -q ADR-100 --format json)
+          SCHEMA="contracts/v0.1/cli/search_result.schema.json"
+          python - "$SCHEMA" "$OUT" <<'PY'
+          import sys, json
+          from jsonschema import validate, Draft202012Validator
+          schema_path, data_str = sys.argv[1], sys.argv[2]
+          schema = json.load(open(schema_path))
+          data = json.loads(data_str)
+          Draft202012Validator.check_schema(schema)
+          validate(instance=data, schema=schema)
+          assert any(item.get('kind')=='note' for item in data.get('results', []))
+          print("search(note).json OK")
+          PY
+
+      - name: Validate search JSON matches schema (todo + kanban)
+        run: |
+          WORKDIR="${{ steps.fx.outputs.workdir }}"
+          NOTES="$WORKDIR/notes"
+          CFG="$WORKDIR/.cli-rag.toml"
+          # Add a note with a TODO in body and kanban in frontmatter
+          cat > "$NOTES/ADR-101.md" <<'MD'
+          ---
+          id: ADR-101
+          tags: [x]
+          status: draft
+          depends_on: []
+          kanban_status: doing
+          kanban_statusline: In progress
+          due_date: 2026-01-01
+          ---
+
+          # ADR-101: Title
+
+          - [ ] Task one
+          MD
+          OUT=$(./target/release/cli-rag --config "$CFG" search -q ADR-101 --format json)
+          SCHEMA="contracts/v0.1/cli/search_result.schema.json"
+          python - "$SCHEMA" "$OUT" <<'PY'
+          import sys, json
+          from jsonschema import validate, Draft202012Validator
+          schema_path, data_str = sys.argv[1], sys.argv[2]
+          schema = json.load(open(schema_path))
+          data = json.loads(data_str)
+          Draft202012Validator.check_schema(schema)
+          validate(instance=data, schema=schema)
+          items = data.get('results', [])
+          assert any(item.get('kind')=='todo' for item in items)
+          assert any(item.get('kind')=='kanban' for item in items)
+          print("search(gtd).json OK")
+          PY
+
       - name: Validate graph JSON matches schema (depends_on)
         run: |
           set -euo pipefail

@@ -35,4 +35,7 @@ Update contracts to normalize kanban casing and enrich TODO/ai_get shapes.
 `jsonschema` validates example payloads reflecting the new optional fields; existing payloads without new fields still validate.
 
 ## Issues Encountered
-N/A at ticket creation.
+- Search envelope alignment required updating existing tests to use `{results: [...]}` rather than a bare array.
+- Clippy flagged `too_many_arguments` on `search::run`; added a targeted allow to keep the handler signature simple while filters are experimental.
+- Rustfmt preferred multi-line formatting for chained expressions and assertions; adjusted code and tests to satisfy pre-commit checks.
+- CI schema paths standardized under `contracts/v0.1/...` to match the alpha versioned contracts folder.
