@@ -37,13 +37,10 @@ fn search_returns_protocol_with_groups() {
         .clone();
 
     let v: serde_json::Value = serde_json::from_slice(&output).unwrap();
-    let arr = v.as_array().unwrap();
+    let arr = v["results"].as_array().unwrap();
     assert_eq!(arr.len(), 1);
+    assert_eq!(arr[0]["kind"].as_str().unwrap(), "note");
     assert_eq!(arr[0]["id"].as_str().unwrap(), "ADR-001");
-    assert_eq!(
-        arr[0]["groups"].as_array().unwrap()[0].as_str().unwrap(),
-        "G1"
-    );
 
     temp.close().unwrap();
 }

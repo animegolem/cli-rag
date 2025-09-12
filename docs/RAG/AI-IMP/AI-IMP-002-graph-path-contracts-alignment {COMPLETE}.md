@@ -74,4 +74,4 @@ Add CI gates to validate `graph` and `path` outputs against their schemas on a m
 CI “Contracts Compliance” job passes on PRs with validations for `graph` and `path` outputs against their respective schemas using the temp fixtures.
 
 ## Issues Encountered
-N/A at ticket creation.
+See [[LOG-AI-2025-09-11b]]

@@ -58,8 +58,7 @@ pub fn run(
                     if let [a, b] = &win {
                         if let (Some(da), Some(db)) = (by_id.get(a), by_id.get(b)) {
                             // Determine direction and kind
-                            let (from_id, to_id, kind) = if da.depends_on.iter().any(|x| x == b)
-                            {
+                            let (from_id, to_id, kind) = if da.depends_on.iter().any(|x| x == b) {
                                 (a.clone(), b.clone(), "depends_on".to_string())
                             } else if db.depends_on.iter().any(|x| x == a) {
                                 (b.clone(), a.clone(), "depends_on".to_string())

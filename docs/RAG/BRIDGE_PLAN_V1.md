@@ -34,13 +34,13 @@ Purpose: contracts‑first master checklist (supersedes IMP-* tickets). Tracks c
   - Gaps: GTD enrichments in emitters (dueDate, priorityScore, span, source), filters and deterministic sort
   - Priority: Medium
 
-- graph [[AI-IMP-002-graph-path-contracts-alignment]]
+- graph [[AI-IMP-002-graph-path-contracts-alignment {COMPLETE}]]
   - Contract: `contracts/v1/cli/graph.schema.json`
   - Status: Pending (current uses members; lacks `kind`)
   - Gaps: output `root`, `nodes`, `edges[{from,to,kind}]`
   - Priority: Medium
 
-- path [[AI-IMP-002-graph-path-contracts-alignment]]
+- path [[AI-IMP-002-graph-path-contracts-alignment {COMPLETE}]]
   - Contract: `contracts/v1/cli/path.schema.json`
   - Status: Pending (missing `ok`, nodes, edge `kind`/`locations`)
   - Gaps: align to contract; include `locations`

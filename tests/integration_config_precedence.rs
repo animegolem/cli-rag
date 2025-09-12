@@ -41,8 +41,8 @@ fn env_overrides_config_and_cli_overrides_env() {
         .stdout
         .clone();
     let v: serde_json::Value = serde_json::from_slice(&out).unwrap();
-    assert_eq!(v.as_array().unwrap().len(), 1);
-    assert_eq!(v.as_array().unwrap()[0]["id"], "ADR-002");
+    assert_eq!(v["results"].as_array().unwrap().len(), 1);
+    assert_eq!(v["results"].as_array().unwrap()[0]["id"], "ADR-002");
 
     // Case B: CLI --base overrides env back to base1
     let mut cmd = Command::cargo_bin("cli-rag").unwrap();
@@ -63,8 +63,8 @@ fn env_overrides_config_and_cli_overrides_env() {
         .stdout
         .clone();
     let v: serde_json::Value = serde_json::from_slice(&out).unwrap();
-    assert_eq!(v.as_array().unwrap().len(), 1);
-    assert_eq!(v.as_array().unwrap()[0]["id"], "ADR-001");
+    assert_eq!(v["results"].as_array().unwrap().len(), 1);
+    assert_eq!(v["results"].as_array().unwrap()[0]["id"], "ADR-001");
 
     temp.close().unwrap();
 }

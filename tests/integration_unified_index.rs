@@ -52,7 +52,7 @@ fn unified_index_reader_works_without_per_base() {
         .stdout
         .clone();
     let v: serde_json::Value = serde_json::from_slice(&out).unwrap();
-    assert_eq!(v.as_array().unwrap().len(), 1);
+    assert_eq!(v["results"].as_array().unwrap().len(), 1);
 
     temp.close().unwrap();
 }
@@ -84,7 +84,7 @@ fn fallback_to_scan_when_no_indexes() {
         .stdout
         .clone();
     let v: serde_json::Value = serde_json::from_slice(&out).unwrap();
-    assert_eq!(v.as_array().unwrap().len(), 1);
+    assert_eq!(v["results"].as_array().unwrap().len(), 1);
 
     temp.close().unwrap();
 }
