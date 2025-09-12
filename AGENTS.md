@@ -11,19 +11,6 @@
 - Remove dead code rather than leaving TODO hooks for later; keep surfaces aligned to `contracts/`.
 - Prioritize matching schemas, exit codes, ordering, and NDJSON conventions defined in `contracts/global-conventions.md`.
 
-## Deprecation Markers
-- Use the exact token `_DEPRECATED` to tag anything slated for removal.
-- Placement:
-  - Put a preceding line comment on the declaration to be removed (fn/struct/impl/module/const/flag): `// _DEPRECATED: <reason> | <removal-phase> | <ticket-id>`.
-  - For files, add a top‑of‑file comment with the same token.
-  - For CLI flags/help, add `(DEPRECATED)` in the help text and keep a code comment with `_DEPRECATED`.
-- Examples:
-  - `// _DEPRECATED: legacy groups writer | Phase 2 | AI-IMP-001`
-  - `// _DEPRECATED: old JSON shape | Phase 1 cleanup | AI-IMP-001`
-- Policy:
-  - Prefer `_DEPRECATED` over ad‑hoc TODOs for removals, so `rg -n "_DEPRECATED"` yields a complete removal list.
-  - PRs that remove deprecated code should reference the marker(s) and the Bridge Plan phase.
-
 ## Project Structure & Module Organization
 - `src/bin/cli-rag.rs`: Thin binary wiring CLI to library.
 - `src/cli.rs` and `src/commands/*`: Clap definitions and subcommand handlers.

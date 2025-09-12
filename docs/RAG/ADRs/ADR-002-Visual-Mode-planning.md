@@ -268,6 +268,152 @@ The raw tracking seems to mostly come down to the narrow extra nuance. This woul
 
 The ease in swapping is traded for the lowered clarity around the question of "what content is part of the note"
 
+### GTD Synthisis 
+
+#### The LUA Escape Hatch 
+
+Given we plan to allow full configs in lua it's likely best to give more open hooks that let you tie into a date system, a todo system a kanban system and let it be defined more freely in lua eg;
+
+```lua
+  M.gtd = {
+    todo_parser = function(line)
+      -- Parse your preferred syntax
+      local priority, text = line:match("%[{TODO@(%w+)}: (.+)%]")
+      return { priority = priority, text = text }
+    end,
+
+    todo_renderer = function(todo)
+      -- Render back to your preferred format
+      return string.format("[{TODO@%s}: %s]", todo.priority, todo.text)
+    end
+  }
+```
+
+```lua
+M.gtd = {
+  todo_parser = function(line)
+    -- Custom syntax: e.g., parse "**TODO high: Fix bug**" 
+    local cmd, priority, text = line:match("%*%*([A-Z]+) (%w+): (.+)%*%*")
+    if cmd then
+      return { cmd = cmd, priority = priority, text = text }
+    end
+  end,
+  todo_renderer = function(todo)
+    -- Render with custom formatting
+    return string.format("**%s %s: %s**", todo.cmd or "TODO", todo.priority or "medium", todo.text)
+  end,
+  -- Bonus: Add a completion hook for AI/agenda updates
+  on_complete = function(todo)
+    todo.completed_at = os.date("!%Y-%m-%dT%H:%M:%SZ")  -- UTC timestamp
+    return todo
+  end
+}
+```
+
+This reduces the load on the toml to simply providing a sensible default. 
+
+#### Inline GTD Headings 
+
+There are two core advantages to this approach
+  1. Clean upgrades to existing notes particularly given the [[AI-IMP-* v3]] notes are based around checklists this allows any section to be made a high, tracked priority on the main screen. eg [[AI-IMP-002-graph-path-contracts-alignment]]  
+  2. least heavy syntax + most like idiomatic markdown. 
+
+**GTD sketch**
+Shape: `[@CMD:attr1=value,attr2=value] Optional Text`
+- Core behavior includes 
+	- Headings
+	- Optional Text
+	- any `-[]` checklist style items within the heading. Follows until the next heading of the same level. Does not read into sub-headings. Any generic/non-formatted text is ignored. In lua this behavior should be configurable.  
+- Attach to headings (e.g., `## Fix Bug [@TODO:rank=high,due=2025-09-01]`) or standalone lines.
+- Sub-tasks use standard Markdown checkists below.
+- Completion: Strike the flag `~~[@TODO:... ]~~` or toggle sub-checkboxes. Toggling the top level to `-[x]` toggles all children.
+
+At present the only planned top level command is `[@TODO]`. The only planned `:commands` are;
+
+- :due=YYYY-MM-DD 
+- :rank=[1,100] or [LOW,MED,HIGH]
+
+however this could easily be expanded as needed e.g.;  
+
+- [@EVENT:time=14:00,location=zoom,due=2025-09-23] Team meeting
+  
+Importantly all of the following should be valid --commands are additive not required. 
+
+- [@TODO] (defaults to medium priority)
+- [@TODO:high] (shorthand for rank=high)
+- [@TODO:12] (shorthand for rank=12)
+- [@TODO:rank=high,due=2025-09-01] (100% verbose)
+  
+when a task is completed only it's command block and immediate line are crossed out. `-[]` are also updated dynamically but not crossed out. 
+
+e.g.
+~~[@TODO:100,due=2025-09-15] Clean your room and do your homework !!!!~~ 
+
+A floating entry can have a checklist below it. It will read only until the first new line that is either 
+
+1. empty
+2. does not start with -[] or - [] 
+
+e.g. 
+
+[@TODO:10] Critical parser bug
+  -[] run debugger
+  -[] panic when i can't find it
+  -[] beg ai for help
+  
+One of the last major questions is what shape should this take eg; 
+
+```bash
+V ToDo !
+  * IMP-005 # to allow multiple TODO per note 
+    -[] [@TODO:10] Critical parser bug | 
+        -[] run debugger
+        -[] panic when i can't find it
+        -[] beg ai for help
+```
+
+
+```
+V ToDo !
+  V Critical parser bug, check the blahbahaha and the blohoohoo. Update the toodledee. [IMP-005] | [@TODO:10] | [DUE:TODAY]
+	-[] run debugger
+	-[] panic when i can't find it
+	-[] beg ai for help
+```
+
+```
+V ToDo !
+  V -[] [IMP-005 | @TODO | RANK:HIGH | DUE:TODAY | SUB-TASKS:3] | Critical parser bug, check... 
+        V Critical parser bug, check the blahbahaha and the blohoohoo. Update the toodledee. We need to ensure the unit tests all pass.
+	      -[x] run debugger and validate bahahaha is crashing. 
+ 	      -[] panic when i can't find why bloohohoo is threadlocking. 
+	      -[] beg ai for help. cry. 
+```
+
+Probably the third is the most clear overall. but the overall wordiness on the top line has become too much. the length of the comment line we don't control. mine would be short but the user could do anything like above or even much longer. 
+
+we should test if we crash on overlong strings when we get there. 
+
+a possible final path is doing it more keyed to give a much more compressed dataline eg 
+
+```bash
+ V TODO! 
+   > [IMP-005|@TODO|H|5D|1/3] critical parser bug...
+     V Critical parser bug, check the blahbahaha and the blohoohoo. Update the toodledee. We need to ensure the unit tests all pass.
+	   -[x] run debugger and validate bahahaha is crashing. 
+ 	   -[] panic when i cant find why bloohohoo is threadlocking. 
+	   -[] beg ai for help. cry. 
+```
+
+`key = [node_id|command|rank|cays till due. (can show negatives)|sub-tasks] first three words... `
+
+I finally feel decent about that one overall. 
+
+A new .toml toggle and lua hook will need to be created to allow tuning of the "garbage collection" for the agenda screen e.g. how long after toggling something off do you have before it's gone and the note updated on disk. 
+
+The overall vision is the 'normal' user just treats it as linear-in-a-repo-with-ai as project management tool but then someone that wants to really configure doesn't fight any of the and just uses big hooks. 
+
+
 ### Thoughts about form factors
 
 #### TUI
@@ -283,7 +429,7 @@ Meaningfully I am typing this in emacs right now. It and obsidian are what i act
 
 
 ## Consequences
-<!-- Wha10es easier or more difficult to do because of this change? -->
+<!-- What is easier or more difficult to do because of this change? -->
 
 ## Updates
 <!-- Changes that happened when the rubber met the road -->

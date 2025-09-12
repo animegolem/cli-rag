@@ -3,7 +3,7 @@ use std::collections::{BTreeMap, BTreeSet, HashMap};
 
 use crate::cli::GraphFormat;
 use crate::commands::output::print_json;
-use crate::config::Config;
+use crate::config::{build_schema_sets, Config};
 use crate::discovery::docs_with_source;
 use crate::graph::compute_cluster;
 use crate::model::AdrDoc;
@@ -12,6 +12,7 @@ use crate::model::AdrDoc;
 struct Edge {
     from: String,
     to: String,
+    kind: String,
 }
 
 fn sanitize_id(id: &str) -> String {
@@ -29,6 +30,7 @@ fn cluster_edges(cluster: &BTreeMap<String, AdrDoc>) -> Vec<Edge> {
                 edges.push(Edge {
                     from: id.clone(),
                     to: dep.clone(),
+                    kind: "depends_on".into(),
                 });
             }
         }
@@ -94,26 +96,45 @@ pub fn run(
     let cluster = compute_cluster(&id, depth, include_bidirectional, &by_id);
     match format {
         GraphFormat::Json => {
-            let members: Vec<serde_json::Value> = cluster
+            // schema inference by filename
+            let schema_sets = build_schema_sets(cfg);
+            let infer_schema = |path: &std::path::Path| -> String {
+                let fname = path.file_name().and_then(|s| s.to_str()).unwrap_or("");
+                for (sc, set) in &schema_sets {
+                    if set.is_match(fname) {
+                        return sc.name.clone();
+                    }
+                }
+                "UNKNOWN".into()
+            };
+            let mut nodes: Vec<serde_json::Value> = cluster
                 .iter()
                 .map(|(oid, d)| {
                     serde_json::json!({
                         "id": oid,
                         "title": d.title,
-                        "status": d.status,
+                        "schema": infer_schema(&d.file),
                     })
                 })
                 .collect();
-            let edges: Vec<serde_json::Value> = cluster_edges(&cluster)
+            // deterministic order
+            nodes.sort_by(|a, b| a["id"].as_str().cmp(&b["id"].as_str()));
+            let mut edges: Vec<serde_json::Value> = cluster_edges(&cluster)
                 .into_iter()
-                .map(|e| serde_json::json!({"from": e.from, "to": e.to}))
+                .map(|e| serde_json::json!({"from": e.from, "to": e.to, "kind": e.kind}))
                 .collect();
+            edges.sort_by(|a, b| {
+                (a["from"].as_str(), a["to"].as_str(), a["kind"].as_str()).cmp(&(
+                    b["from"].as_str(),
+                    b["to"].as_str(),
+                    b["kind"].as_str(),
+                ))
+            });
             let out = serde_json::json!({
-                "root": id,
-                "members": members,
+                "protocolVersion": crate::protocol::PROTOCOL_VERSION,
+                "root": {"id": id},
+                "nodes": nodes,
                 "edges": edges,
-                "depth": depth,
-                "bidirectional": include_bidirectional,
             });
             print_json(&out)?;
         }

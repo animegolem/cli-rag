@@ -126,9 +126,9 @@ pub enum Commands {
         depth: Option<usize>,
         #[arg(long)]
         include_bidirectional: Option<bool>,
-        /// Output format
-        #[arg(long, value_enum, default_value_t = GraphFormat::Mermaid)]
-        format: GraphFormat,
+        /// Output format (json is the machine/AI surface)
+        #[arg(long = "graph-format", value_enum, default_value_t = GraphFormat::Mermaid, help = "Output format (json is the machine/AI surface)")]
+        graph_format: GraphFormat,
     },
     Validate(ValidateArgs),
 

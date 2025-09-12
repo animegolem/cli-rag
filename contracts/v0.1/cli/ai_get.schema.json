@@ -12,6 +12,9 @@
     "title": { "type": "string" },
     "file": { "type": "string" },
     "frontmatter": { "type": "object", "additionalProperties": true },
+    "kanbanStatus": { "type": ["string", "null"] },
+    "kanbanStatusLine": { "type": ["string", "null"] },
+    "dueDate": { "type": ["string", "null"], "format": "date" },
     "content": {
       "type": "array",
       "items": {
@@ -40,7 +43,9 @@
           "edge": { "type": "string" },
           "status": { "type": ["string", "null"] },
           "tags": { "type": "array", "items": { "type": "string" } },
+          "kanbanStatus": { "type": ["string", "null"] },
           "kanbanStatusLine": { "type": ["string", "null"] },
+          "dueDate": { "type": ["string", "null"], "format": "date" },
           "lastModified": { "type": ["string", "null"], "format": "date-time" },
           "score": { "type": ["number", "null"] },
           "content": {

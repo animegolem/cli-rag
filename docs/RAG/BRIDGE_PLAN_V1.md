@@ -12,10 +12,11 @@ Purpose: contracts‑first master checklist (supersedes IMP-* tickets). Tracks c
 - Exit codes: see `contracts/global-conventions.md`
 - Deterministic ordering: search, neighbors, graph/path per conventions
 - NDJSON watch handshake: first event `{"event":"watch_start","protocolVersion":1}`
+- CLI flags: long flags use kebab-case (e.g., `--graph-format`, `--full-rescan`).
 
 ## CLI Surfaces
 
-- info [[AI-IMP-001-contracts-ci-bootstrap]]
+- info [[AI-IMP-001-contracts-ci-bootstrap {COMPLETE}]]
   - Contract: `contracts/v1/cli/info.schema.json`
   - Status: Complete (protocolVersion, config/index/cache, capabilities)
   - Gaps: None for Phase 1
@@ -27,31 +28,31 @@ Purpose: contracts‑first master checklist (supersedes IMP-* tickets). Tracks c
   - Gaps: Optional span/field/nodeId as future enrichment
   - Priority: High (done)
 
-- search
-  - Contract: `contracts/cli/search_result.schema.json`
-  - Status: returns bare array; must return `{results:[...]}` with typed `note|todo|kanban`
-  - Gaps: add filters and deterministic sort
+- search [[AI-IMP-003-gtd-schema-polish]] [[AI-IMP-004-gtd-emitters-and-ci]]
+  - Contract: `contracts/v1/cli/search_result.schema.json`
+  - Status: Envelope `{results:[...]}` with typed `note|todo|kanban` (pending emitter alignment)
+  - Gaps: GTD enrichments in emitters (dueDate, priorityScore, span, source), filters and deterministic sort
   - Priority: Medium
 
-- graph
+- graph [[AI-IMP-002-graph-path-contracts-alignment]]
   - Contract: `contracts/v1/cli/graph.schema.json`
   - Status: Pending (current uses members; lacks `kind`)
   - Gaps: output `root`, `nodes`, `edges[{from,to,kind}]`
   - Priority: Medium
 
-- path
+- path [[AI-IMP-002-graph-path-contracts-alignment]]
   - Contract: `contracts/v1/cli/path.schema.json`
   - Status: Pending (missing `ok`, nodes, edge `kind`/`locations`)
   - Gaps: align to contract; include `locations`
   - Priority: Medium
 
-- ai get
+- ai get [[AI-IMP-004-gtd-emitters-and-ci]]
   - Contract: `contracts/v1/cli/ai_get.schema.json`
-  - Status: ensure `protocolVersion`, `retrievalVersion`, neighbors ordering/limits
-  - Gaps: implement `neighborStyle` variants; enforce depth/fanout policies
+  - Status: contract updated to allow optional root/neighbor GTD hints (kanbanStatus, kanbanStatusLine, dueDate)
+  - Gaps: implement `neighborStyle` variants; enforce depth/fanout policies; emit GTD hints when available
   - Priority: Medium
 
-- ai index (plan/apply)
+- ai index (plan/apply) 
   - Contracts: `contracts/v1/cli/ai_index_plan.schema.json`, `contracts/v1/cli/ai_index_apply_report.schema.json`
   - Status: plan/apply wiring TBD; cache shape in ADR aligns
   - Gaps: hashing of source index; tag write policy
@@ -86,8 +87,8 @@ Purpose: contracts‑first master checklist (supersedes IMP-* tickets). Tracks c
 2) Info/Validate JSON surfaces to contract shapes
 3) Unified index writing (edges.kind/locations, computed fields)
 4) Graph/Path outputs to contract shapes
-5) Search envelope + filters (note/todo/kanban kinds)
-6) AI Get neighbors/policies; AI Index plan/apply basics
+5) Search envelope + filters (note/todo/kanban kinds) + GTD enrichments
+6) AI Get neighbors/policies; GTD hints; AI Index plan/apply basics
 7) Watch NDJSON handshake and event envelope
 
 ## Rollout With CI (Contracts‑First)
@@ -111,11 +112,11 @@ Purpose: contracts‑first master checklist (supersedes IMP-* tickets). Tracks c
     - Validate `path` output on a small fixture.
 
 - Phase 3 (Search)
-  - Impl: envelope `{results:[...]}` with typed items and deterministic ordering.
+  - Impl: envelope `{results:[...]}` with typed items and deterministic ordering; emit GTD enrichments.
   - CI gate: validate `search --format json` → `contracts/v1/cli/search_result.schema.json`.
 
 - Phase 4 (AI surfaces)
-  - Impl: `ai get` neighbors/style policies; `ai index plan/apply` basics.
+  - Impl: `ai get` neighbors/style policies; emit GTD hints; `ai index plan/apply` basics.
   - CI gates: validate outputs against `contracts/v1/cli/ai_get.schema.json`, `contracts/v1/cli/ai_index_plan.schema.json`, `contracts/v1/cli/ai_index_apply_report.schema.json` on small fixtures.
 
 - Phase 5 (Watch)

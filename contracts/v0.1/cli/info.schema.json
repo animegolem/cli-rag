@@ -45,7 +45,9 @@
         },
         "pathLocations": { "type": "boolean" },
         "aiIndex": { "type": "boolean" },
-        "luaApiVersion": { "type": "integer" }
+        "luaApiVersion": { "type": "integer" },
+        "gtdTasks": { "type": "boolean" },
+        "kanban": { "type": "boolean" }
       },
       "additionalProperties": true
     }

@@ -1,3 +1,4 @@
+use regex::Regex;
 use std::collections::{BTreeSet, HashMap, HashSet, VecDeque};
 
 use crate::model::AdrDoc;
@@ -10,6 +11,8 @@ pub fn bfs_path(
     max_depth: usize,
     by_id: &HashMap<String, AdrDoc>,
 ) -> Option<Vec<String>> {
+    // Compile mentions regex once
+    let mention_re: Regex = Regex::new(r"\[\[([A-Za-z]+-[0-9A-Za-z_-]+)\]\]").unwrap();
     if from == to {
         return Some(vec![from.into()]);
     }
@@ -29,6 +32,17 @@ pub fn bfs_path(
             for (oid, other) in by_id.iter() {
                 if other.depends_on.iter().any(|d| d == &cur) {
                     neighbors.insert(oid.clone());
+                }
+            }
+            // mentions-based neighbors: scan for wikilinks [[ID]]
+            if let Ok(content) = std::fs::read_to_string(&doc.file) {
+                for cap in mention_re.captures_iter(&content) {
+                    if let Some(m) = cap.get(1) {
+                        let t = m.as_str().to_string();
+                        if by_id.contains_key(&t) {
+                            neighbors.insert(t);
+                        }
+                    }
                 }
             }
             for n in neighbors {

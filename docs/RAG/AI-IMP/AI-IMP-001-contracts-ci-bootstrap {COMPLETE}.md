@@ -3,6 +3,7 @@ node_id: AI-IMP-001
 tags:
   - IMP-LIST
   - Implementation
+kanban_status: complete
 confidence_score: 0.8
 created_date: 2025-09-10
 ---

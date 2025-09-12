@@ -3,8 +3,9 @@
   "$id": "contracts/cli/v1/path.schema.json",
   "title": "path v1",
   "type": "object",
-  "required": ["ok", "path", "edges"],
+  "required": ["protocolVersion", "ok", "path", "edges"],
   "properties": {
+    "protocolVersion": { "type": "integer", "minimum": 1 },
     "ok": { "type": "boolean" },
     "path": {
       "type": "array",

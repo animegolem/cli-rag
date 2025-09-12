@@ -74,13 +74,13 @@ fn main() -> Result<()> {
             id,
             depth,
             include_bidirectional,
-            format,
+            graph_format,
         } => {
             let (cfg, cfg_path) = load_config(&cli.config, &cli.base)?;
             cli_rag::commands::graph::run(
                 &cfg,
                 &cfg_path,
-                &format,
+                &graph_format,
                 id,
                 depth,
                 include_bidirectional,

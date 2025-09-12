@@ -6,6 +6,10 @@
 - JSON outputs: camelCase keys. Exception: edge kind names and schema names are emitted as-is (e.g., "depends_on", "ADR").
 - Frontmatter (YAML): snake_case keys.
 
+### CLI flags
+- Long flags use kebab-case (e.g., `--graph-format`, `--full-rescan`).
+- Short flags remain single letters where applicable (e.g., `-q`).
+
 ### IDs, dates, times
 - Note IDs: schema-specific; recommended regex default ^[A-Z]{2,5}-\d{3,}$ unless overridden.
 - Date-only: YYYY-MM-DD.

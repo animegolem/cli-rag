@@ -3,8 +3,9 @@
   "$id": "contracts/cli/v1/graph.schema.json",
   "title": "graph v1",
   "type": "object",
-  "required": ["root", "nodes", "edges"],
+  "required": ["protocolVersion", "root", "nodes", "edges"],
   "properties": {
+    "protocolVersion": { "type": "integer", "minimum": 1 },
     "root": {
       "type": "object",
       "required": ["id"],

@@ -2,10 +2,9 @@ use anyhow::Result;
 
 use crate::cli::OutputFormat;
 use crate::commands::output::print_json;
-use crate::config::Config;
+use crate::config::{build_schema_sets, Config};
 use crate::discovery::docs_with_source;
 use crate::graph::bfs_path;
-use crate::protocol::ToolCallLocation;
 
 pub fn run(
     cfg: &Config,
@@ -28,40 +27,95 @@ pub fn run(
     let res = bfs_path(&from, &to, max_depth, &by_id);
     match format {
         OutputFormat::Json | OutputFormat::Ndjson | OutputFormat::Ai => {
-            // Optional locations for each hop if we can detect a mention line
-            let mut locations: Vec<serde_json::Value> = Vec::new();
+            // Build contract-shaped output per contracts/v1/cli/path.schema.json
             if let Some(path_ids) = &res {
+                // schema inference helper
+                let schema_sets = build_schema_sets(cfg);
+                let infer_schema = |path: &std::path::Path| -> String {
+                    let fname = path.file_name().and_then(|s| s.to_str()).unwrap_or("");
+                    for (sc, set) in &schema_sets {
+                        if set.is_match(fname) {
+                            return sc.name.clone();
+                        }
+                    }
+                    "UNKNOWN".into()
+                };
+                // path nodes
+                let nodes: Vec<serde_json::Value> = path_ids
+                    .iter()
+                    .filter_map(|pid| by_id.get(pid))
+                    .map(|d| {
+                        serde_json::json!({
+                            "id": d.id.clone().unwrap_or_default(),
+                            "title": d.title,
+                            "schema": infer_schema(&d.file),
+                        })
+                    })
+                    .collect();
+                // edges along path with kind and locations
+                let mut edges: Vec<serde_json::Value> = Vec::new();
                 for win in path_ids.windows(2) {
                     if let [a, b] = &win {
                         if let (Some(da), Some(db)) = (by_id.get(a), by_id.get(b)) {
-                            let (file, needle): (&std::path::PathBuf, &str) =
-                                if da.depends_on.iter().any(|x| x == b) {
-                                    (&da.file, b.as_str())
-                                } else {
-                                    (&db.file, a.as_str())
-                                };
-                            let mut line: Option<u32> = None;
-                            if let Ok(content) = std::fs::read_to_string(file) {
-                                for (i, l) in content.lines().enumerate() {
-                                    if l.contains(needle) {
-                                        line = Some((i + 1) as u32);
-                                        break;
+                            // Determine direction and kind
+                            let (from_id, to_id, kind) = if da.depends_on.iter().any(|x| x == b)
+                            {
+                                (a.clone(), b.clone(), "depends_on".to_string())
+                            } else if db.depends_on.iter().any(|x| x == a) {
+                                (b.clone(), a.clone(), "depends_on".to_string())
+                            } else {
+                                // assume mentions; try to locate lines in either file
+                                (a.clone(), b.clone(), "mentions".to_string())
+                            };
+                            // Collect locations only for mentions by scanning file content
+                            let mut locs: Vec<serde_json::Value> = Vec::new();
+                            if kind == "mentions" {
+                                // Try a mentions scan in both files; record first hit each
+                                let mut push_loc = |file: &std::path::Path, needle: &str| {
+                                    if let Ok(content) = std::fs::read_to_string(file) {
+                                        for (i, l) in content.lines().enumerate() {
+                                            if l.contains(needle) {
+                                                locs.push(serde_json::json!({
+                                                    "path": file.display().to_string(),
+                                                    "line": i as i32 + 1
+                                                }));
+                                                break;
+                                            }
+                                        }
                                     }
+                                };
+                                if let (Some(daid), Some(dbid)) =
+                                    (da.id.as_deref(), db.id.as_deref())
+                                {
+                                    push_loc(&da.file, dbid);
+                                    push_loc(&db.file, daid);
                                 }
                             }
-                            let loc = ToolCallLocation {
-                                path: file.clone(),
-                                line,
-                            };
-                            locations
-                                .push(serde_json::to_value(&loc).unwrap_or(serde_json::json!({})));
+                            edges.push(serde_json::json!({
+                                "from": from_id,
+                                "to": to_id,
+                                "kind": kind,
+                                "locations": locs,
+                            }));
                         }
                     }
                 }
+                let out = serde_json::json!({
+                    "protocolVersion": crate::protocol::PROTOCOL_VERSION,
+                    "ok": true,
+                    "path": nodes,
+                    "edges": edges,
+                });
+                print_json(&out)?;
+            } else {
+                let out = serde_json::json!({
+                    "protocolVersion": crate::protocol::PROTOCOL_VERSION,
+                    "ok": false,
+                    "path": [],
+                    "edges": []
+                });
+                print_json(&out)?;
             }
-            let out =
-                serde_json::json!({"from": from, "to": to, "path": res, "locations": locations});
-            print_json(&out)?;
         }
         OutputFormat::Plain => {
             println!("# Dependency Path: {} → {}\n", from, to);
