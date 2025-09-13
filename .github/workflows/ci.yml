@@ -390,6 +390,8 @@ jobs:
           # ADR-001: Title
           MD
           # (Schemas are already defined in the fixture config)
+          # Rebuild index to include new files
+          ./target/release/cli-rag --config "$CFG" validate --format json >/dev/null
           # Run graph
           OUT=$(./target/release/cli-rag --config "$CFG" graph --id ADR-001 --graph-format json)
           SCHEMA="contracts/v1/cli/graph.schema.json"
@@ -410,6 +412,8 @@ jobs:
           set -euo pipefail
           WORKDIR="${{ steps.fx.outputs.workdir }}"
           CFG="$WORKDIR/.cli-rag.toml"
+          # Ensure index includes ADR-001/ADR-002
+          ./target/release/cli-rag --config "$CFG" validate --format json >/dev/null
           OUT=$(./target/release/cli-rag --config "$CFG" path --from ADR-001 --to ADR-002 --format json)
           SCHEMA="contracts/v1/cli/path.schema.json"
           python - "$SCHEMA" "$OUT" <<'PY'
@@ -463,6 +467,8 @@ jobs:
           # ADR-024: Title
           MD
           # (Schemas are already defined in the fixture config)
+          # Rebuild index to include new files
+          ./target/release/cli-rag --config "$CFG" validate --format json >/dev/null
           OUT=$(./target/release/cli-rag --config "$CFG" path --from ADR-024 --to ADR-029 --format json)
           SCHEMA="contracts/v1/cli/path.schema.json"
           python - "$SCHEMA" "$OUT" <<'PY'
