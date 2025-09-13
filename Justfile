@@ -43,3 +43,7 @@ precommit:
     scripts/line_guard.sh
     cargo fmt --all -- --check
     cargo clippy --all-targets --all-features -- -D warnings
+
+# Local CI-like fixture checks (fast)
+ci-check:
+    bash ./scripts/ci-fixtures-check.sh

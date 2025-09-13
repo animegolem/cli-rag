@@ -57,8 +57,11 @@ pub fn load_docs_unified(
             let path_rel = n.get("path").and_then(|v| v.as_str()).unwrap_or("");
             let file = cfg_dir.join(path_rel);
             // Derive tags/status from frontmatter if present
+            let mut fm_map: std::collections::BTreeMap<String, serde_yaml::Value> =
+                std::collections::BTreeMap::new();
             let (tags, status) = match n.get("frontmatter") {
                 Some(Value::Object(obj)) => {
+                    // tags/status convenience
                     let tags = obj
                         .get("tags")
                         .and_then(|v| v.as_array())
@@ -72,6 +75,23 @@ pub fn load_docs_unified(
                         .get("status")
                         .and_then(|v| v.as_str())
                         .map(|s| s.to_string());
+                    // populate fm_map with simple JSON→YAML conversion for strings/arrays
+                    for (k, v) in obj {
+                        let yv = match v {
+                            Value::String(s) => serde_yaml::Value::from(s.clone()),
+                            Value::Array(a) => {
+                                let mut seq = Vec::new();
+                                for it in a {
+                                    if let Some(ss) = it.as_str() {
+                                        seq.push(serde_yaml::Value::from(ss.to_string()));
+                                    }
+                                }
+                                serde_yaml::Value::Sequence(seq)
+                            }
+                            _ => serde_yaml::Value::Null,
+                        };
+                        fm_map.insert(k.clone(), yv);
+                    }
                     (tags, status)
                 }
                 _ => (Vec::new(), None),
@@ -87,7 +107,7 @@ pub fn load_docs_unified(
                 depends_on: deps_map.remove(&id_str).unwrap_or_default(),
                 supersedes: Vec::new(),
                 superseded_by: Vec::new(),
-                fm: std::collections::BTreeMap::new(),
+                fm: fm_map,
                 mtime: None,
                 size: None,
             });
