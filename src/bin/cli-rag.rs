@@ -58,9 +58,21 @@ fn main() -> Result<()> {
         Commands::Get {
             id,
             include_dependents,
+            neighbor_style,
+            depth,
+            max_fanout,
         } => {
             let (cfg, cfg_path) = load_config(&cli.config, &cli.base)?;
-            cli_rag::commands::get::run(&cfg, &cfg_path, &cli.format, id, include_dependents)?;
+            cli_rag::commands::get::run(
+                &cfg,
+                &cfg_path,
+                &cli.format,
+                id,
+                include_dependents,
+                neighbor_style,
+                depth,
+                max_fanout,
+            )?;
         }
         Commands::Cluster {
             id,

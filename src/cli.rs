@@ -86,6 +86,15 @@ pub enum Commands {
         id: String,
         #[arg(long, default_value_t = false)]
         include_dependents: bool,
+        /// Neighbor style for JSON output (metadata|outline|full)
+        #[arg(long, value_name = "STYLE")]
+        neighbor_style: Option<String>,
+        /// Neighbor search depth (JSON)
+        #[arg(long)]
+        depth: Option<usize>,
+        /// Max neighbors to include (JSON)
+        #[arg(long, value_name = "N")]
+        max_fanout: Option<usize>,
     },
     Cluster {
         #[arg(long)]

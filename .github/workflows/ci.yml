@@ -118,6 +118,37 @@ jobs:
           ./target/release/cli-rag completions bash > /tmp/test-completions.bash
           ./target/release/cli-rag completions zsh > /tmp/test-completions.zsh
 
+      - name: Watch NDJSON handshake
+        run: |
+          set -euo pipefail
+          WORKDIR=$(mktemp -d)
+          mkdir -p "$WORKDIR/notes"
+          cat > "$WORKDIR/.cli-rag.toml" <<EOF
+          bases = [
+            '$WORKDIR/notes'
+          ]
+
+          [[schema]]
+          name = "ADR"
+          file_patterns = ["ADR-*.md"]
+          unknown_policy = "ignore"
+          EOF
+          python - <<'PY'
+          import json, os, subprocess, sys
+          workdir = os.environ['WORKDIR']
+          p = subprocess.Popen([
+              './target/release/cli-rag', '--config', f'{workdir}/.cli-rag.toml', 'watch', '--debounce-ms', '200', '--dry-run', '--json'
+          ], stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True)
+          try:
+              line = p.stdout.readline().strip()
+              obj = json.loads(line)
+              assert obj.get('event') == 'watch_start', obj
+              assert obj.get('protocolVersion') == 1, obj
+          finally:
+              p.kill()
+          print('watch handshake OK')
+          PY
+
   msrv:
     name: Minimum Supported Rust Version
     runs-on: ubuntu-latest
@@ -185,7 +216,7 @@ jobs:
           printf "bases = [\n  '%s'\n]\n" "$BASE" > "$WORKDIR/.cli-rag.toml"
       - name: Validate info JSON matches schema
         run: |
-          SCHEMA="contracts/v0.1/cli/info.schema.json"
+          SCHEMA="contracts/v1/cli/info.schema.json"
           OUT=$(./target/release/cli-rag --config "${{ steps.fx.outputs.workdir }}/.cli-rag.toml" info --format json)
           python - "$SCHEMA" "$OUT" <<'PY'
           import sys, json
@@ -199,7 +230,7 @@ jobs:
           PY
       - name: Validate validate --dry-run JSON matches schema
         run: |
-          SCHEMA="contracts/v0.1/cli/validate_result.schema.json"
+          SCHEMA="contracts/v1/cli/validate_result.schema.json"
           OUT=$(./target/release/cli-rag --config "${{ steps.fx.outputs.workdir }}/.cli-rag.toml" validate --format json --dry-run)
           python - "$SCHEMA" "$OUT" <<'PY'
           import sys, json
@@ -216,7 +247,7 @@ jobs:
           WORKDIR="${{ steps.fx.outputs.workdir }}"
           ./target/release/cli-rag --config "$WORKDIR/.cli-rag.toml" validate --format json >/dev/null
           test -f "$WORKDIR/.cli-rag/resolved.json"
-          SCHEMA="contracts/v0.1/config/resolved_config.json"
+          SCHEMA="contracts/v1/config/resolved_config.json"
           python - "$SCHEMA" "$WORKDIR/.cli-rag/resolved.json" <<'PY'
           import sys, json
           from jsonschema import validate, Draft202012Validator
@@ -232,7 +263,7 @@ jobs:
           WORKDIR="${{ steps.fx.outputs.workdir }}"
           INDEX_PATH="$WORKDIR/index/adr-index.json"
           test -f "$INDEX_PATH"
-          SCHEMA="contracts/v0.1/index/index.schema.json"
+          SCHEMA="contracts/v1/index/index.schema.json"
           python - "$SCHEMA" "$INDEX_PATH" <<'PY'
           import sys, json
           from jsonschema import validate, Draft202012Validator
@@ -254,7 +285,7 @@ jobs:
           # Append schema mapping
           printf "\n[[schema]]\nname = \"ADR\"\nfile_patterns = [\"ADR-*.md\"]\nunknown_policy = \"ignore\"\n" >> "$CFG"
           OUT=$(./target/release/cli-rag --config "$CFG" search -q ADR-100 --format json)
-          SCHEMA="contracts/v0.1/cli/search_result.schema.json"
+          SCHEMA="contracts/v1/cli/search_result.schema.json"
           python - "$SCHEMA" "$OUT" <<'PY'
           import sys, json
           from jsonschema import validate, Draft202012Validator
@@ -288,8 +319,8 @@ jobs:
 
           - [ ] Task one
           MD
-          OUT=$(./target/release/cli-rag --config "$CFG" search -q ADR-101 --format json)
-          SCHEMA="contracts/v0.1/cli/search_result.schema.json"
+          OUT=$(./target/release/cli-rag --config "$CFG" search -q ADR-101 --kind kanban,todo --format json)
+          SCHEMA="contracts/v1/cli/search_result.schema.json"
           python - "$SCHEMA" "$OUT" <<'PY'
           import sys, json
           from jsonschema import validate, Draft202012Validator
@@ -317,7 +348,7 @@ jobs:
           printf "\n[[schema]]\nname = \"ADR\"\nfile_patterns = [\"ADR-*.md\"]\nunknown_policy = \"ignore\"\n" >> "$CFG"
           # Run graph
           OUT=$(./target/release/cli-rag --config "$CFG" graph --id ADR-001 --graph-format json)
-          SCHEMA="contracts/v0.1/cli/graph.schema.json"
+          SCHEMA="contracts/v1/cli/graph.schema.json"
           python - "$SCHEMA" "$OUT" <<'PY'
           import sys, json
           from jsonschema import validate, Draft202012Validator
@@ -336,7 +367,7 @@ jobs:
           WORKDIR="${{ steps.fx.outputs.workdir }}"
           CFG="$WORKDIR/.cli-rag.toml"
           OUT=$(./target/release/cli-rag --config "$CFG" path --from ADR-001 --to ADR-002 --format json)
-          SCHEMA="contracts/v0.1/cli/path.schema.json"
+          SCHEMA="contracts/v1/cli/path.schema.json"
           python - "$SCHEMA" "$OUT" <<'PY'
           import sys, json
           from jsonschema import validate, Draft202012Validator
@@ -361,7 +392,7 @@ jobs:
           # Append IMP schema so filename mapping knows both
           printf "\n[[schema]]\nname = \"IMP\"\nfile_patterns = [\"IMP-*.md\"]\nunknown_policy = \"ignore\"\n" >> "$CFG"
           OUT=$(./target/release/cli-rag --config "$CFG" path --from ADR-024 --to ADR-029 --format json)
-          SCHEMA="contracts/v0.1/cli/path.schema.json"
+          SCHEMA="contracts/v1/cli/path.schema.json"
           python - "$SCHEMA" "$OUT" <<'PY'
           import sys, json
           from jsonschema import validate, Draft202012Validator
@@ -373,4 +404,29 @@ jobs:
           # Has a mentions edge with at least one location
           assert any(e.get('kind')=='mentions' and isinstance(e.get('locations'), list) and len(e['locations'])>0 for e in data.get('edges', []))
           print("path(mentions).json OK")
+          PY
+
+      - name: Validate ai get JSON matches schema
+        run: |
+          set -euo pipefail
+          WORKDIR="${{ steps.fx.outputs.workdir }}"
+          NOTES="$WORKDIR/notes"
+          CFG="$WORKDIR/.cli-rag.toml"
+          # Add a simple ADR
+          printf "---\nid: ADR-150\ntags: [x]\nstatus: draft\ndepends_on: []\n---\n\n# ADR-150: Title\n\nBody\n" > "$NOTES/ADR-150.md"
+          # Ensure schema mapping exists
+          printf "\n[[schema]]\nname = \"ADR\"\nfile_patterns = [\"ADR-*.md\"]\nunknown_policy = \"ignore\"\n" >> "$CFG"
+          OUT=$(./target/release/cli-rag --config "$CFG" get --id ADR-150 --format json)
+          SCHEMA="contracts/v1/cli/ai_get.schema.json"
+          python - "$SCHEMA" "$OUT" <<'PY'
+          import sys, json
+          from jsonschema import validate, Draft202012Validator
+          schema_path, data_str = sys.argv[1], sys.argv[2]
+          schema = json.load(open(schema_path))
+          data = json.loads(data_str)
+          Draft202012Validator.check_schema(schema)
+          validate(instance=data, schema=schema)
+          assert data.get('protocolVersion') == 1
+          assert data.get('retrievalVersion') == 1
+          print("ai_get.json OK")
           PY

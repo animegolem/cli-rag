@@ -16,9 +16,9 @@ created_date: 2025-09-12
 Update contracts to normalize kanban casing and enrich TODO/ai_get shapes.
 
 ### Files to Touch
-- `contracts/v0.1/cli/search_result.schema.json`
-- `contracts/v0.1/cli/ai_get.schema.json`
-- `contracts/v0.1/cli/info.schema.json`
+- `contracts/v1/cli/search_result.schema.json`
+- `contracts/v1/cli/ai_get.schema.json`
+- `contracts/v1/cli/info.schema.json`
 - `contracts/global-conventions.md`
 - `contracts/changelog.md`
 
@@ -38,4 +38,4 @@ Update contracts to normalize kanban casing and enrich TODO/ai_get shapes.
 - Search envelope alignment required updating existing tests to use `{results: [...]}` rather than a bare array.
 - Clippy flagged `too_many_arguments` on `search::run`; added a targeted allow to keep the handler signature simple while filters are experimental.
 - Rustfmt preferred multi-line formatting for chained expressions and assertions; adjusted code and tests to satisfy pre-commit checks.
-- CI schema paths standardized under `contracts/v0.1/...` to match the alpha versioned contracts folder.
+- CI schema paths standardized under `contracts/v1/...` to match the v1 contracts folder.

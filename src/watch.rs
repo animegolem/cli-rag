@@ -20,17 +20,38 @@ pub fn run_watch(
     cfg_path: &Option<std::path::PathBuf>,
     args: WatchArgs,
 ) -> Result<()> {
+    // Helper to emit NDJSON event envelopes
+    let emit = |event: &str, payload: serde_json::Value| {
+        let mut obj = serde_json::json!({
+            "event": event,
+            "protocolVersion": crate::protocol::PROTOCOL_VERSION,
+        });
+        if let Some(map) = obj.as_object_mut() {
+            if let Some(add) = payload.as_object() {
+                for (k, v) in add.iter() {
+                    map.insert(k.clone(), v.clone());
+                }
+            }
+        }
+        println!("{}", obj.to_string());
+    };
+
+    if args.json {
+        // NDJSON handshake first line
+        emit("watch_start", serde_json::json!({}));
+        // Ensure it's flushed right away
+        use std::io::Write;
+        let _ = std::io::stdout().flush();
+    }
     // Initial run
     {
         let docs = incremental_collect_docs(cfg, args.full_rescan)?;
         let report = validate_docs(cfg, &docs);
         if args.json {
-            // Emit a validated event
-            let ev = crate::protocol::SessionUpdate::Validated {
-                ok: report.ok,
-                doc_count: docs.len(),
-            };
-            println!("{}", serde_json::to_string(&ev)?);
+            emit(
+                "validated",
+                serde_json::json!({"ok": report.ok, "docCount": docs.len()}),
+            );
         }
         if report.ok && !args.dry_run {
             let cfg_dir = cfg_path
@@ -43,17 +64,24 @@ pub fn run_watch(
                 for base in &cfg.bases {
                     let count = docs.iter().filter(|d| d.file.starts_with(base)).count();
                     let path = base.join(&cfg.index_relative);
-                    let ev = crate::protocol::SessionUpdate::IndexWritten { path, count };
-                    println!("{}", serde_json::to_string(&ev)?);
+                    emit(
+                        "index_written",
+                        serde_json::json!({
+                            "path": path.display().to_string(),
+                            "count": count
+                        }),
+                    );
                 }
                 // Unified index event if cfg_dir is present
                 if let Some(dir) = cfg_dir {
                     let path = dir.join(&cfg.index_relative);
-                    let ev = crate::protocol::SessionUpdate::IndexWritten {
-                        path,
-                        count: docs.len(),
-                    };
-                    println!("{}", serde_json::to_string(&ev)?);
+                    emit(
+                        "index_written",
+                        serde_json::json!({
+                            "path": path.display().to_string(),
+                            "count": docs.len()
+                        }),
+                    );
                 }
             }
         }
@@ -91,11 +119,10 @@ pub fn run_watch(
         let docs = incremental_collect_docs(cfg, false)?;
         let report = validate_docs(cfg, &docs);
         if args.json {
-            let ev = crate::protocol::SessionUpdate::Validated {
-                ok: report.ok,
-                doc_count: docs.len(),
-            };
-            println!("{}", serde_json::to_string(&ev)?);
+            emit(
+                "validated",
+                serde_json::json!({"ok": report.ok, "docCount": docs.len()}),
+            );
         }
         if report.ok && !args.dry_run {
             let cfg_dir = cfg_path
@@ -107,16 +134,23 @@ pub fn run_watch(
                 for base in &cfg.bases {
                     let count = docs.iter().filter(|d| d.file.starts_with(base)).count();
                     let path = base.join(&cfg.index_relative);
-                    let ev = crate::protocol::SessionUpdate::IndexWritten { path, count };
-                    println!("{}", serde_json::to_string(&ev)?);
+                    emit(
+                        "index_written",
+                        serde_json::json!({
+                            "path": path.display().to_string(),
+                            "count": count
+                        }),
+                    );
                 }
                 if let Some(dir) = cfg_dir {
                     let path = dir.join(&cfg.index_relative);
-                    let ev = crate::protocol::SessionUpdate::IndexWritten {
-                        path,
-                        count: docs.len(),
-                    };
-                    println!("{}", serde_json::to_string(&ev)?);
+                    emit(
+                        "index_written",
+                        serde_json::json!({
+                            "path": path.display().to_string(),
+                            "count": docs.len()
+                        }),
+                    );
                 }
             }
         }
@@ -127,8 +161,13 @@ pub fn run_watch(
                     let path = base.join(&cfg.groups_relative);
                     // Count equals number of groups entries as a heuristic: number of group labels
                     let count = docs.iter().flat_map(|d| d.groups.iter()).count();
-                    let ev = crate::protocol::SessionUpdate::GroupsWritten { path, count };
-                    println!("{}", serde_json::to_string(&ev)?);
+                    emit(
+                        "groups_written",
+                        serde_json::json!({
+                            "path": path.display().to_string(),
+                            "count": count
+                        }),
+                    );
                 }
             }
         }

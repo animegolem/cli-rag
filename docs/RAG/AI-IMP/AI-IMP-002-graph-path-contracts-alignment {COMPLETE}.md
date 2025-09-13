@@ -66,8 +66,8 @@ Add CI gates to validate `graph` and `path` outputs against their schemas on a m
 
 ### Implementation Checklist
 - [x] In CI, create a temp fixture with two notes (ADR-001 depends on ADR-002) and run:
-  - [x] `graph --id ADR-001 --graph-format json` → validate against `contracts/v0.1/cli/graph.schema.json`.
-  - [x] `path --from ADR-001 --to ADR-002 --format json` → validate against `contracts/v0.1/cli/path.schema.json`.
+  - [x] `graph --id ADR-001 --graph-format json` → validate against `contracts/v1/cli/graph.schema.json`.
+  - [x] `path --from ADR-001 --to ADR-002 --format json` → validate against `contracts/v1/cli/path.schema.json`.
 - [x] Add a second fixture case exercising `mentions` edge on `path` with `locations`.
 
 ### Acceptance Criteria

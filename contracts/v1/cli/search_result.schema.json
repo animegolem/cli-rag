@@ -3,8 +3,9 @@
   "$id": "contracts/cli/v1/search_result.schema.json",
   "title": "search result v1",
   "type": "object",
-  "required": ["results"],
+  "required": ["protocolVersion", "results"],
   "properties": {
+    "protocolVersion": { "type": "integer", "minimum": 1 },
     "results": {
       "type": "array",
       "items": {

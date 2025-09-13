@@ -28,29 +28,29 @@ Purpose: contracts‑first master checklist (supersedes IMP-* tickets). Tracks c
   - Gaps: Optional span/field/nodeId as future enrichment
   - Priority: High (done)
 
-- search [[AI-IMP-003-gtd-schema-polish]] [[AI-IMP-004-gtd-emitters-and-ci]]
+- search [[AI-IMP-003-gtd-schema-polish {COMPLETE}]] [[AI-IMP-004-gtd-emitters-and-ci {COMPLETE}]]
   - Contract: `contracts/v1/cli/search_result.schema.json`
-  - Status: Envelope `{results:[...]}` with typed `note|todo|kanban` (pending emitter alignment)
-  - Gaps: GTD enrichments in emitters (dueDate, priorityScore, span, source), filters and deterministic sort
-  - Priority: Medium
+  - Status: Complete (protocolVersion; envelope `{results:[...]}`; filters; GTD emitters for todos/kanban with dueDate, priorityScore, span, source)
+  - Gaps: Optional scoring refinements
+  - Priority: Done
 
 - graph [[AI-IMP-002-graph-path-contracts-alignment {COMPLETE}]]
   - Contract: `contracts/v1/cli/graph.schema.json`
-  - Status: Pending (current uses members; lacks `kind`)
-  - Gaps: output `root`, `nodes`, `edges[{from,to,kind}]`
-  - Priority: Medium
+  - Status: Complete (root, nodes, edges with kind; deterministic ordering; protocolVersion)
+  - Gaps: None
+  - Priority: Done
 
 - path [[AI-IMP-002-graph-path-contracts-alignment {COMPLETE}]]
   - Contract: `contracts/v1/cli/path.schema.json`
-  - Status: Pending (missing `ok`, nodes, edge `kind`/`locations`)
-  - Gaps: align to contract; include `locations`
-  - Priority: Medium
+  - Status: Complete (ok flag; nodes; edges with kind and locations; protocolVersion)
+  - Gaps: None
+  - Priority: Done
 
-- ai get [[AI-IMP-004-gtd-emitters-and-ci]]
+- ai get [[AI-IMP-004-gtd-emitters-and-ci {COMPLETE}]] [[AI-IMP-005-ai-get-neighbor-policies-and-style {COMPLETE}]]
   - Contract: `contracts/v1/cli/ai_get.schema.json`
-  - Status: contract updated to allow optional root/neighbor GTD hints (kanbanStatus, kanbanStatusLine, dueDate)
-  - Gaps: implement `neighborStyle` variants; enforce depth/fanout policies; emit GTD hints when available
-  - Priority: Medium
+  - Status: Complete (protocolVersion/retrievalVersion; neighborStyle metadata|outline|full; depth/fanout enforcement; GTD hints on root and neighbors)
+  - Gaps: Optional outline tuning and scoring
+  - Priority: Done
 
 - ai index (plan/apply) 
   - Contracts: `contracts/v1/cli/ai_index_plan.schema.json`, `contracts/v1/cli/ai_index_apply_report.schema.json`
@@ -60,9 +60,9 @@ Purpose: contracts‑first master checklist (supersedes IMP-* tickets). Tracks c
 
 ## ResolvedConfig (camelCase)
 - Contract: `contracts/v1/config/resolved_config.json`
-- Status: Updated to enumerate `validate.frontmatter|body|edges|gtd`; `defaultMaxNodes` removed
-- Gaps: None major; implementation to follow (Lua overlay/versioning)
-- Priority: High (loader + emitter)
+- Status: Snapshot emitter implemented (`.cli-rag/resolved.json`); fields aligned per contract
+- Gaps: Lua overlay/versioning not yet implemented
+- Priority: High (loader/overlay)
 
 ## Unified Index
 - Contract: `contracts/v1/index/index.schema.json`
@@ -70,11 +70,11 @@ Purpose: contracts‑first master checklist (supersedes IMP-* tickets). Tracks c
 - Gaps: Additional computed fields optional (tokenEstimate, topics)
 - Priority: High (done)
 
-## Watch (NDJSON)
+## Watch (NDJSON) [[AI-IMP-006-watch-ndjson-handshake-and-events {COMPLETE}]]
 - Contract reference: `contracts/global-conventions.md`
-- Status: Stream events; add initial `watch_start`
-- Gaps: event envelope standardization
-- Priority: Medium
+- Status: Complete (first event handshake `{event:watch_start, protocolVersion:1}`; standardized event envelopes)
+- Gaps: None
+- Priority: Done
 
 ## Lua API
 - Contract reference: `contracts/global-conventions.md` (hooks + ctx)
@@ -82,14 +82,14 @@ Purpose: contracts‑first master checklist (supersedes IMP-* tickets). Tracks c
 - Gaps: sandbox, `--no-lua`, `luaApiVersion` exposure in info
 - Priority: Medium
 
-## Implementation Order (suggested)
-1) Loader/ResolvedConfig emitter (config + Lua overlay; write snapshot)
-2) Info/Validate JSON surfaces to contract shapes
-3) Unified index writing (edges.kind/locations, computed fields)
-4) Graph/Path outputs to contract shapes
-5) Search envelope + filters (note/todo/kanban kinds) + GTD enrichments
-6) AI Get neighbors/policies; GTD hints; AI Index plan/apply basics
-7) Watch NDJSON handshake and event envelope
+## Implementation Order (status)
+1) Loader/ResolvedConfig emitter (snapshot complete; Lua overlay pending)
+2) Info/Validate JSON surfaces to contract shapes — Complete
+3) Unified index writing (edges.kind/locations, computed fields) — Complete
+4) Graph/Path outputs to contract shapes — Complete
+5) Search envelope + filters (note/todo/kanban kinds) + GTD enrichments — Complete
+6) AI Get neighbors/policies; GTD hints — Complete; AI Index plan/apply basics — Pending
+7) Watch NDJSON handshake and event envelope — Complete
 
 ## Rollout With CI (Contracts‑First)
 
