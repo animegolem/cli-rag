@@ -214,7 +214,11 @@ jobs:
           mkdir -p "$WORKDIR/notes"
           # minimal config using the fixture base
           BASE="$WORKDIR/notes"
-          printf "bases = [\n  '%s'\n]\n" "$BASE" > "$WORKDIR/.cli-rag.toml"
+          cat > "$WORKDIR/.cli-rag.toml" <<EOF
+          bases = [
+            '$BASE'
+          ]
+          EOF
       - name: Validate info JSON matches schema
         run: |
           SCHEMA="contracts/v1/cli/info.schema.json"
@@ -282,9 +286,24 @@ jobs:
           NOTES="$WORKDIR/notes"
           CFG="$WORKDIR/.cli-rag.toml"
           # Write a simple ADR to search for
-          printf "---\nid: ADR-100\ntags: [x]\nstatus: draft\ndepends_on: []\n---\n\n# ADR-100: Title\n" > "$NOTES/ADR-100.md"
+          cat > "$NOTES/ADR-100.md" <<'MD'
+          ---
+          id: ADR-100
+          tags: [x]
+          status: draft
+          depends_on: []
+          ---
+
+          # ADR-100: Title
+          MD
           # Append schema mapping
-          printf "\n[[schema]]\nname = \"ADR\"\nfile_patterns = [\"ADR-*.md\"]\nunknown_policy = \"ignore\"\n" >> "$CFG"
+          cat >> "$CFG" <<'EOF'
+          
+          [[schema]]
+          name = "ADR"
+          file_patterns = ["ADR-*.md"]
+          unknown_policy = "ignore"
+          EOF
           OUT=$(./target/release/cli-rag --config "$CFG" search -q ADR-100 --format json)
           SCHEMA="contracts/v1/cli/search_result.schema.json"
           python - "$SCHEMA" "$OUT" <<'PY'
@@ -343,10 +362,34 @@ jobs:
           NOTES="$WORKDIR/notes"
           CFG="$WORKDIR/.cli-rag.toml"
           # Write minimal fixture
-          printf "---\nid: ADR-002\ntags: [x]\nstatus: draft\ndepends_on: []\n---\n\n# ADR-002: Title\n" > "$NOTES/ADR-002.md"
-          printf "---\nid: ADR-001\ntags: [x]\nstatus: draft\ndepends_on: [\"ADR-002\"]\n---\n\n# ADR-001: Title\n" > "$NOTES/ADR-001.md"
+          cat > "$NOTES/ADR-002.md" <<'MD'
+          ---
+          id: ADR-002
+          tags: [x]
+          status: draft
+          depends_on: []
+          ---
+
+          # ADR-002: Title
+          MD
+          cat > "$NOTES/ADR-001.md" <<'MD'
+          ---
+          id: ADR-001
+          tags: [x]
+          status: draft
+          depends_on: ["ADR-002"]
+          ---
+
+          # ADR-001: Title
+          MD
           # Minimal schema mapping
-          printf "\n[[schema]]\nname = \"ADR\"\nfile_patterns = [\"ADR-*.md\"]\nunknown_policy = \"ignore\"\n" >> "$CFG"
+          cat >> "$CFG" <<'EOF'
+          
+          [[schema]]
+          name = "ADR"
+          file_patterns = ["ADR-*.md"]
+          unknown_policy = "ignore"
+          EOF
           # Run graph
           OUT=$(./target/release/cli-rag --config "$CFG" graph --id ADR-001 --graph-format json)
           SCHEMA="contracts/v1/cli/graph.schema.json"
@@ -387,11 +430,46 @@ jobs:
           WORKDIR="${{ steps.fx.outputs.workdir }}"
           NOTES="$WORKDIR/notes"
           CFG="$WORKDIR/.cli-rag.toml"
-          printf "---\nid: ADR-029\ntags: [x]\nstatus: draft\ndepends_on: []\n---\n\n# ADR-029: Title\n" > "$NOTES/ADR-029.md"
-          printf "---\nid: IMP-006\ntags: [x]\nstatus: draft\ndepends_on: []\n---\n\n# IMP-006: Title\n\nThis mentions [[ADR-029]] here.\n" > "$NOTES/IMP-006.md"
-          printf "---\nid: ADR-024\ntags: [x]\nstatus: draft\ndepends_on: [\"IMP-006\"]\n---\n\n# ADR-024: Title\n" > "$NOTES/ADR-024.md"
+          cat > "$NOTES/ADR-029.md" <<'MD'
+          ---
+          id: ADR-029
+          tags: [x]
+          status: draft
+          depends_on: []
+          ---
+
+          # ADR-029: Title
+          MD
+          cat > "$NOTES/IMP-006.md" <<'MD'
+          ---
+          id: IMP-006
+          tags: [x]
+          status: draft
+          depends_on: []
+          ---
+
+          # IMP-006: Title
+
+          This mentions [[ADR-029]] here.
+          MD
+          cat > "$NOTES/ADR-024.md" <<'MD'
+          ---
+          id: ADR-024
+          tags: [x]
+          status: draft
+          depends_on: ["IMP-006"]
+          ---
+
+          # ADR-024: Title
+          MD
           # Append IMP schema so filename mapping knows both
-          printf "\n[[schema]]\nname = \"IMP\"\nfile_patterns = [\"IMP-*.md\"]\nunknown_policy = \"ignore\"\n" >> "$CFG"
+          cat >> "$CFG" <<'EOF'
+          
+          [[schema]]
+          name = "IMP"
+          file_patterns = ["IMP-*.md"]
+          unknown_policy = "ignore"
+          EOF
           OUT=$(./target/release/cli-rag --config "$CFG" path --from ADR-024 --to ADR-029 --format json)
           SCHEMA="contracts/v1/cli/path.schema.json"
           python - "$SCHEMA" "$OUT" <<'PY'
