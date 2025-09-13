@@ -33,7 +33,7 @@ pub fn run_watch(
                 }
             }
         }
-        println!("{}", obj.to_string());
+        println!("{}", obj);
     };
 
     if args.json {

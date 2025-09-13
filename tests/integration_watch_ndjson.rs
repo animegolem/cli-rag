@@ -2,7 +2,6 @@ use assert_cmd::prelude::*;
 use assert_fs::prelude::*;
 use std::io::{BufRead, BufReader};
 use std::process::{Command, Stdio};
-use std::time::Duration;
 
 #[test]
 fn watch_emits_handshake_first() {
@@ -41,8 +40,8 @@ fn watch_emits_handshake_first() {
     assert_eq!(v["event"], "watch_start");
     assert_eq!(v["protocolVersion"].as_i64(), Some(1));
 
-    // terminate process
+    // terminate process and wait to avoid zombie
     let _ = child.kill();
+    let _ = child.wait();
     temp.close().unwrap();
 }
-

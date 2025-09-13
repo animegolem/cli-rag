@@ -9,6 +9,7 @@ pub mod new;
 pub mod output;
 pub mod path;
 pub mod search;
+pub mod search_gtd;
 pub mod topics;
 pub mod validate_cmd;
 pub mod watch_cmd;

@@ -4,9 +4,9 @@ use std::fs;
 
 use crate::cli::OutputFormat;
 use crate::commands::output::print_json;
+use crate::config::build_schema_sets;
 use crate::config::Config;
 use crate::discovery::docs_with_source;
-use crate::config::build_schema_sets;
 use crate::protocol::ContentBlock;
 
 fn build_outline(path: &std::path::Path, lines_per_heading: usize) -> serde_json::Value {
@@ -14,13 +14,14 @@ fn build_outline(path: &std::path::Path, lines_per_heading: usize) -> serde_json
     let mut outline: Vec<serde_json::Value> = Vec::new();
     let mut current_heading: Option<String> = None;
     let mut buffer: Vec<String> = Vec::new();
-    let mut flush = |heading: &mut Option<String>, buf: &mut Vec<String>, out: &mut Vec<serde_json::Value>| {
-        if let Some(h) = heading.take() {
-            let first: Vec<String> = buf.iter().take(lines_per_heading).cloned().collect();
-            out.push(serde_json::json!({"heading": h, "firstLines": first}));
-            buf.clear();
-        }
-    };
+    let flush =
+        |heading: &mut Option<String>, buf: &mut Vec<String>, out: &mut Vec<serde_json::Value>| {
+            if let Some(h) = heading.take() {
+                let first: Vec<String> = buf.iter().take(lines_per_heading).cloned().collect();
+                out.push(serde_json::json!({"heading": h, "firstLines": first}));
+                buf.clear();
+            }
+        };
     for line in content.lines() {
         let lt = line.trim_start();
         if lt.starts_with('#') {
@@ -34,12 +35,11 @@ fn build_outline(path: &std::path::Path, lines_per_heading: usize) -> serde_json
         }
     }
     // Flush last
-    {
-        let _ = flush(&mut current_heading, &mut buffer, &mut outline);
-    }
+    flush(&mut current_heading, &mut buffer, &mut outline);
     serde_json::Value::Array(outline)
 }
 
+#[allow(clippy::too_many_arguments)]
 pub fn run(
     cfg: &Config,
     cfg_path: &Option<std::path::PathBuf>,
@@ -127,7 +127,9 @@ pub fn run(
             let depth = depth.unwrap_or(1);
             let max_fanout = max_fanout.unwrap_or(5);
             if style == "full" && depth > 1 {
-                eprintln!("Policy violation: neighborStyle=full with depth>1 (NEIGHBORS_FULL_DEPTH_GT1)");
+                eprintln!(
+                    "Policy violation: neighborStyle=full with depth>1 (NEIGHBORS_FULL_DEPTH_GT1)"
+                );
                 std::process::exit(2);
             }
 
@@ -157,14 +159,18 @@ pub fn run(
                 }
             }
             // BFS
-            let mut q: std::collections::VecDeque<(String, usize)> = std::collections::VecDeque::new();
-            let mut dist: std::collections::HashMap<String, usize> = std::collections::HashMap::new();
+            let mut q: std::collections::VecDeque<(String, usize)> =
+                std::collections::VecDeque::new();
+            let mut dist: std::collections::HashMap<String, usize> =
+                std::collections::HashMap::new();
             let mut discovered_from: std::collections::HashMap<String, (String, String)> =
                 std::collections::HashMap::new(); // neighbor -> (from, edge)
             dist.insert(id.clone(), 0);
             q.push_back((id.clone(), 0));
             while let Some((cur, dlevel)) = q.pop_front() {
-                if dlevel >= depth { continue; }
+                if dlevel >= depth {
+                    continue;
+                }
                 // explore both directions
                 for (nbr, edge) in out_edges.get(&cur).cloned().unwrap_or_default() {
                     if !dist.contains_key(&nbr) {
@@ -186,9 +192,13 @@ pub fn run(
             let mut neighbors: Vec<serde_json::Value> = Vec::new();
             let mut seen: BTreeSet<String> = BTreeSet::new();
             for (nid, dlevel) in dist.iter() {
-                if nid == &id { continue; }
+                if nid == &id {
+                    continue;
+                }
                 if let Some(d) = by_id.get(nid) {
-                    if !seen.insert(nid.clone()) { continue; }
+                    if !seen.insert(nid.clone()) {
+                        continue;
+                    }
                     let (from, edge) = discovered_from
                         .get(nid)
                         .cloned()
@@ -252,7 +262,12 @@ pub fn run(
                             _ => std::cmp::Ordering::Equal,
                         }
                     })
-                    .then_with(|| a["id"].as_str().unwrap_or("").cmp(b["id"].as_str().unwrap_or("")))
+                    .then_with(|| {
+                        a["id"]
+                            .as_str()
+                            .unwrap_or("")
+                            .cmp(b["id"].as_str().unwrap_or(""))
+                    })
             });
 
             // Apply fanout limit after sort
