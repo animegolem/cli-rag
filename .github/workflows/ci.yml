@@ -496,9 +496,26 @@ jobs:
           NOTES="$WORKDIR/notes"
           CFG="$WORKDIR/.cli-rag.toml"
           # Add a simple ADR
-          printf "---\nid: ADR-150\ntags: [x]\nstatus: draft\ndepends_on: []\n---\n\n# ADR-150: Title\n\nBody\n" > "$NOTES/ADR-150.md"
+          cat > "$NOTES/ADR-150.md" <<'MD'
+          ---
+          id: ADR-150
+          tags: [x]
+          status: draft
+          depends_on: []
+          ---
+
+          # ADR-150: Title
+
+          Body
+          MD
           # Ensure schema mapping exists
-          printf "\n[[schema]]\nname = \"ADR\"\nfile_patterns = [\"ADR-*.md\"]\nunknown_policy = \"ignore\"\n" >> "$CFG"
+          cat >> "$CFG" <<'EOF'
+          
+          [[schema]]
+          name = "ADR"
+          file_patterns = ["ADR-*.md"]
+          unknown_policy = "ignore"
+          EOF
           OUT=$(./target/release/cli-rag --config "$CFG" get --id ADR-150 --format json)
           SCHEMA="contracts/v1/cli/ai_get.schema.json"
           python - "$SCHEMA" "$OUT" <<'PY'
