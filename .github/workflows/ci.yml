@@ -504,6 +504,8 @@ jobs:
           Body
           MD
           # (Schemas are already defined in the fixture config)
+          # Rebuild index to include new files
+          ./target/release/cli-rag --config "$CFG" validate --format json >/dev/null
           OUT=$(./target/release/cli-rag --config "$CFG" get --id ADR-150 --format json)
           SCHEMA="contracts/v1/cli/ai_get.schema.json"
           python - "$SCHEMA" "$OUT" <<'PY'
