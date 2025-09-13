@@ -218,6 +218,16 @@ jobs:
           bases = [
             '$BASE'
           ]
+
+          [[schema]]
+          name = "ADR"
+          file_patterns = ["ADR-*.md"]
+          unknown_policy = "ignore"
+
+          [[schema]]
+          name = "IMP"
+          file_patterns = ["IMP-*.md"]
+          unknown_policy = "ignore"
           EOF
       - name: Validate info JSON matches schema
         run: |
@@ -296,14 +306,7 @@ jobs:
 
           # ADR-100: Title
           MD
-          # Append schema mapping
-          cat >> "$CFG" <<'EOF'
-
-          [[schema]]
-          name = "ADR"
-          file_patterns = ["ADR-*.md"]
-          unknown_policy = "ignore"
-          EOF
+          # (Schemas are already defined in the fixture config)
           # Rebuild index to include new files
           ./target/release/cli-rag --config "$CFG" validate --format json >/dev/null
           OUT=$(./target/release/cli-rag --config "$CFG" search -q ADR-100 --format json)
@@ -386,14 +389,7 @@ jobs:
 
           # ADR-001: Title
           MD
-          # Minimal schema mapping
-          cat >> "$CFG" <<'EOF'
-          
-          [[schema]]
-          name = "ADR"
-          file_patterns = ["ADR-*.md"]
-          unknown_policy = "ignore"
-          EOF
+          # (Schemas are already defined in the fixture config)
           # Run graph
           OUT=$(./target/release/cli-rag --config "$CFG" graph --id ADR-001 --graph-format json)
           SCHEMA="contracts/v1/cli/graph.schema.json"
@@ -466,14 +462,7 @@ jobs:
 
           # ADR-024: Title
           MD
-          # Append IMP schema so filename mapping knows both
-          cat >> "$CFG" <<'EOF'
-          
-          [[schema]]
-          name = "IMP"
-          file_patterns = ["IMP-*.md"]
-          unknown_policy = "ignore"
-          EOF
+          # (Schemas are already defined in the fixture config)
           OUT=$(./target/release/cli-rag --config "$CFG" path --from ADR-024 --to ADR-029 --format json)
           SCHEMA="contracts/v1/cli/path.schema.json"
           python - "$SCHEMA" "$OUT" <<'PY'
@@ -508,14 +497,7 @@ jobs:
 
           Body
           MD
-          # Ensure schema mapping exists
-          cat >> "$CFG" <<'EOF'
-          
-          [[schema]]
-          name = "ADR"
-          file_patterns = ["ADR-*.md"]
-          unknown_policy = "ignore"
-          EOF
+          # (Schemas are already defined in the fixture config)
           OUT=$(./target/release/cli-rag --config "$CFG" get --id ADR-150 --format json)
           SCHEMA="contracts/v1/cli/ai_get.schema.json"
           python - "$SCHEMA" "$OUT" <<'PY'
