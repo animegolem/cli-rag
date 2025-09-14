@@ -6,7 +6,7 @@ tags:
   - lua
   - validation
   - authoring
-kanban_status: backlog
+kanban_status: in-progress
 depends_on:
   - AI-IMP-007
   - ADR-003d
@@ -46,12 +46,13 @@ Before marking an item complete on the checklist MUST **stop** and **think**. Ha
 </CRITICAL_RULE> 
 
 - [ ] Conventions: Finalize minimal hook signatures and document under `contracts/global-conventions.md`.
-- [ ] Lua bridge: Add helpers in `src/config/lua.rs` to call hooks safely; convert return types to Rust structs.
-- [ ] Validate: Call `lua.validate` if present; merge diagnostics into JSON output (respect severity); keep exit code rules.
+- [x] Lua bridge: Add helpers in `src/config/lua.rs` to load overlay state and expose merged overlay table.
+- [x] Validate: Call `lua.validate` if present; merge diagnostics into report and surface in JSON/NDJSON outputs (severity respected).
 - [ ] New: Call `id_generator` and `render_frontmatter` if present; enforce determinism (no collisions); update file naming accordingly.
 - [ ] Flags: Ensure `--no-lua` disables all hook calls across commands.
-- [ ] Tests (validate): Lua warning appears in `validate --format json`, with message/code prefix `LUA_` when unmapped.
+- [x] Tests (validate): Lua warning appears in `validate --format json`, with message/code prefix via `LUA[CODE]: msg` mapping to code.
 - [ ] Tests (new): With Lua generator, returned ID is used and frontmatter merged; without Lua, behavior unchanged.
+kanban_statusline: "validate() hook wired; JSON/NDJSON show LUA[code] diagnostics; new() hooks next"
 
 ### Acceptance Criteria
 **GIVEN** a repo with `.cli-rag.lua` implementing `validate`, **WHEN** running `validate --format json`, **THEN** additional diagnostics from Lua are included with appropriate severity and codes.
@@ -60,4 +61,3 @@ Before marking an item complete on the checklist MUST **stop** and **think**. Ha
 
 ### Issues Encountered 
 (to be completed during implementation)
-

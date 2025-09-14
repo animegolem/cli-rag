@@ -1,6 +1,7 @@
 use std::path::{Path, PathBuf};
 
 use crate::config::schema::OverlayInfo;
+use mlua::{Lua, Table, Value as LuaValue};
 
 fn home_dir() -> Option<PathBuf> {
     if let Ok(h) = std::env::var("HOME") {
@@ -54,4 +55,48 @@ pub fn discover_overlays(cfg_path: &Option<PathBuf>, no_lua_flag: bool) -> Overl
         repo_path,
         user_path,
     }
+}
+
+fn read_file_if_exists(p: &Path) -> Option<String> {
+    std::fs::read_to_string(p).ok()
+}
+
+fn merge_tables(_base_lua: &Lua, base: &Table, add: &Table) -> mlua::Result<()> {
+    for pair in add.clone().pairs::<LuaValue, LuaValue>() {
+        let (k, v) = pair?;
+        base.set(k, v)?;
+    }
+    Ok(())
+}
+
+/// Load overlay Lua state and return a merged overlay table (repo overlaid by user).
+pub fn load_overlay_state(_cfg_path: &Option<PathBuf>, overlays: &OverlayInfo) -> Option<Lua> {
+    if !overlays.enabled {
+        return None;
+    }
+    let lua = Lua::new();
+    let overlay_tbl = lua.create_table().ok()?;
+    // Load repo, then user (user overrides repo)
+    if let Some(ref rp) = overlays.repo_path {
+        if let Some(code) = read_file_if_exists(rp) {
+            let chunk = lua.load(&code).set_name("repo_overlay");
+            if let Ok(tbl) = chunk.eval::<Table>() {
+                let _ = merge_tables(&lua, &overlay_tbl, &tbl);
+            }
+        }
+    }
+    if let Some(ref up) = overlays.user_path {
+        if let Some(code) = read_file_if_exists(up) {
+            let chunk = lua.load(&code).set_name("user_overlay");
+            if let Ok(tbl) = chunk.eval::<Table>() {
+                let _ = merge_tables(&lua, &overlay_tbl, &tbl);
+            }
+        }
+    }
+    // set as global 'overlay'
+    {
+        let globals = lua.globals();
+        let _ = globals.set("overlay", overlay_tbl);
+    }
+    Some(lua)
 }

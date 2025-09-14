@@ -1,6 +1,7 @@
 use anyhow::Result;
 
 use crate::cli::OutputFormat;
+use crate::commands::lua_integration::lua_validate_augment;
 use crate::commands::output::{print_json, print_ndjson_iter, print_ndjson_value};
 use crate::config::Config;
 use crate::discovery::incremental_collect_docs;
@@ -17,7 +18,14 @@ pub fn run(
     full_rescan: bool,
 ) -> Result<()> {
     let docs = incremental_collect_docs(cfg, full_rescan)?;
-    let report = validate_docs(cfg, &docs);
+    let mut report = validate_docs(cfg, &docs);
+    lua_validate_augment(
+        cfg,
+        cfg_path,
+        &docs,
+        &mut report.errors,
+        &mut report.warnings,
+    );
     // Helper to derive location from message when possible
     fn derive_location(message: &str) -> Option<(String, ToolCallLocation)> {
         // Expected leading pattern: "/path/to/file.md: ..."
@@ -54,6 +62,15 @@ pub fn run(
     }
     fn classify_code(message: &str, kind: &str) -> Option<String> {
         let m = message;
+        // Lua-provided messages: LUA[CODE]: ...
+        if let Some(start) = m.find("LUA[") {
+            if let Some(end) = m[start + 4..].find(']') {
+                let code = &m[start + 4..start + 4 + end];
+                if !code.is_empty() {
+                    return Some(code.to_string());
+                }
+            }
+        }
         // config loader codes may appear as E100/E110/E120 already
         if m.contains("multiple schema matches") {
             return Some("E200".into());

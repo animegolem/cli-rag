@@ -84,8 +84,8 @@
 - All hooks optional. Use snake_case names.
 
 ### Signatures
-- id_generator(ctx) → { id, filename }
-- render_frontmatter(note, ctx) → table
+- id_generator(schema, ctx) → { id, filename? }
+- render_frontmatter(schema, title?, ctx) → table
 - template_prompt(ctx) → string|nil
 - template_note(ctx) → string|nil
 - validate(note, ctx) → { diagnostics: Diagnostic[] }

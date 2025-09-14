@@ -4,9 +4,12 @@ use std::fs;
 use std::path::PathBuf;
 use std::time::SystemTime;
 
+use crate::commands::lua_integration::lua_new_hooks;
 use crate::config::Config;
 use crate::discovery::docs_with_source;
 use crate::util::try_open_editor;
+#[allow(unused_imports)]
+use mlua::{Function as LuaFunction, Table as LuaTable};
 
 fn render_template(mut s: String, id: &str, title: &str) -> String {
     s = s.replace("{{id}}", id);
@@ -123,11 +126,17 @@ pub fn run(
         &cfg.bases[0]
     };
     let (docs, _used_unified) = docs_with_source(cfg, cfg_path)?;
-    let id = compute_next_id(&schema, &docs);
+    let mut id = compute_next_id(&schema, &docs);
     let mut title = title_opt.unwrap_or_else(|| id.clone());
     if normalize_title {
         use heck::ToTitleCase;
         title = title.to_title_case();
+    }
+
+    // Lua hooks: id_generator(schema, ctx) and render_frontmatter(schema, title?, ctx)
+    let (id_override, fm_overrides) = lua_new_hooks(cfg, cfg_path, &schema, &title, &docs);
+    if let Some(newid) = id_override {
+        id = newid;
     }
 
     // Find template under config dir if available
@@ -149,7 +158,30 @@ pub fn run(
             "---\nid: {{id}}\ntags: []\nstatus: draft\ndepends_on: []\n---\n\n# {{id}}: {{title}}\n\n",
         )
     };
-    let body = render_template(body_raw, &id, &title);
+    let mut body = render_template(body_raw, &id, &title);
+    // If Lua provided frontmatter overrides, merge into the YAML block
+    if let Some(fm_map) = fm_overrides {
+        if body.starts_with("---\n") {
+            if let Some(end) = body.find("\n---\n") {
+                let fm_content = &body[4..end];
+                let rest = &body[end + 5..];
+                if let Ok(val) = serde_yaml::from_str::<serde_yaml::Value>(fm_content) {
+                    use serde_yaml::{Mapping, Value};
+                    let mut map = match val {
+                        Value::Mapping(m) => m,
+                        _ => Mapping::new(),
+                    };
+                    // apply overrides map
+                    for (k, v) in fm_map {
+                        map.insert(Value::String(k), v);
+                    }
+                    let yaml = serde_yaml::to_string(&Value::Mapping(map)).unwrap_or_default();
+                    let front = format!("---\n{}---\n", yaml);
+                    body = format!("{}{}", front, rest);
+                }
+            }
+        }
+    }
     // Determine filename template: CLI flag takes precedence, else per-schema config
     let schema_tpl: Option<String> = if filename_template.is_none() {
         cfg.schema
@@ -213,7 +245,7 @@ pub fn run(
         }
         // Ensure we don't overwrite an existing file; bump numeric suffix if needed
         if out_path.exists() {
-            let prefix = schema;
+            let prefix = schema.clone();
             let re = Regex::new(&format!(r"^{}-(\d+)$", regex::escape(&prefix))).unwrap();
             let mut n: usize = 1;
             if let Some(caps) = re.captures(&id) {

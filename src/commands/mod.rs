@@ -5,6 +5,7 @@ pub mod graph;
 pub mod group;
 pub mod info;
 pub mod init;
+pub mod lua_integration;
 pub mod new;
 pub mod output;
 pub mod path;
