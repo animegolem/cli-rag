@@ -7,6 +7,13 @@ status: draft
 
 Purpose: contracts‑first master checklist (supersedes IMP-* tickets). Tracks current status, gaps, priorities, and conventions for the v1 surface. Contracts live under `contracts/` and are authoritative.
 
+## Status Checkpoint (2025-09-14)
+- Complete: info, validate, search, graph, path, ai get, unified index, watch NDJSON handshake.
+- Partial: resolved config snapshot is emitted; Lua overlay/versioning not implemented yet.
+- Pending: ai index plan/apply (contracts defined; implementation not wired).
+- Cleanup gap: legacy `topics`/`group` surfaces still exist contrary to ADR-003d’s “groups removed” decision; to be removed or deprecated in v2.
+- Minor mismatch: `info` currently advertises `aiIndex: true`; capability should be gated once plan/apply lands.
+
 ## Conventions
 - Casing: TOML/Lua snake_case; JSON camelCase
 - Exit codes: see `contracts/global-conventions.md`
@@ -54,7 +61,7 @@ Purpose: contracts‑first master checklist (supersedes IMP-* tickets). Tracks c
 
 - ai index (plan/apply) 
   - Contracts: `contracts/v1/cli/ai_index_plan.schema.json`, `contracts/v1/cli/ai_index_apply_report.schema.json`
-  - Status: plan/apply wiring TBD; cache shape in ADR aligns
+  - Status: plan/apply wiring TBD; cache shape in ADR aligns (capability advertised in `info` to be gated or corrected in v2)
   - Gaps: hashing of source index; tag write policy
   - Priority: Low
 
@@ -130,3 +137,7 @@ Purpose: contracts‑first master checklist (supersedes IMP-* tickets). Tracks c
 ## Notes
 - Contracts are authoritative. Prefer updating `contracts/` over ADR text.
 - Alpha/non‑prod: remove dead code, avoid compatibility crutches.
+
+### Deviations to resolve in v2
+- Remove or deprecate legacy `topics`/`group` commands and groups JSON emission; standardize on tags + `ai index` per ADR-003d.
+- Implement Lua overlay and `--no-lua`, and gate `aiIndex` capability in `info` until implemented.
