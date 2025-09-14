@@ -6,17 +6,17 @@ You've found this way too early! Nothing here is ready for production. :) This w
 
 ## JSON/NDJSON surfaces (ACP-aligned)
 
-- `watch --json` emits NDJSON events compatible with ACP-style session updates:
-  - `{"sessionUpdate":"validated","ok":true,"docCount":N}`
-  - `{"sessionUpdate":"index_written","path":"...","count":N}`
-  - `{"sessionUpdate":"groups_written","path":"...","count":N}`
+- `watch --json` emits NDJSON events with an `event` field:
+  - `{"event":"watch_start","protocolVersion":1}`
+  - `{"event":"validated","ok":true,"docCount":N}`
+  - `{"event":"index_written","path":"...","count":N}`
   Each event is a single line of JSON; stderr retains human-readable logs.
 
 - `get --format ai` returns content blocks friendly to LLMs/editors:
   - `{ id, title, file, neighbors:{depends_on,dependents}, content:[ {type:"resource_link",uri}, {type:"text",text} ] }`
 
-- `info --format json` includes protocol metadata:
-  - `{ protocolVersion: 1, capabilities: { watchNdjson: true, aiGet: { retrievalVersion: 1 }, pathLocations: true } }`
+- `info --format json` includes protocol metadata and capabilities:
+  - `{ protocolVersion: 1, cache: { aiIndexPath, exists }, capabilities: { watchNdjson: true, aiGet: { retrievalVersion: 1 }, pathLocations: true, aiIndex: false, luaApiVersion: 1, overlaysEnabled: true } }`
 
 ## Commands (overview)
 
@@ -58,13 +58,12 @@ Usage:
 ```
 cli-rag --config ./.cli-rag.toml ai-index-apply \
   --from .cli-rag/cache/plan.json \
-  --write-cache true \
-  --write-frontmatter false \
+  --write-frontmatter \
   --dry-run
 ```
 
 Notes:
 - Validates plan.sourceIndexHash against the current unified index (exit 2 on mismatch).
-- Writes cache to `.cli-rag/cache/ai-index.json` when `--write-cache` is true.
-- Tag writes are additive and require an existing `tags` field in frontmatter; otherwise exit 4.
+- Writes cache to `.cli-rag/cache/ai-index.json` by default.
+- Tag writes: enable with `--write-frontmatter`. Additive and require an existing `tags` field in frontmatter; otherwise exit 4.
 - Apply report matches `contracts/v1/cli/ai_index_apply_report.schema.json`.
