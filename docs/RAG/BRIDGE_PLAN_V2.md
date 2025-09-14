@@ -13,6 +13,7 @@ Purpose: track the next phase of work post‑v1 to close remaining gaps, align s
 - Deliver `ai index plan` and `ai index apply` per contracts (`contracts/v1/cli/ai_index_plan.schema.json`, `contracts/v1/cli/ai_index_apply_report.schema.json`).
 - Remove or deprecate legacy `topics`/`group` surfaces and groups JSON emission per ADR-003d.
 - Gate capability flags accurately (e.g., advertise `aiIndex` only when plan/apply available).
+- Config versioning: read `config_version` from TOML when present; default sensibly; expose in `info` and `resolved.json` (source-of-truth from config rather than hardcoded).
 
 ## Scope
 - Config/Lua
@@ -57,4 +58,3 @@ Purpose: track the next phase of work post‑v1 to close remaining gaps, align s
 2) ai index plan implementation + CI schema gate.
 3) ai index apply implementation + cache write + CI gate.
 4) Capability gating + groups deprecation + doc updates.
-
