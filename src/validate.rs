@@ -135,6 +135,7 @@ mod tests {
             allowed_statuses: default_allowed_statuses(),
             defaults: default_defaults(),
             schema: Vec::new(),
+            overlays: crate::config::schema::OverlayInfo::default(),
         };
         let d1 = AdrDoc {
             file: PathBuf::from("X.md"),
@@ -236,6 +237,7 @@ mod tests {
             allowed_statuses: default_allowed_statuses(),
             defaults: default_defaults(),
             schema: vec![sc_adr, sc_imp],
+            overlays: crate::config::schema::OverlayInfo::default(),
         };
 
         // ADR doc with empty required 'tags', unknown key in fm, and depends_on an IMP doc
@@ -295,6 +297,7 @@ mod tests {
             allowed_statuses: default_allowed_statuses(),
             defaults: default_defaults(),
             schema: Vec::new(),
+            overlays: crate::config::schema::OverlayInfo::default(),
         };
         let d = AdrDoc {
             file: PathBuf::from("A.md"),

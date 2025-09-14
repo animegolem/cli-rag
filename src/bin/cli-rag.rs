@@ -18,7 +18,7 @@ fn main() -> Result<()> {
             cli_rag::commands::init::run(path, force, print_template, silent, schema, separate)?;
         }
         Commands::Info {} => {
-            let (cfg, cfg_path) = load_config(&cli.config, &cli.base)?;
+            let (cfg, cfg_path) = load_config(&cli.config, &cli.base, cli.no_lua)?;
             cli_rag::commands::info::run(&cfg, &cfg_path, &cli.format)?;
         }
         Commands::Completions { shell } => {
@@ -32,7 +32,7 @@ fn main() -> Result<()> {
             status,
             tag,
         } => {
-            let (cfg, cfg_path) = load_config(&cli.config, &cli.base)?;
+            let (cfg, cfg_path) = load_config(&cli.config, &cli.base, cli.no_lua)?;
             cli_rag::commands::search::run(
                 &cfg,
                 &cfg_path,
@@ -45,14 +45,14 @@ fn main() -> Result<()> {
             )?;
         }
         Commands::Topics {} => {
-            let (cfg, cfg_path) = load_config(&cli.config, &cli.base)?;
+            let (cfg, cfg_path) = load_config(&cli.config, &cli.base, cli.no_lua)?;
             cli_rag::commands::topics::run(&cfg, &cfg_path, &cli.format)?;
         }
         Commands::Group {
             topic,
             include_content,
         } => {
-            let (cfg, cfg_path) = load_config(&cli.config, &cli.base)?;
+            let (cfg, cfg_path) = load_config(&cli.config, &cli.base, cli.no_lua)?;
             cli_rag::commands::group::run(&cfg, &cfg_path, &cli.format, topic, include_content)?;
         }
         Commands::Get {
@@ -62,7 +62,7 @@ fn main() -> Result<()> {
             depth,
             max_fanout,
         } => {
-            let (cfg, cfg_path) = load_config(&cli.config, &cli.base)?;
+            let (cfg, cfg_path) = load_config(&cli.config, &cli.base, cli.no_lua)?;
             cli_rag::commands::get::run(
                 &cfg,
                 &cfg_path,
@@ -79,7 +79,7 @@ fn main() -> Result<()> {
             depth,
             include_bidirectional,
         } => {
-            let (cfg, cfg_path) = load_config(&cli.config, &cli.base)?;
+            let (cfg, cfg_path) = load_config(&cli.config, &cli.base, cli.no_lua)?;
             cli_rag::commands::cluster::run(
                 &cfg,
                 &cfg_path,
@@ -94,7 +94,7 @@ fn main() -> Result<()> {
             to,
             max_depth,
         } => {
-            let (cfg, cfg_path) = load_config(&cli.config, &cli.base)?;
+            let (cfg, cfg_path) = load_config(&cli.config, &cli.base, cli.no_lua)?;
             cli_rag::commands::path::run(&cfg, &cfg_path, &cli.format, from, to, max_depth)?;
         }
         Commands::Graph {
@@ -103,7 +103,7 @@ fn main() -> Result<()> {
             include_bidirectional,
             graph_format,
         } => {
-            let (cfg, cfg_path) = load_config(&cli.config, &cli.base)?;
+            let (cfg, cfg_path) = load_config(&cli.config, &cli.base, cli.no_lua)?;
             cli_rag::commands::graph::run(
                 &cfg,
                 &cfg_path,
@@ -123,7 +123,7 @@ fn main() -> Result<()> {
             dry_run,
             edit,
         } => {
-            let (cfg, cfg_path) = load_config(&cli.config, &cli.base)?;
+            let (cfg, cfg_path) = load_config(&cli.config, &cli.base, cli.no_lua)?;
             cli_rag::commands::new::run(
                 &cfg,
                 &cfg_path,
@@ -143,7 +143,7 @@ fn main() -> Result<()> {
             dry_run,
             json,
         } => {
-            let (cfg, cfg_path) = load_config(&cli.config, &cli.base)?;
+            let (cfg, cfg_path) = load_config(&cli.config, &cli.base, cli.no_lua)?;
             cli_rag::commands::watch_cmd::run(
                 &cfg,
                 &cfg_path,
@@ -154,7 +154,7 @@ fn main() -> Result<()> {
             )?;
         }
         Commands::Validate(args) => {
-            let (cfg, cfg_path) = load_config(&cli.config, &cli.base)?;
+            let (cfg, cfg_path) = load_config(&cli.config, &cli.base, cli.no_lua)?;
             cli_rag::commands::validate_cmd::run(
                 &cfg,
                 &cfg_path,

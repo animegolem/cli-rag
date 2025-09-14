@@ -246,6 +246,21 @@ pub fn run(
                 .iter()
                 .map(|s| serde_json::json!({"name": s.name, "filePatterns": s.file_patterns}))
                 .collect();
+            let overlays = serde_json::json!({
+                "enabled": cfg.overlays.enabled,
+                "repoPath": cfg
+                    .overlays
+                    .repo_path
+                    .as_ref()
+                    .map(|p| p.display().to_string())
+                    .unwrap_or_else(|| "".into()),
+                "userPath": cfg
+                    .overlays
+                    .user_path
+                    .as_ref()
+                    .map(|p| p.display().to_string())
+                    .unwrap_or_else(|| "".into()),
+            });
             let resolved = serde_json::json!({
                 "protocolVersion": crate::protocol::PROTOCOL_VERSION,
                 "configVersion": "0.1",
@@ -255,7 +270,8 @@ pub fn run(
                 "authoring": authoring,
                 "graph": graph,
                 "templates": templates,
-                "schemas": schemas
+                "schemas": schemas,
+                "overlays": overlays
             });
             let _ = std::fs::write(
                 &resolved_path,

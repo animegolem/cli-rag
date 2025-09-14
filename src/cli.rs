@@ -29,6 +29,10 @@ pub struct Cli {
     #[arg(long, value_delimiter = ',', global = true, alias = "filepaths")]
     pub base: Option<Vec<PathBuf>>,
 
+    /// Disable Lua overlays entirely (also honored via CLI_RAG_NO_LUA=1)
+    #[arg(long, global = true, default_value_t = false)]
+    pub no_lua: bool,
+
     /// Global output format
     #[arg(long, value_enum, global = true, default_value_t = OutputFormat::Plain)]
     pub format: OutputFormat,

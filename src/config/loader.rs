@@ -8,6 +8,7 @@ use std::path::{Path, PathBuf};
 
 use super::defaults::*;
 use super::schema::{Config, SchemaCfg};
+use crate::config::lua::discover_overlays;
 
 pub fn find_config_upwards(explicit: &Option<PathBuf>) -> Option<PathBuf> {
     if let Some(p) = explicit {
@@ -53,6 +54,7 @@ fn find_all_configs_upwards_chain() -> Vec<PathBuf> {
 pub fn load_config(
     path_opt: &Option<PathBuf>,
     base_override: &Option<Vec<PathBuf>>,
+    no_lua: bool,
 ) -> Result<(Config, Option<PathBuf>)> {
     // Detect multiple configs in scope (unless an explicit path is provided or CLI_RAG_CONFIG is set)
     let env_cfg = env::var("CLI_RAG_CONFIG").ok().map(PathBuf::from);
@@ -85,8 +87,12 @@ pub fn load_config(
             allowed_statuses: default_allowed_statuses(),
             defaults: default_defaults(),
             schema: Vec::new(),
+            overlays: super::schema::OverlayInfo::default(),
         }
     };
+    // Discover overlays (repo + user), honoring CLI flag and env. Merge is deferred to hook wiring.
+    let overlays = discover_overlays(&path, no_lua);
+    cfg.overlays = overlays;
     // Env override for bases/filepaths (comma-separated)
     if let Ok(env_bases) = env::var("CLI_RAG_FILEPATHS") {
         let list: Vec<PathBuf> = env_bases

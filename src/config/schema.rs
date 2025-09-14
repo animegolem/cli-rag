@@ -1,6 +1,13 @@
 use serde::Deserialize;
 use std::path::PathBuf;
 
+#[derive(Debug, Clone, Default)]
+pub struct OverlayInfo {
+    pub enabled: bool,
+    pub repo_path: Option<PathBuf>,
+    pub user_path: Option<PathBuf>,
+}
+
 #[derive(Debug, Deserialize, Clone)]
 pub struct DefaultsCfg {
     #[serde(default = "crate::config::defaults::default_depth")]
@@ -70,4 +77,8 @@ pub struct Config {
     pub defaults: DefaultsCfg,
     #[serde(default)]
     pub schema: Vec<SchemaCfg>,
+
+    // Runtime-only overlay metadata (not part of TOML)
+    #[serde(skip)]
+    pub overlays: OverlayInfo,
 }

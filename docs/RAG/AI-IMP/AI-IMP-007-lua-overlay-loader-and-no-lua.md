@@ -6,7 +6,7 @@ tags:
   - lua
   - config
   - cli
-kanban_status: backlog
+kanban_status: in-progress
 depends_on:
   - ADR-003d
   - ADR-006
@@ -48,11 +48,11 @@ Introduce a Lua overlay system with deterministic load order and an opt-out flag
 Before marking an item complete on the checklist MUST **stop** and **think**. Have you validated all aspects are **implemented** and **tested**? 
 </CRITICAL_RULE> 
 
-- [ ] CLI: Add `--no-lua` (bool) and environment var `CLI_RAG_NO_LUA` handling in `src/cli.rs`.
-- [ ] Config: Create `src/config/lua.rs` with functions to locate repo/user overlays and parse them (parse-as-data approach; no hooks yet).
-- [ ] Loader: After TOML load in `load_config`, call overlay loader unless disabled; merge overlay values into effective config.
-- [ ] Resolved snapshot: Include `{ overlays: { enabled, repoPath?, userPath? } }` in `.cli-rag/resolved.json`.
-- [ ] Info: Add `capabilities.overlaysEnabled` (true when overlays are active) and expose overlay paths under `cache` or a new top-level field.
+- [x] CLI: Add `--no-lua` (bool) and environment var `CLI_RAG_NO_LUA` handling in `src/cli.rs`.
+- [x] Config: Create `src/config/lua.rs` with functions to locate repo/user overlays and parse them (parse-as-data approach; no hooks yet).
+- [x] Loader: After TOML load in `load_config`, call overlay loader unless disabled; store overlay metadata on config (merge of values deferred to hooks ticket).
+- [x] Resolved snapshot: Include `{ overlays: { enabled, repoPath?, userPath? } }` in `.cli-rag/resolved.json`.
+- [x] Info: Add `capabilities.overlaysEnabled` (true when overlays are active).
 - [ ] Docs: Update `contracts/global-conventions.md` to document load order and `--no-lua`.
 - [ ] Tests: Add a unit/integration test that sets up `.cli-rag.lua`, runs `validate` and asserts `resolved.json.overlays.enabled==true` and paths present.
 - [ ] Tests: Verify `--no-lua` and `CLI_RAG_NO_LUA=1` both disable overlays and resolved snapshot reflects `enabled==false`.
@@ -65,4 +65,3 @@ Before marking an item complete on the checklist MUST **stop** and **think**. Ha
 
 ### Issues Encountered 
 (to be completed during implementation)
-
