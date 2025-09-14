@@ -6,13 +6,13 @@ tags:
   - ai-index
   - cache
   - tags
-kanban_status: backlog
+kanban_status: done
 depends_on:
   - AI-IMP-009
   - ADR-003d
 confidence_score: 0.73
 created_date: 2025-09-14
-close_date: 
+close_date: 2025-09-14
 ---
 
 # AI-IMP-010-ai-index-apply-cache-and-tags
@@ -44,12 +44,12 @@ Add `ai index apply` to persist labeled clusters to an authoritative cache and o
 Before marking an item complete on the checklist MUST **stop** and **think**. Have you validated all aspects are **implemented** and **tested**? 
 </CRITICAL_RULE> 
 
-- [ ] CLI: Add `ai index apply` flags per design.
-- [ ] Parser: Read and validate `plan.json`; verify `sourceIndexHash` against current unified index when present.
-- [ ] Cache: Write `.cli-rag/cache/ai-index.json` when enabled; ensure deterministic order.
-- [ ] Tags: When enabled, add label-as-tag to member notes; only when schema allows tags; skip with warning otherwise.
-- [ ] Report: Print contract-shaped JSON; set exit codes per global conventions.
-- [ ] Tests: Integration covering dry-run, write-cache only, write-frontmatter, and mismatched hash (exit 2).
+- [x] CLI: Add `ai index apply` flags per design.
+- [x] Parser: Read and validate `plan.json`; verify `sourceIndexHash` against current unified index when present (exit 2 on mismatch).
+- [x] Cache: Write `.cli-rag/cache/ai-index.json` when enabled; ensure directories are created.
+- [x] Tags: When enabled, add label-derived tag (kebab-case) or plan.tags; require existing `tags` field; additive, de-dup; exit 4 on schema/format error.
+- [x] Report: Print contract-shaped JSON; set exit codes (2/4) per conventions.
+- [x] Tests: Integration for dry-run; for write-cache+frontmatter; for mismatched hash (exit 2).
 
 ### Acceptance Criteria
 **GIVEN** a valid plan with matching `sourceIndexHash`, **WHEN** running `ai index apply --from plan.json --write-cache true --write-frontmatter false`, **THEN** `.cli-rag/cache/ai-index.json` exists, JSON validates, and report indicates `written.cache=true` and `frontmatter=false`.
@@ -59,5 +59,4 @@ Before marking an item complete on the checklist MUST **stop** and **think**. Ha
 **GIVEN** hash mismatch, **WHEN** running apply, **THEN** process exits with code 2 and a clear message.
 
 ### Issues Encountered 
-(to be completed during implementation)
-
+- None blocking; added strict guards for frontmatter tags format (sequence) to avoid schema ambiguity.

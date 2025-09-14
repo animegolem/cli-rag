@@ -145,7 +145,7 @@ eg
     "watchNdjson": true,
     "aiGet": { "retrievalVersion": 1 },
     "pathLocations": true,
-    "aiIndex": true
+    "aiIndex": false
   }
 }
 ```
@@ -222,7 +222,7 @@ Return a consistent envelope with results (not a bare array), plus a “kind” 
 "schema": "IMP",  
 "path": "IMP/IMP-004-something.md",  
 "kanbanStatus": "in_progress",  
-"kanbanStatusline": "Refactor validation",  
+"kanbanStatusLine": "Refactor validation",  
 "dueDate": "2025-09-03"  
 }  
 ]  
@@ -233,7 +233,7 @@ Return a consistent envelope with results (not a bare array), plus a “kind” 
 - Output
 	- note: `{ id, title, schema, path, tags?, status?, kanbanStatus?, score?, lastModified?, lastAccessed? }`
 	- todo: `{ id, noteId, schema, path, line, priority, text, createdAt?, completedAt? }`
-	- kanban: `{ id, noteId, schema, path, kanbanStatus, kanbanStatusline?, dueDate? }`
+	- kanban: `{ id, noteId, schema, path, kanbanStatus, kanbanStatusLine?, dueDate? }`
 - Fuzzy Filters
     - Use an in-proc fuzzy scorer (skim/skim-like) internally; no REPL. Deterministic sort: score desc, then `last_modified` desc, then `id`.
     - `--recent` uses index fields: `file_mtime` (required), `git_last_commit_ts` (optional), or your own `last_accessed` when commands touch a note. Do not write this into files.
@@ -439,7 +439,7 @@ Resolve a note and its neighborhood; print for ai optimized for stepwise travers
 - `--depth <N>` returns error (eg, `NEIGHBORS_FULL_DEPTH_GT1`) if used >1 with neighborstyle full. 
 - `--json` (default; single JSON object)
 - `--neighbor-style full|outline|metadata` default = metadata 
-	- metadata: { id, title, schema, path, distance, discoveredFrom, edge, status?, tags?, kanbanStatusline?, lastModified?, score? }
+	- metadata: { id, title, schema, path, distance, discoveredFrom, edge, status?, tags?, kanbanStatusLine?, lastModified?, score? }
 	- full: same as metadata + content: [{ type:"text", text, tokenEstimate? }]
 	- outline: same as metadata + contentOutline: [{ heading, firstLines: [string] }]
 - `--outline-lines <N>` (only used when neighbor-style=outline. Default=2) 
@@ -473,7 +473,7 @@ Example: neighbor-style=metadata, depth=1
 "edge": "depends_on",  
 "status": "accepted",  
 "tags": ["config"],  
-"kanbanStatusline": null,  
+"kanbanStatusLine": null,  
 "lastModified": "2025-08-28T12:14:00Z",  
 "score": 0.82  
 }  
@@ -505,7 +505,7 @@ Example: neighbor-style=outline, outline-lines=2, depth=1
     - `--min-cluster-size <n>` default 3
     - `--output <path.json>` required
     - `--schema <S> optional`
-- Output JSON (contracts/protocol/v1/ai_index_plan.schema.json):
+- Output JSON (contracts/v1/cli/ai_index_plan.schema.json):
 
 ```json
 {
@@ -556,7 +556,7 @@ persist cluster labels/summaries; optionally add relevant tags per cluster to th
 ```
         
 - Frontmatter (optional): assign relevant tags to notes in cluster creating appropriate links. 
-- Apply report JSON (contracts/protocol/v1/ai_index_apply_report.schema.json):
+- Apply report JSON (contracts/v1/cli/ai_index_apply_report.schema.json):
 
 ```json
 {

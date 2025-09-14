@@ -9,10 +9,10 @@ Purpose: contracts‑first master checklist (supersedes IMP-* tickets). Tracks c
 
 ## Status Checkpoint (2025-09-14)
 - Complete: info, validate, search, graph, path, ai get, unified index, watch NDJSON handshake.
-- Partial: resolved config snapshot is emitted; Lua overlay/versioning not implemented yet.
-- Pending: ai index plan/apply (contracts defined; implementation not wired).
+- Complete: resolved config snapshot; Lua overlay + --no-lua + hooks (validate/new) implemented.
+- Complete: ai index plan implemented; apply pending. Version signaling exposure (luaApiVersion in info/resolved) pending.
 - Cleanup gap: legacy `topics`/`group` surfaces still exist contrary to ADR-003d’s “groups removed” decision; to be removed or deprecated in v2.
-- Minor mismatch: `info` currently advertises `aiIndex: true`; capability should be gated once plan/apply lands.
+- Minor mismatch: gate `info.capabilities.aiIndex` to false until apply lands.
 
 ## Conventions
 - Casing: TOML/Lua snake_case; JSON camelCase
@@ -59,11 +59,11 @@ Purpose: contracts‑first master checklist (supersedes IMP-* tickets). Tracks c
   - Gaps: Optional outline tuning and scoring
   - Priority: Done
 
-- ai index (plan/apply) 
+- ai index (plan/apply)
   - Contracts: `contracts/v1/cli/ai_index_plan.schema.json`, `contracts/v1/cli/ai_index_apply_report.schema.json`
-  - Status: plan/apply wiring TBD; cache shape in ADR aligns (capability advertised in `info` to be gated or corrected in v2)
-  - Gaps: hashing of source index; tag write policy
-  - Priority: Low
+  - Status: plan implemented (deterministic clusters + sourceIndexHash); apply pending (cache write + optional tag writes)
+  - Gaps: CI gate for plan; apply behavior (cache write + tags) to implement
+  - Priority: Medium (apply)
 
 ## ResolvedConfig (camelCase)
 - Contract: `contracts/v1/config/resolved_config.json`
@@ -85,9 +85,9 @@ Purpose: contracts‑first master checklist (supersedes IMP-* tickets). Tracks c
 
 ## Lua API
 - Contract reference: `contracts/global-conventions.md` (hooks + ctx)
-- Status: overlay semantics and versioning to implement
-- Gaps: sandbox, `--no-lua`, `luaApiVersion` exposure in info
-- Priority: Medium
+- Status: overlay + --no-lua and hooks (validate, id_generator, render_frontmatter) implemented
+- Gaps: sandboxing notes; expose `luaApiVersion` in info/resolved
+- Priority: Medium (version signaling)
 
 ## Implementation Order (status)
 1) Loader/ResolvedConfig emitter (snapshot complete; Lua overlay pending)
@@ -123,8 +123,8 @@ Purpose: contracts‑first master checklist (supersedes IMP-* tickets). Tracks c
   - CI gate: validate `search --format json` → `contracts/v1/cli/search_result.schema.json`.
 
 - Phase 4 (AI surfaces)
-  - Impl: `ai get` neighbors/style policies; emit GTD hints; `ai index plan/apply` basics.
-  - CI gates: validate outputs against `contracts/v1/cli/ai_get.schema.json`, `contracts/v1/cli/ai_index_plan.schema.json`, `contracts/v1/cli/ai_index_apply_report.schema.json` on small fixtures.
+  - Impl: `ai get` neighbors/style policies; emit GTD hints; `ai index plan` implemented; `ai index apply` pending.
+  - CI gates: validate outputs against `contracts/v1/cli/ai_get.schema.json`; add `ai index plan` schema validation; add `ai index apply` once implemented.
 
 - Phase 5 (Watch)
   - Impl: NDJSON handshake first event and event envelopes.
@@ -140,4 +140,4 @@ Purpose: contracts‑first master checklist (supersedes IMP-* tickets). Tracks c
 
 ### Deviations to resolve in v2
 - Remove or deprecate legacy `topics`/`group` commands and groups JSON emission; standardize on tags + `ai index` per ADR-003d.
-- Implement Lua overlay and `--no-lua`, and gate `aiIndex` capability in `info` until implemented.
+- Gate `aiIndex` capability in `info` until `ai index plan/apply` implemented; finalize version signaling exposure.

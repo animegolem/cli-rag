@@ -33,10 +33,16 @@
 - 5 IO/index lock error
 
 ### Version signaling
-- All top-level JSON responses include protocolVersion.
-- ai get includes retrievalVersion.
-- info includes luaApiVersion and configVersion (string).
-- TOML config_version is a string (e.g., "0.1").
+- All top-level JSON responses include `protocolVersion`.
+- `ai get` includes `retrievalVersion`.
+- `info` shape:
+  - `capabilities.luaApiVersion` (integer, Lua hooks API major version)
+  - `config.version` (string; version from TOML)
+- ResolvedConfig shape:
+  - top-level `configVersion` (string; from TOML `config_version`)
+  - top-level `luaApiVersion` (integer)
+- TOML `config_version` is a string (e.g., "0.1").
+  - Note: Lua API may have point releases; `luaApiVersion` signals the major. Minor, non-breaking changes do not bump the major. A semver string may be added later as `luaApiSemver`.
 
 ### Template system
 - Variables: {{id}}, {{title}}, {{schema.name}}, {{now | date:"%Y-%m-%d"}}
@@ -86,8 +92,8 @@
 ### Signatures
 - id_generator(schema, ctx) → { id, filename? }
 - render_frontmatter(schema, title?, ctx) → table
-- template_prompt(ctx) → string|nil
-- template_note(ctx) → string|nil
+- template_prompt(ctx) → string|nil (optional; may be ignored by CLI)
+- template_note(ctx) → string|nil (optional; may be ignored by CLI)
 - validate(note, ctx) → { diagnostics: Diagnostic[] }
 
 ### Context (read-only)

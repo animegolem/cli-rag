@@ -9,7 +9,7 @@ created_date: 2025-09-14
 Purpose: track the next phase of work post‑v1 to close remaining gaps, align surfaces with ADR-003d, and add the AI Index and Lua overlay capabilities. Contracts remain authoritative.
 
 ## Goals
-- Implement Lua overlay and versioning with `--no-lua` switch; expose `luaApiVersion` and provenance in outputs where applicable.
+- Finalize Lua versioning exposure (overlay + `--no-lua` + hooks implemented); expose `luaApiVersion` and provenance where applicable.
 - Deliver `ai index plan` and `ai index apply` per contracts (`contracts/v1/cli/ai_index_plan.schema.json`, `contracts/v1/cli/ai_index_apply_report.schema.json`).
 - Remove or deprecate legacy `topics`/`group` surfaces and groups JSON emission per ADR-003d.
 - Gate capability flags accurately (e.g., advertise `aiIndex` only when plan/apply available).
@@ -36,16 +36,16 @@ Purpose: track the next phase of work post‑v1 to close remaining gaps, align s
 - Advanced token estimates or embeddings; out of scope for v2.
 
 ## Deliverables
-- Lua overlay loader with `--no-lua`.
-- New subcommands: `ai index plan`, `ai index apply`.
+- Lua version exposure and provenance in info/resolved (overlay already implemented).
+- `ai index plan` (DONE) and `ai index apply`.
 - Accurate `info` capability flags (toggle `aiIndex` true only when supported).
 - Removal/deprecation path for groups surfaces.
 - CI additions: jsonschema validation for ai index plan/apply outputs; Lua overlay smoke test (with and without `--no-lua`).
 
 ## CI & Contracts
 - Add gates validating:
-  - `ai index plan` JSON → `contracts/v1/cli/ai_index_plan.schema.json`.
-  - `ai index apply` JSON → `contracts/v1/cli/ai_index_apply_report.schema.json`.
+  - `ai index plan` JSON → `contracts/v1/cli/ai_index_plan.schema.json`. (ADD)
+  - `ai index apply` JSON → `contracts/v1/cli/ai_index_apply_report.schema.json`. (AFTER IMPLEMENT)
   - `info` reflects correct capability flags.
   - Resolved snapshot still validates after overlay.
 
@@ -54,7 +54,7 @@ Purpose: track the next phase of work post‑v1 to close remaining gaps, align s
 - Backwards compat: additive changes; retain protocolVersion=1.
 
 ## Milestones
-1) Lua overlay loader + `--no-lua` + CI smoke.
-2) ai index plan implementation + CI schema gate.
-3) ai index apply implementation + cache write + CI gate.
+1) Lua version exposure + CI smoke for overlays on/off.
+2) ai index plan implementation + CI schema gate. (DONE)
+3) ai index apply implementation + cache write + CI gate. (NEXT)
 4) Capability gating + groups deprecation + doc updates.

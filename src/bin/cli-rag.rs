@@ -164,6 +164,38 @@ fn main() -> Result<()> {
                 args.full_rescan,
             )?;
         }
+        Commands::AiIndexPlan {
+            edges,
+            min_cluster_size,
+            schema,
+            output,
+        } => {
+            let (cfg, cfg_path) = load_config(&cli.config, &cli.base, cli.no_lua)?;
+            cli_rag::commands::ai_index_plan::run(
+                &cfg,
+                &cfg_path,
+                edges,
+                min_cluster_size,
+                schema,
+                output,
+            )?;
+        }
+        Commands::AiIndexApply {
+            from,
+            write_cache,
+            write_frontmatter,
+            dry_run,
+        } => {
+            let (cfg, cfg_path) = load_config(&cli.config, &cli.base, cli.no_lua)?;
+            cli_rag::commands::ai_index_apply::run(
+                &cfg,
+                &cfg_path,
+                from,
+                write_cache,
+                write_frontmatter,
+                dry_run,
+            )?;
+        }
     }
     Ok(())
 }

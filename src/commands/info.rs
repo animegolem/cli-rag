@@ -46,7 +46,7 @@ fn info_json(cfg: &Config, cfg_path: &Option<PathBuf>) -> serde_json::Value {
             "watchNdjson": true,
             "aiGet": { "retrievalVersion": 1 },
             "pathLocations": true,
-            "aiIndex": true,
+            "aiIndex": false,
             "luaApiVersion": 1,
             "overlaysEnabled": cfg.overlays.enabled,
             "gtdTasks": true,

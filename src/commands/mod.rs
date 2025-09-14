@@ -1,3 +1,5 @@
+pub mod ai_index_apply;
+pub mod ai_index_plan;
 pub mod cluster;
 pub mod completions;
 pub mod get;
