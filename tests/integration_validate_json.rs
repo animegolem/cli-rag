@@ -21,7 +21,6 @@ fn validate_json_shape_and_writes_groups() {
         .arg("validate")
         .arg("--format")
         .arg("json")
-        .arg("--write-groups")
         .assert()
         .success()
         .get_output()
@@ -33,12 +32,7 @@ fn validate_json_shape_and_writes_groups() {
     assert_eq!(v["docCount"].as_u64().unwrap(), 0);
     assert!(v["diagnostics"].as_array().unwrap().is_empty());
 
-    // Groups file should exist (empty sections array)
-    let groups_path = base.path().join("index/semantic-groups.json");
-    assert!(groups_path.exists());
-    let groups: serde_json::Value =
-        serde_json::from_str(&std::fs::read_to_string(groups_path).unwrap()).unwrap();
-    assert!(groups["sections"].is_array());
+    // Groups file removed per ADR-003d; validate focuses on index/diagnostics only
 
     temp.close().unwrap();
 }

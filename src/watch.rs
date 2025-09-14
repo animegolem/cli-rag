@@ -4,14 +4,13 @@ use std::time::Duration;
 
 use crate::config::Config;
 use crate::discovery::incremental_collect_docs;
-use crate::index::{write_groups_config, write_indexes};
+use crate::index::write_indexes;
 use crate::validate::validate_docs;
 
 pub struct WatchArgs {
     pub full_rescan: bool,
     pub debounce_ms: u64,
     pub dry_run: bool,
-    pub write_groups: bool,
     pub json: bool,
 }
 
@@ -154,23 +153,7 @@ pub fn run_watch(
                 }
             }
         }
-        if args.write_groups && !args.dry_run {
-            write_groups_config(cfg, &docs)?;
-            if args.json {
-                for base in &cfg.bases {
-                    let path = base.join(&cfg.groups_relative);
-                    // Count equals number of groups entries as a heuristic: number of group labels
-                    let count = docs.iter().flat_map(|d| d.groups.iter()).count();
-                    emit(
-                        "groups_written",
-                        serde_json::json!({
-                            "path": path.display().to_string(),
-                            "count": count
-                        }),
-                    );
-                }
-            }
-        }
+        // groups removed per ADR-003d
         if !report.errors.is_empty() {
             eprintln!("Validation failed:");
             for e in &report.errors {

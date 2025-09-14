@@ -193,29 +193,4 @@ pub fn write_indexes(
     Ok(())
 }
 
-pub fn write_groups_config(cfg: &Config, docs: &Vec<AdrDoc>) -> Result<()> {
-    use std::collections::{BTreeMap, BTreeSet};
-    let mut by_group: BTreeMap<String, BTreeSet<String>> = BTreeMap::new();
-    for d in docs {
-        if let Some(ref id) = d.id {
-            for g in &d.groups {
-                by_group.entry(g.clone()).or_default().insert(id.clone());
-            }
-        }
-    }
-    let mut sections = Vec::new();
-    for (title, ids) in by_group {
-        sections.push(serde_json::json!({ "title": title, "selectors": [ { "anyIds": ids.into_iter().collect::<Vec<_>>() } ] }));
-    }
-    for base in &cfg.bases {
-        let out_path = base.join(&cfg.groups_relative);
-        if let Some(parent) = out_path.parent() {
-            fs::create_dir_all(parent).ok();
-        }
-        let body = serde_json::json!({ "sections": sections });
-        fs::write(&out_path, serde_json::to_string_pretty(&body)?)
-            .with_context(|| format!("writing groups to {}", out_path.display()))?;
-        eprintln!("Wrote groups: {}", out_path.display());
-    }
-    Ok(())
-}
+// groups feature removed per ADR-003d; unified index is authoritative

@@ -5,7 +5,7 @@ use crate::commands::lua_integration::lua_validate_augment;
 use crate::commands::output::{print_json, print_ndjson_iter, print_ndjson_value};
 use crate::config::Config;
 use crate::discovery::incremental_collect_docs;
-use crate::index::{write_groups_config, write_indexes};
+use crate::index::write_indexes;
 use crate::protocol::{ToolCallLocation, ValidateHeader, ValidateIssue};
 use crate::validate::validate_docs;
 
@@ -13,7 +13,6 @@ pub fn run(
     cfg: &Config,
     cfg_path: &Option<std::path::PathBuf>,
     format: &OutputFormat,
-    write_groups: bool,
     dry_run: bool,
     full_rescan: bool,
 ) -> Result<()> {
@@ -295,9 +294,6 @@ pub fn run(
                 serde_json::to_string_pretty(&resolved).unwrap_or_else(|_| "{}".into()),
             );
         }
-    }
-    if write_groups && !dry_run {
-        write_groups_config(cfg, &docs)?;
     }
     if !report.ok {
         // Exit code 2: validation failed (per contracts/global conventions)

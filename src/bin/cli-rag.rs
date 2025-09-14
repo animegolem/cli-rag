@@ -44,17 +44,7 @@ fn main() -> Result<()> {
                 tag,
             )?;
         }
-        Commands::Topics {} => {
-            let (cfg, cfg_path) = load_config(&cli.config, &cli.base, cli.no_lua)?;
-            cli_rag::commands::topics::run(&cfg, &cfg_path, &cli.format)?;
-        }
-        Commands::Group {
-            topic,
-            include_content,
-        } => {
-            let (cfg, cfg_path) = load_config(&cli.config, &cli.base, cli.no_lua)?;
-            cli_rag::commands::group::run(&cfg, &cfg_path, &cli.format, topic, include_content)?;
-        }
+
         Commands::Get {
             id,
             include_dependents,
@@ -159,7 +149,6 @@ fn main() -> Result<()> {
                 &cfg,
                 &cfg_path,
                 &args.format,
-                args.write_groups,
                 args.dry_run,
                 args.full_rescan,
             )?;

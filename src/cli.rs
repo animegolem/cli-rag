@@ -78,13 +78,6 @@ pub enum Commands {
         #[arg(long, value_delimiter = ',')]
         tag: Option<Vec<String>>,
     },
-    Topics {},
-    Group {
-        #[arg(long)]
-        topic: String,
-        #[arg(long)]
-        include_content: Option<bool>,
-    },
     Get {
         #[arg(long)]
         id: String,
@@ -165,7 +158,7 @@ pub enum Commands {
         /// Debounce milliseconds for coalescing FS events
         #[arg(long, default_value_t = 400)]
         debounce_ms: u64,
-        /// Print only; do not write indexes or groups
+        /// Print only; do not write index
         #[arg(long, default_value_t = false)]
         dry_run: bool,
         /// Emit ACP-like NDJSON events to stdout
@@ -214,9 +207,7 @@ pub enum Commands {
 pub struct ValidateArgs {
     #[arg(long, value_enum, default_value_t = OutputFormat::Plain)]
     pub format: OutputFormat,
-    #[arg(long, default_value_t = false)]
-    pub write_groups: bool,
-    /// Do not write index/groups; print results only
+    /// Do not write index; print results only
     #[arg(long, default_value_t = false)]
     pub dry_run: bool,
     /// Force full rescan instead of incremental

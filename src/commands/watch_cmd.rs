@@ -18,7 +18,6 @@ pub fn run(
             full_rescan,
             debounce_ms,
             dry_run,
-            write_groups: false,
             json,
         },
     )

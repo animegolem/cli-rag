@@ -6,7 +6,7 @@ tags:
   - cleanup
   - cli
   - docs
-kanban_status: backlog
+kanban_status: in-progress
 depends_on:
   - ADR-003d
   - docs/RAG/BRIDGE_PLAN_V2.md
@@ -58,4 +58,3 @@ Before marking an item complete on the checklist MUST **stop** and **think**. Ha
 
 ### Issues Encountered 
 (to be completed during implementation)
-

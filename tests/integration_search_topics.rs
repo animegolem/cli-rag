@@ -45,33 +45,4 @@ fn search_returns_protocol_with_groups() {
     temp.close().unwrap();
 }
 
-#[test]
-fn topics_counts_groups_from_docs() {
-    let temp = assert_fs::TempDir::new().unwrap();
-    let base = temp.child("notes");
-    base.create_dir_all().unwrap();
-    write_simple_adr(&base.child("ADR-001.md"), "ADR-001", "Tools");
-
-    let cfg = temp.child(".cli-rag.toml");
-    cfg.write_str(&format!("bases = [\n  '{}'\n]\n", base.path().display()))
-        .unwrap();
-
-    let mut cmd = Command::cargo_bin("cli-rag").unwrap();
-    let output = cmd
-        .arg("--config")
-        .arg(cfg.path())
-        .arg("topics")
-        .arg("--format")
-        .arg("json")
-        .assert()
-        .success()
-        .get_output()
-        .stdout
-        .clone();
-
-    let v: serde_json::Value = serde_json::from_slice(&output).unwrap();
-    let arr = v.as_array().unwrap();
-    assert!(arr.iter().any(|e| e["topic"] == "Tools" && e["count"] == 1));
-
-    temp.close().unwrap();
-}
+// topics command removed per ADR-003d
