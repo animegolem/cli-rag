@@ -53,9 +53,10 @@ Before marking an item complete on the checklist MUST **stop** and **think**. Ha
 - [x] Loader: After TOML load in `load_config`, call overlay loader unless disabled; store overlay metadata on config (merge of values deferred to hooks ticket).
 - [x] Resolved snapshot: Include `{ overlays: { enabled, repoPath?, userPath? } }` in `.cli-rag/resolved.json`.
 - [x] Info: Add `capabilities.overlaysEnabled` (true when overlays are active).
-- [ ] Docs: Update `contracts/global-conventions.md` to document load order and `--no-lua`.
-- [ ] Tests: Add a unit/integration test that sets up `.cli-rag.lua`, runs `validate` and asserts `resolved.json.overlays.enabled==true` and paths present.
-- [ ] Tests: Verify `--no-lua` and `CLI_RAG_NO_LUA=1` both disable overlays and resolved snapshot reflects `enabled==false`.
+- [x] Docs: Update `contracts/global-conventions.md` to document load order and `--no-lua` (already documented; verified).
+- [x] Tests: Add a integration test that sets up `.cli-rag.lua`, runs `validate` and asserts `resolved.json.overlays.enabled==true` and paths present.
+- [x] Tests: Verify `--no-lua` and `CLI_RAG_NO_LUA=1` both disable overlays and resolved snapshot reflects `enabled==false`.
+kanban_statusline: "Added --no-lua, overlay discovery, caps + resolved snapshot; tests in place"
 
 ### Acceptance Criteria
 **GIVEN** a repo with `.cli-rag.lua` and no env flags, **WHEN** `cli-rag validate --format json` runs, **THEN** `.cli-rag/resolved.json` contains `overlays.enabled=true` and `repoPath` is the repo file path.
