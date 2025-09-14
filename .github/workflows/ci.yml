@@ -290,6 +290,105 @@ jobs:
           print("unified index OK")
           PY
 
+      - name: Validate ai-index-plan JSON matches schema
+        run: |
+          set -euo pipefail
+          WORKDIR="${{ steps.fx.outputs.workdir }}"
+          CFG="$WORKDIR/.cli-rag.toml"
+          PLAN="$WORKDIR/plan.json"
+          # Ensure unified index exists
+          ./target/release/cli-rag --config "$CFG" validate --format json >/dev/null
+          ./target/release/cli-rag --config "$CFG" ai-index-plan --min-cluster-size 1 --output "$PLAN"
+          SCHEMA="contracts/v1/cli/ai_index_plan.schema.json"
+          python - "$SCHEMA" "$PLAN" <<'PY'
+          import sys, json
+          from jsonschema import validate, Draft202012Validator
+          schema_path, plan_path = sys.argv[1], sys.argv[2]
+          schema = json.load(open(schema_path))
+          data = json.load(open(plan_path))
+          Draft202012Validator.check_schema(schema)
+          validate(instance=data, schema=schema)
+          assert data.get('version') == 1
+          assert isinstance(data.get('clusters'), list)
+          print("ai_index_plan.json OK")
+          PY
+
+      - name: Validate ai-index-apply report (dry-run) matches schema
+        run: |
+          set -euo pipefail
+          WORKDIR="${{ steps.fx.outputs.workdir }}"
+          CFG="$WORKDIR/.cli-rag.toml"
+          PLAN="$WORKDIR/plan.json"
+          OUT=$(./target/release/cli-rag --config "$CFG" ai-index-apply --from "$PLAN" --dry-run)
+          SCHEMA="contracts/v1/cli/ai_index_apply_report.schema.json"
+          python - "$SCHEMA" "$OUT" <<'PY'
+          import sys, json
+          from jsonschema import validate, Draft202012Validator
+          schema_path, data_str = sys.argv[1], sys.argv[2]
+          schema = json.load(open(schema_path))
+          data = json.loads(data_str)
+          Draft202012Validator.check_schema(schema)
+          validate(instance=data, schema=schema)
+          assert data.get('ok') is True
+          assert data.get('written', {}).get('cache') is True
+          print("ai_index_apply(dry).json OK")
+          PY
+
+      - name: Validate ai-index-apply non-dry run writes cache and tags
+        run: |
+          set -euo pipefail
+          WORKDIR="${{ steps.fx.outputs.workdir }}"
+          NOTES="$WORKDIR/notes"
+          CFG="$WORKDIR/.cli-rag.toml"
+          # Create two connected notes with tags fields for tag writes
+          cat > "$NOTES/ADR-010.md" <<'MD'
+          ---
+          id: ADR-010
+          tags: []
+          status: draft
+          depends_on: [ADR-011]
+          ---
+
+          # ADR-010
+          MD
+          cat > "$NOTES/ADR-011.md" <<'MD'
+          ---
+          id: ADR-011
+          tags: []
+          status: draft
+          depends_on: []
+          ---
+
+          # ADR-011
+          MD
+          # Build index and plan
+          ./target/release/cli-rag --config "$CFG" validate --format json >/dev/null
+          PLAN="$WORKDIR/plan_apply.json"
+          ./target/release/cli-rag --config "$CFG" ai-index-plan --min-cluster-size 2 --output "$PLAN"
+          # Inject a label and remove tags on first cluster to trigger derivation
+          python - "$PLAN" <<'PY'
+          import json,sys
+          p=sys.argv[1]
+          obj=json.load(open(p))
+          if obj['clusters']:
+              c0=obj['clusters'][0]
+              c0['label']='retrieval systems'
+              if 'tags' in c0: del c0['tags']
+          open(p,'w').write(json.dumps(obj))
+          PY
+          # Apply with frontmatter writes
+          OUT=$(./target/release/cli-rag --config "$CFG" ai-index-apply --from "$PLAN" --write-frontmatter)
+          echo "$OUT" | python - <<'PY'
+          import json,sys
+          data=json.loads(sys.stdin.read())
+          assert data.get('ok') is True
+          assert data.get('written',{}).get('cache') is True
+          assert data.get('written',{}).get('frontmatter') is True
+          assert (data.get('membersTagged') or 0) >= 1
+          print('ai_index_apply(non-dry) OK')
+          PY
+          test -f "$WORKDIR/.cli-rag/cache/ai-index.json"
+
       - name: Validate search JSON matches schema (note)
         run: |
           WORKDIR="${{ steps.fx.outputs.workdir }}"
