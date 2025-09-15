@@ -16,7 +16,7 @@ You've found this way too early! Nothing here is ready for production. :) This w
   - `{ id, title, file, neighbors:{depends_on,dependents}, content:[ {type:"resource_link",uri}, {type:"text",text} ] }`
 
 - `info --format json` includes protocol metadata and capabilities:
-  - `{ protocolVersion: 1, cache: { aiIndexPath, exists }, capabilities: { watchNdjson: true, aiGet: { retrievalVersion: 1 }, pathLocations: true, aiIndex: false, luaApiVersion: 1, overlaysEnabled: true } }`
+  - `{ protocolVersion: 1, cache: { aiIndexPath, exists }, capabilities: { watchNdjson: true, aiGet: { retrievalVersion: 1 }, pathLocations: true, aiIndex: true, luaApiVersion: 1, overlaysEnabled: true } }`
 
 ## Commands (overview)
 
