@@ -42,3 +42,7 @@ pub fn default_defaults() -> DefaultsCfg {
         include_content: true,
     }
 }
+
+pub fn default_config_version() -> String {
+    "0.1".to_string()
+}

@@ -27,7 +27,7 @@ fn info_json(cfg: &Config, cfg_path: &Option<PathBuf>) -> serde_json::Value {
             .as_ref()
             .map(|p| p.display().to_string())
             .unwrap_or_else(|| "<defaults>".into()),
-        "version": "0.1",
+        "version": cfg.config_version.as_deref().unwrap_or("0.1"),
         "deprecated": false,
     });
 

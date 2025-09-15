@@ -126,6 +126,7 @@ mod tests {
     #[test]
     fn test_validate_docs_invalid_status_and_refs_and_duplicates() {
         let cfg = Config {
+            config_version: Some(crate::config::defaults::default_config_version()),
             import: Vec::new(),
             bases: vec![],
             index_relative: default_index_rel(),
@@ -228,6 +229,7 @@ mod tests {
             rules: BTreeMap::new(),
         };
         let cfg = Config {
+            config_version: Some(crate::config::defaults::default_config_version()),
             import: Vec::new(),
             bases: vec![],
             index_relative: default_index_rel(),
@@ -288,6 +290,7 @@ mod tests {
     #[test]
     fn test_warn_on_isolated_adrs() {
         let cfg = Config {
+            config_version: Some(crate::config::defaults::default_config_version()),
             import: Vec::new(),
             bases: vec![],
             index_relative: default_index_rel(),

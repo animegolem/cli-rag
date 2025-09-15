@@ -56,6 +56,9 @@ pub struct SchemaCfg {
 
 #[derive(Debug, Deserialize, Clone)]
 pub struct Config {
+    /// Optional configuration version from TOML (snake_case). Defaults applied in loader.
+    #[serde(default)]
+    pub config_version: Option<String>,
     #[serde(default)]
     pub import: Vec<String>,
     #[serde(

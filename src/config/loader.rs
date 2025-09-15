@@ -78,6 +78,7 @@ pub fn load_config(
         toml::from_str(&s).with_context(|| format!("parsing TOML config {:?}", p))?
     } else {
         Config {
+            config_version: None,
             import: Vec::new(),
             bases: default_bases(),
             index_relative: default_index_rel(),
@@ -90,6 +91,10 @@ pub fn load_config(
             overlays: super::schema::OverlayInfo::default(),
         }
     };
+    // Default config_version if not provided
+    if cfg.config_version.is_none() {
+        cfg.config_version = Some(super::defaults::default_config_version());
+    }
     // Discover overlays (repo + user), honoring CLI flag and env. Merge is deferred to hook wiring.
     let overlays = discover_overlays(&path, no_lua);
     cfg.overlays = overlays;

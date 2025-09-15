@@ -279,7 +279,7 @@ pub fn run(
             });
             let resolved = serde_json::json!({
                 "protocolVersion": crate::protocol::PROTOCOL_VERSION,
-                "configVersion": "0.1",
+                "configVersion": cfg.config_version.as_deref().unwrap_or("0.1"),
                 "luaApiVersion": 1,
                 "projectRoot": project_root.display().to_string(),
                 "scan": scan,
