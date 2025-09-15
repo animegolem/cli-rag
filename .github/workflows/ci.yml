@@ -273,6 +273,37 @@ jobs:
           validate(instance=data, schema=schema)
           print("resolved.json OK")
           PY
+
+      - name: Lua overlays smoke (enabled vs --no-lua)
+        run: |
+          set -euo pipefail
+          WORKDIR="${{ steps.fx.outputs.workdir }}"
+          CFG="$WORKDIR/.cli-rag.toml"
+          # Create a repo overlay that sets a sentinel value
+          cat > "$WORKDIR/.cli-rag.lua" <<'LUA'
+          return {
+            sentinel = 42
+          }
+          LUA
+          # Run validate to write resolved.json with overlays.enabled true
+          ./target/release/cli-rag --config "$CFG" validate --format json >/dev/null
+          test -f "$WORKDIR/.cli-rag/resolved.json"
+          python - <<'PY'
+          import json, os
+          p=os.environ['WORKDIR']+"/.cli-rag/resolved.json"
+          data=json.load(open(p))
+          assert data.get('overlays',{}).get('enabled') is True
+          print('overlays enabled OK')
+          PY
+          # Now run with --no-lua to disable overlays and rewrite snapshot
+          ./target/release/cli-rag --config "$CFG" --no-lua validate --format json >/dev/null
+          python - <<'PY'
+          import json, os
+          p=os.environ['WORKDIR']+"/.cli-rag/resolved.json"
+          data=json.load(open(p))
+          assert data.get('overlays',{}).get('enabled') is False
+          print('overlays disabled OK')
+          PY
       - name: Validate unified index JSON matches schema
         run: |
           WORKDIR="${{ steps.fx.outputs.workdir }}"
