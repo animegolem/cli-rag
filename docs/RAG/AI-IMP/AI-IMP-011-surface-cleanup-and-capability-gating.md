@@ -6,13 +6,13 @@ tags:
   - cleanup
   - cli
   - docs
-kanban_status: in-progress
+kanban_status: done
 depends_on:
   - ADR-003d
   - docs/RAG/BRIDGE_PLAN_V2.md
 confidence_score: 0.81
 created_date: 2025-09-14
-close_date: 
+close_date: 2025-09-15
 ---
 
 # AI-IMP-011-surface-cleanup-and-capability-gating

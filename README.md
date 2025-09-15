@@ -1,22 +1,8 @@
 # cli-rag
 
-A CLI based system for creating and managing Obsidian compliant YAML front matter. This creates a simplifed DAG that allows a local "region" to be called by an LLM.
+A CLI based system for creating and managing Obsidian compliant YAML front matter. This creates a simplified DAG that allows a local "region" to be called by an LLM.
 
 You've found this way too early! Nothing here is ready for production. :) This will all be cleaned up over the next few days. But i would not use this right now.
-
-## JSON/NDJSON surfaces (ACP-aligned)
-
-- `watch --json` emits NDJSON events with an `event` field:
-  - `{"event":"watch_start","protocolVersion":1}`
-  - `{"event":"validated","ok":true,"docCount":N}`
-  - `{"event":"index_written","path":"...","count":N}`
-  Each event is a single line of JSON; stderr retains human-readable logs.
-
-- `get --format ai` returns content blocks friendly to LLMs/editors:
-  - `{ id, title, file, neighbors:{depends_on,dependents}, content:[ {type:"resource_link",uri}, {type:"text",text} ] }`
-
-- `info --format json` includes protocol metadata and capabilities:
-  - `{ protocolVersion: 1, cache: { aiIndexPath, exists }, capabilities: { watchNdjson: true, aiGet: { retrievalVersion: 1 }, pathLocations: true, aiIndex: true, luaApiVersion: 1, overlaysEnabled: true } }`
 
 ## Commands (overview)
 
@@ -67,3 +53,4 @@ Notes:
 - Writes cache to `.cli-rag/cache/ai-index.json` by default.
 - Tag writes: enable with `--write-frontmatter`. Additive and require an existing `tags` field in frontmatter; otherwise exit 4.
 - Apply report matches `contracts/v1/cli/ai_index_apply_report.schema.json`.
+

@@ -7,14 +7,14 @@ tags:
   - contracts
   - lua
   - ai-index
-kanban_status: backlog
+kanban_status: done
 depends_on:
   - AI-IMP-007
   - AI-IMP-009
   - AI-IMP-010
 confidence_score: 0.77
 created_date: 2025-09-14
-close_date: 
+close_date: 2025-09-15
 ---
 
 # AI-IMP-012-ci-gates-for-ai-index-and-lua-smoke
@@ -41,9 +41,9 @@ Extend CI to validate new surfaces against contracts and prevent regressions. Ad
 Before marking an item complete on the checklist MUST **stop** and **think**. Have you validated all aspects are **implemented** and **tested**? 
 </CRITICAL_RULE> 
 
-- [ ] CI: Add ai index plan → jsonschema validation step with a tiny graph.
-- [ ] CI: Add ai index apply (dry-run) → jsonschema validation.
-- [ ] CI: Add Lua overlay smoke (on/off) and resolved snapshot assertions.
+- [x] CI: Add ai index plan → jsonschema validation step with a tiny graph.
+- [x] CI: Add ai index apply (dry-run) → jsonschema validation.
+- [x] CI: Add Lua overlay smoke (on/off) and resolved snapshot assertions.
 - [ ] Local: Optionally extend `scripts/ci-fixtures-check.sh` to replicate the new gates.
 
 ### Acceptance Criteria
@@ -51,4 +51,3 @@ Before marking an item complete on the checklist MUST **stop** and **think**. Ha
 
 ### Issues Encountered 
 (to be completed during implementation)
-
