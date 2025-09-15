@@ -7,12 +7,11 @@ status: draft
 
 Purpose: contracts‑first master checklist (supersedes IMP-* tickets). Tracks current status, gaps, priorities, and conventions for the v1 surface. Contracts live under `contracts/` and are authoritative.
 
-## Status Checkpoint (2025-09-14)
+## Status Checkpoint (2025-09-15)
 - Complete: info, validate, search, graph, path, ai get, unified index, watch NDJSON handshake.
 - Complete: resolved config snapshot; Lua overlay + --no-lua + hooks (validate/new) implemented.
-- Complete: ai index plan implemented; apply pending. Version signaling exposure (luaApiVersion in info/resolved) pending.
-- Cleanup gap: legacy `topics`/`group` surfaces still exist contrary to ADR-003d’s “groups removed” decision; to be removed or deprecated in v2.
-- Minor mismatch: gate `info.capabilities.aiIndex` to false until apply lands.
+- Complete: ai index plan and apply implemented (deterministic clusters, sourceIndexHash; apply writes cache and additive tags) with CI gates.
+- Complete: capability gating accurate (aiIndex=true); legacy `topics`/`group` surfaces removed per ADR-003d.
 
 ## Conventions
 - Casing: TOML/Lua snake_case; JSON camelCase
@@ -61,15 +60,15 @@ Purpose: contracts‑first master checklist (supersedes IMP-* tickets). Tracks c
 
 - ai index (plan/apply)
   - Contracts: `contracts/v1/cli/ai_index_plan.schema.json`, `contracts/v1/cli/ai_index_apply_report.schema.json`
-  - Status: plan implemented (deterministic clusters + sourceIndexHash); apply pending (cache write + optional tag writes)
-  - Gaps: CI gate for plan; apply behavior (cache write + tags) to implement
-  - Priority: Medium (apply)
+  - Status: Complete (plan + apply with cache and tag writes); CI validates both plan and apply reports
+  - Gaps: Optional UX polish for labeling workflows
+  - Priority: Done
 
 ## ResolvedConfig (camelCase)
 - Contract: `contracts/v1/config/resolved_config.json`
-- Status: Snapshot emitter implemented (`.cli-rag/resolved.json`); fields aligned per contract
-- Gaps: Lua overlay/versioning not yet implemented
-- Priority: High (loader/overlay)
+- Status: Snapshot emitter implemented (`.cli-rag/resolved.json`); fields aligned per contract (including overlays and configVersion)
+- Gaps: None (phase 1 complete)
+- Priority: Done
 
 ## Unified Index
 - Contract: `contracts/v1/index/index.schema.json`
@@ -85,9 +84,9 @@ Purpose: contracts‑first master checklist (supersedes IMP-* tickets). Tracks c
 
 ## Lua API
 - Contract reference: `contracts/global-conventions.md` (hooks + ctx)
-- Status: overlay + --no-lua and hooks (validate, id_generator, render_frontmatter) implemented
-- Gaps: sandboxing notes; expose `luaApiVersion` in info/resolved
-- Priority: Medium (version signaling)
+- Status: overlay + --no-lua and hooks implemented; `luaApiVersion` exposed; overlaysEnabled surfaced
+- Gaps: Sandbox hardening (future)
+- Priority: Done
 
 ## Implementation Order (status)
 1) Loader/ResolvedConfig emitter (snapshot complete; Lua overlay pending)
@@ -95,7 +94,7 @@ Purpose: contracts‑first master checklist (supersedes IMP-* tickets). Tracks c
 3) Unified index writing (edges.kind/locations, computed fields) — Complete
 4) Graph/Path outputs to contract shapes — Complete
 5) Search envelope + filters (note/todo/kanban kinds) + GTD enrichments — Complete
-6) AI Get neighbors/policies; GTD hints — Complete; AI Index plan/apply basics — Pending
+6) AI Get neighbors/policies; GTD hints — Complete; AI Index plan/apply — Complete
 7) Watch NDJSON handshake and event envelope — Complete
 
 ## Rollout With CI (Contracts‑First)
@@ -138,6 +137,5 @@ Purpose: contracts‑first master checklist (supersedes IMP-* tickets). Tracks c
 - Contracts are authoritative. Prefer updating `contracts/` over ADR text.
 - Alpha/non‑prod: remove dead code, avoid compatibility crutches.
 
-### Deviations to resolve in v2
-- Remove or deprecate legacy `topics`/`group` commands and groups JSON emission; standardize on tags + `ai index` per ADR-003d.
-- Gate `aiIndex` capability in `info` until `ai index plan/apply` implemented; finalize version signaling exposure.
+### Deviations
+- None blocking for v1. Optional polish items: search scoring tuning; expanded diagnostics spans.
