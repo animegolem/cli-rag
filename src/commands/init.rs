@@ -9,7 +9,7 @@ fn schema_block(name: &str) -> String {
     let upper = name.to_string();
     let patt = format!("{}-*.md", upper);
     format!(
-        "# config_version = 1\n\n[[schema]]\nname = \"{upper}\"\nfile_patterns = [\"{patt}\"]\nrequired = [\"id\", \"tags\", \"status\", \"depends_on\"]\nunknown_policy = \"ignore\"\n# cycle_policy = \"warn\"   # warn | error | ignore\n\n[schema.rules.status]\nallowed = [\n  \"draft\", \"incomplete\", \"proposed\", \"accepted\",\n  \"complete\", \"design\", \"legacy-reference\", \"superseded\"\n]\nseverity = \"error\"\n"
+        "[[schema]]\nname = \"{upper}\"\nfile_patterns = [\"{patt}\"]\nrequired = [\"id\", \"tags\", \"status\", \"depends_on\"]\nunknown_policy = \"ignore\"\n# cycle_policy = \"warn\"   # warn | error | ignore\n\n[schema.rules.status]\nallowed = [\n  \"draft\", \"incomplete\", \"proposed\", \"accepted\",\n  \"complete\", \"design\", \"legacy-reference\", \"superseded\"\n]\nseverity = \"error\"\n"
     )
 }
 

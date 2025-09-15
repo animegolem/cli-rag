@@ -14,16 +14,18 @@ pub fn write_template(path: &Path) -> Result<()> {
 
 pub const TEMPLATE: &str = r#"# Repo-local CLI config (cli-rag)
 
+# Version of this configuration. Keep in sync with contracts; defaults to "0.1".
+config_version = "0.1"
+
 # One or more directories to scan or read an index from.
 # Prefer `filepaths`; `bases` is still accepted for backwards-compat.
 filepaths = [
-  "docs/masterplan",
+  "docs/masterplan-v2",
   # "docs/notes",
 ]
 
-# Where to read/write the index and semantic groups (paths are relative to each base).
+# Where to read/write the unified index (path is relative to each base).
 index_relative = "index/adr-index.json"
-groups_relative = "index/semantic-groups.json"
 
 # Discovery and semantics
 file_patterns = ["ADR-*.md", "ADR-DB-*.md", "IMP-*.md"]
