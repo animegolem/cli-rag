@@ -376,11 +376,18 @@ jobs:
               if 'tags' in c0: del c0['tags']
           open(p,'w').write(json.dumps(obj))
           PY
-          # Apply with frontmatter writes
-          OUT=$(./target/release/cli-rag --config "$CFG" ai-index-apply --from "$PLAN" --write-frontmatter)
-          echo "$OUT" | python - <<'PY'
-          import json,sys
-          data=json.loads(sys.stdin.read())
+          # Apply with frontmatter writes; capture JSON report to file
+          REPORT="$WORKDIR/apply_report.json"
+          ./target/release/cli-rag --config "$CFG" ai-index-apply --from "$PLAN" --write-frontmatter > "$REPORT"
+          SCHEMA="contracts/v1/cli/ai_index_apply_report.schema.json"
+          python - "$SCHEMA" "$REPORT" <<'PY'
+          import sys, json
+          from jsonschema import validate, Draft202012Validator
+          schema_path, report_path = sys.argv[1], sys.argv[2]
+          schema = json.load(open(schema_path))
+          data = json.load(open(report_path))
+          Draft202012Validator.check_schema(schema)
+          validate(instance=data, schema=schema)
           assert data.get('ok') is True
           assert data.get('written',{}).get('cache') is True
           assert data.get('written',{}).get('frontmatter') is True

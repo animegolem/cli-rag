@@ -315,7 +315,7 @@ This reduces the load on the toml to simply providing a sensible default.
 #### Inline GTD Headings 
 
 There are two core advantages to this approach
-  1. Clean upgrades to existing notes particularly given the [[AI-IMP-* v3]] notes are based around checklists this allows any section to be made a high, tracked priority on the main screen. eg [[AI-IMP-002-graph-path-contracts-alignment {COMPLETE}]]  
+  1. Clean upgrades to existing notes particularly given the [[AI-IMP-template v3]] notes are based around checklists this allows any section to be made a high, tracked priority on the main screen. eg [[AI-IMP-002-graph-path-contracts-alignment {COMPLETE}]]  
   2. least heavy syntax + most like idiomatic markdown. 
 
 **GTD sketch**
