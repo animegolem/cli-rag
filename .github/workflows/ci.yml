@@ -221,10 +221,16 @@ jobs:
           [config.scan]
           filepaths = [
             "$BASE"
+          [config]
+          config_version = "1.2"
+
+          [config.scan]
+          filepaths = [
+            "$BASE"
           ]
           index_path = "index/adr-index.json"
           index_strategy = "content"
-          ignore_globs = ["**/tmp/**"]
+          ignore_globs = ["**/node_modules/**", "**/dist/**"]
 
           [config.authoring]
           editor = "nvim"
@@ -243,11 +249,17 @@ jobs:
           [schema.new]
           id_generator = { strategy = "increment", prefix = "ADR-", padding = 3 }
           filename_template = "{{id}}-{{title|kebab-case}}.md"
+          [schema.new]
+          id_generator = { strategy = "increment", prefix = "ADR-", padding = 3 }
+          filename_template = "{{id}}-{{title|kebab-case}}.md"
 
           [[schema]]
           name = "IMP"
           file_patterns = ["IMP-*.md"]
           unknown_policy = "ignore"
+          [schema.new]
+          id_generator = { strategy = "datetime", prefix = "IMP-" }
+          filename_template = "{{now|date:\"%Y-%m-%d\"}}-{{title|snake_case}}.md"
           [schema.new]
           id_generator = { strategy = "datetime", prefix = "IMP-" }
           filename_template = "{{now|date:\"%Y-%m-%d\"}}-{{title|snake_case}}.md"
