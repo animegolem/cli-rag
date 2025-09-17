@@ -6,12 +6,12 @@ tags:
   - authoring
   - new
   - templates
-kanban_status: backlog
+kanban_status: done
 depends_on:
   - AI-EPIC-001
 confidence_score: 0.8
 created_date: 2025-09-15
-close_date:
+close_date: 2025-09-16
 ---
 
 # AI-IMP-015-new-id-generator-and-filename-template
@@ -41,14 +41,13 @@ Implement `new` authoring features required by contracts/templates: id generatio
 Before marking an item complete on the checklist MUST **stop** and **think**. Have you validated all aspects are **implemented** and **tested**? 
 </CRITICAL_RULE>
 
-- [ ] Parse id_generator and filename_template from schema.
-- [ ] Implement strategies and next-ID logic (increment considers existing IDs in index or files).
-- [ ] Implement template filters with deterministic behavior; unit-test them.
-- [ ] Integration: verify produced path and ID; ensure validate passes after writing.
+- [x] Parse id_generator and filename_template from schema.
+- [x] Implement strategies and next-ID logic (increment considers existing IDs in index or files).
+- [x] Implement template filters with deterministic behavior; unit-test them.
+- [x] Integration: verify produced path and ID; ensure validate passes after writing.
 
 ### Acceptance Criteria
 GIVEN a schema with `id_generator={strategy="increment",prefix="ADR-",padding=3}` and `filename_template="{{id}}-{{title|kebab-case}}.md"`, WHEN running `new --schema ADR --title "Circuit Breaker"`, THEN a file `ADR-XYZ-circuit-breaker.md` is created with ID assigned and validate succeeds.
 
 ### Issues Encountered
 {LOC|20}
-

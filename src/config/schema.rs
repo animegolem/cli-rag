@@ -1,6 +1,26 @@
 use serde::Deserialize;
 use std::path::PathBuf;
 
+#[derive(Debug, Deserialize, Clone)]
+pub struct IdGeneratorCfg {
+    #[serde(default)]
+    pub strategy: String, // increment | datetime | uuid
+    #[serde(default)]
+    pub prefix: Option<String>,
+    #[serde(default)]
+    pub padding: Option<usize>,
+}
+
+#[derive(Debug, Deserialize, Clone, Default)]
+pub struct SchemaNewCfg {
+    #[serde(default)]
+    pub id_generator: Option<IdGeneratorCfg>,
+    #[serde(default)]
+    pub filename_template: Option<String>,
+    #[serde(default)]
+    pub lua_generator: Option<String>,
+}
+
 #[derive(Debug, Clone, Default)]
 pub struct OverlayInfo {
     pub enabled: bool,
@@ -48,6 +68,8 @@ pub struct SchemaCfg {
     pub cycle_policy: Option<String>, // warn | error | ignore (default warn)
     #[serde(default)]
     pub filename_template: Option<String>, // e.g., "{{id}}-{{title}}.md"
+    #[serde(default)]
+    pub new: Option<SchemaNewCfg>,
     #[serde(default)]
     pub allowed_keys: Vec<String>,
     #[serde(default)]

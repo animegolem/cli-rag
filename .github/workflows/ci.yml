@@ -274,10 +274,52 @@ jobs:
           print("resolved.json OK")
           PY
 
+      - name: Nested user_config acceptance (IMP-014)
+        run: |
+          set -euo pipefail
+          WORKDIR=$(mktemp -d)
+          mkdir -p "$WORKDIR/notes"
+          cat > "$WORKDIR/.cli-rag.toml" <<EOF
+          [config]
+          config_version = "1.2"
+
+          [config.scan]
+          filepaths = [
+            "$WORKDIR/notes"
+          ]
+          index_path = "alt/index.json"
+          ignore_globs = ["**/tmp/**"]
+
+          [config.graph]
+          depth = 3
+          include_bidirectional = false
+
+          [config.templates]
+          import = [".cli-rag/templates/ADR.toml"]
+          EOF
+          ./target/release/cli-rag --config "$WORKDIR/.cli-rag.toml" validate --format json >/dev/null
+          test -f "$WORKDIR/.cli-rag/resolved.json"
+          SCHEMA="contracts/v1/config/resolved_config.json"
+          python - "$SCHEMA" "$WORKDIR/.cli-rag/resolved.json" <<'PY'
+          import sys, json
+          from jsonschema import validate, Draft202012Validator
+          schema_path, resolved_path = sys.argv[1], sys.argv[2]
+          schema = json.load(open(schema_path))
+          data = json.load(open(resolved_path))
+          Draft202012Validator.check_schema(schema)
+          validate(instance=data, schema=schema)
+          assert data.get('graph',{}).get('depth') == 3
+          assert data.get('graph',{}).get('includeBidirectional') is False
+          assert data.get('configVersion') == '1.2'
+          assert data.get('scan',{}).get('indexPath','').endswith('alt/index.json')
+          print('nested user_config acceptance OK')
+          PY
+
       - name: Lua overlays smoke (enabled vs --no-lua)
         run: |
           set -euo pipefail
           WORKDIR="${{ steps.fx.outputs.workdir }}"
+          export WORKDIR
           CFG="$WORKDIR/.cli-rag.toml"
           # Create a repo overlay that sets a sentinel value
           cat > "$WORKDIR/.cli-rag.lua" <<'LUA'
@@ -620,6 +662,55 @@ jobs:
           assert any(e.get('kind')=='mentions' and isinstance(e.get('locations'), list) and len(e['locations'])>0 for e in data.get('edges', []))
           print("path(mentions).json OK")
           PY
+
+      - name: New authoring acceptance (IMP-015)
+        run: |
+          set -euo pipefail
+          WORKDIR=$(mktemp -d)
+          export WORKDIR
+          NOTES="$WORKDIR/notes"
+          mkdir -p "$NOTES"
+          CFG="$WORKDIR/.cli-rag.toml"
+          cat > "$CFG" <<EOF
+          bases = [
+            "$NOTES"
+          ]
+
+          [[schema]]
+          name = "RFC"
+          file_patterns = ["RFC-*.md"]
+          [schema.new]
+          id_generator = { strategy = "increment", prefix = "RFC-", padding = 4 }
+
+          [[schema]]
+          name = "IMP"
+          file_patterns = ["IMP-*.md"]
+          [schema.new]
+          id_generator = { strategy = "datetime", prefix = "IMP-" }
+
+          [[schema]]
+          name = "UID"
+          file_patterns = ["UID-*.md"]
+          [schema.new]
+          id_generator = { strategy = "uuid", prefix = "UID-" }
+          EOF
+          # Build release binary if not present
+          test -x ./target/release/cli-rag || cargo build --release
+          # increment strategy
+          ./target/release/cli-rag --config "$CFG" new --schema RFC --title "Spec One"
+          test -f "$NOTES/RFC-0001.md"
+          # datetime strategy
+          ./target/release/cli-rag --config "$CFG" new --schema IMP --title "Time Based"
+          ls "$NOTES" | grep -E '^IMP-[0-9]{14}\.md$'
+          # uuid strategy
+          ./target/release/cli-rag --config "$CFG" new --schema UID --title "Uuid Based"
+          ls "$NOTES" | grep -E '^UID-[0-9a-f]{32}\.md$'
+          # filename template filters via CLI
+          TS=$(date +%Y-%m)
+          ./target/release/cli-rag --config "$CFG" new --schema RFC --title "Hello Filters" --filename-template '{{now|date:"%Y-%m"}}-{{title|snake_case}}.md'
+          test -f "$NOTES/$TS-hello_filters.md"
+          # Validate repository remains healthy
+          ./target/release/cli-rag --config "$CFG" validate --format json >/dev/null
 
       - name: Validate ai get JSON matches schema
         run: |

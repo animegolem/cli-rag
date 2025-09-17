@@ -48,4 +48,3 @@ GIVEN a schema declaring `frontmatter.gtd.kanban_status=[...]` WHEN a note conta
 
 ### Issues Encountered
 {LOC|20}
-

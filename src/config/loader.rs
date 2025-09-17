@@ -51,6 +51,61 @@ fn find_all_configs_upwards_chain() -> Vec<PathBuf> {
     out
 }
 
+fn normalize_nested_user_config(mut tv: toml::Value) -> toml::Value {
+    use toml::Value as V;
+    let root = tv.as_table_mut();
+    if root.is_none() {
+        return tv;
+    }
+    let root = root.unwrap();
+    // Extract and flatten [config] nested shape into flat keys our Config understands.
+    if let Some(V::Table(cfg_tbl)) = root.remove("config") {
+        // config.config_version -> config_version (nested takes precedence over flat)
+        if let Some(V::String(v)) = cfg_tbl.get("config_version") {
+            root.insert("config_version".into(), V::String(v.clone()));
+        }
+        // [config.scan]
+        if let Some(V::Table(scan)) = cfg_tbl.get("scan") {
+            // filepaths -> filepaths (alias to bases)
+            if let Some(v) = scan.get("filepaths") {
+                // Write to alias key understood by Config (serde alias will map to bases)
+                root.insert("filepaths".into(), v.clone());
+            }
+            // index_path -> index_relative
+            if let Some(V::String(v)) = scan.get("index_path") {
+                root.insert("index_relative".into(), V::String(v.clone()));
+            }
+            // ignore_globs -> ignore_globs
+            if let Some(v) = scan.get("ignore_globs") {
+                root.insert("ignore_globs".into(), v.clone());
+            }
+        }
+        // [config.graph]
+        if let Some(V::Table(graph)) = cfg_tbl.get("graph") {
+            // Map to [defaults] table fields
+            let defaults_entry = root
+                .entry("defaults")
+                .or_insert(V::Table(Default::default()));
+            if let V::Table(def_tbl) = defaults_entry {
+                if let Some(V::Integer(depth)) = graph.get("depth") {
+                    def_tbl.insert("depth".into(), V::Integer(*depth));
+                }
+                if let Some(V::Boolean(b)) = graph.get("include_bidirectional") {
+                    def_tbl.insert("include_bidirectional".into(), V::Boolean(*b));
+                }
+            }
+        }
+        // [config.templates]
+        if let Some(V::Table(templates)) = cfg_tbl.get("templates") {
+            if let Some(v) = templates.get("import") {
+                root.insert("import".into(), v.clone());
+            }
+        }
+        // We've consumed the nested table; not re-inserting keeps the normalized shape.
+    }
+    tv
+}
+
 pub fn load_config(
     path_opt: &Option<PathBuf>,
     base_override: &Option<Vec<PathBuf>>,
@@ -75,7 +130,12 @@ pub fn load_config(
     }
     let mut cfg: Config = if let Some(ref p) = path {
         let s = fs::read_to_string(p).with_context(|| format!("reading config {:?}", p))?;
-        toml::from_str(&s).with_context(|| format!("parsing TOML config {:?}", p))?
+        // Parse as TOML value first to support nested [config.*] shape, then normalize
+        let tv: toml::Value =
+            toml::from_str(&s).with_context(|| format!("parsing TOML config {:?}", p))?;
+        let flat = normalize_nested_user_config(tv);
+        let flat_str = toml::to_string(&flat).unwrap_or_else(|_| s.clone());
+        toml::from_str(&flat_str).with_context(|| format!("mapping normalized config {:?}", p))?
     } else {
         Config {
             config_version: None,

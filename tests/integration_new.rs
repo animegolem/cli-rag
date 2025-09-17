@@ -252,3 +252,187 @@ fn new_injects_frontmatter_when_token_present() {
     drop(cfg);
     temp.close().unwrap();
 }
+#[test]
+fn new_id_generator_increment_with_prefix_and_padding() {
+    let temp = assert_fs::TempDir::new().unwrap();
+    let base = temp.child("notes");
+    base.create_dir_all().unwrap();
+    let cfg = temp.child(".cli-rag.toml");
+    cfg.write_str(&format!(
+        "bases = [\n  '{}'\n]\n\n[[schema]]\nname = 'RFC'\nfile_patterns = ['RFC-*.md']\n[schema.new]\nid_generator = {{ strategy = 'increment', prefix = 'RFC-', padding = 4 }}\n",
+        base.path().display()
+    ))
+    .unwrap();
+
+    // Create note
+    Command::cargo_bin("cli-rag")
+        .unwrap()
+        .arg("--config")
+        .arg(cfg.path())
+        .arg("new")
+        .arg("--schema")
+        .arg("RFC")
+        .arg("--title")
+        .arg("Spec One")
+        .assert()
+        .success();
+
+    base.child("RFC-0001.md").assert(predicates::path::exists());
+    // Validate repo stays healthy
+    Command::cargo_bin("cli-rag")
+        .unwrap()
+        .arg("--config")
+        .arg(cfg.path())
+        .arg("validate")
+        .arg("--format")
+        .arg("json")
+        .assert()
+        .success();
+    temp.close().unwrap();
+}
+
+#[test]
+fn new_id_generator_datetime_and_uuid() {
+    let temp = assert_fs::TempDir::new().unwrap();
+    let base = temp.child("notes");
+    base.create_dir_all().unwrap();
+    let cfg = temp.child(".cli-rag.toml");
+    cfg.write_str(&format!(
+        "bases = [\n  '{}'\n]\n\n[[schema]]\nname = 'IMP'\nfile_patterns = ['IMP-*.md']\n[schema.new]\nid_generator = {{ strategy = 'datetime', prefix = 'IMP-' }}\n\n[[schema]]\nname = 'UID'\nfile_patterns = ['UID-*.md']\n[schema.new]\nid_generator = {{ strategy = 'uuid', prefix = 'UID-' }}\n",
+        base.path().display()
+    ))
+    .unwrap();
+
+    // Create datetime note
+    Command::cargo_bin("cli-rag")
+        .unwrap()
+        .arg("--config")
+        .arg(cfg.path())
+        .arg("new")
+        .arg("--schema")
+        .arg("IMP")
+        .assert()
+        .success();
+    // File with IMP-YYYYMMDDHHMMSS.md exists
+    let mut found_dt = false;
+    for entry in std::fs::read_dir(base.path()).unwrap() {
+        let p = entry.unwrap().path();
+        if let Some(name) = p.file_name().and_then(|s| s.to_str()) {
+            if name.starts_with("IMP-")
+                && name.ends_with(".md")
+                && name.len() >= "IMP-YYYYMMDDHHMMSS.md".len()
+            {
+                found_dt = true;
+            }
+        }
+    }
+    assert!(found_dt, "IMP datetime file not found");
+
+    // Create uuid note
+    Command::cargo_bin("cli-rag")
+        .unwrap()
+        .arg("--config")
+        .arg(cfg.path())
+        .arg("new")
+        .arg("--schema")
+        .arg("UID")
+        .assert()
+        .success();
+    // File with UID-<uuid>.md exists
+    let mut found_uuid = false;
+    for entry in std::fs::read_dir(base.path()).unwrap() {
+        let p = entry.unwrap().path();
+        if let Some(name) = p.file_name().and_then(|s| s.to_str()) {
+            if name.starts_with("UID-") && name.ends_with(".md") && name.len() > "UID-.md".len() {
+                found_uuid = true;
+            }
+        }
+    }
+    assert!(found_uuid, "UID uuid file not found");
+
+    Command::cargo_bin("cli-rag")
+        .unwrap()
+        .arg("--config")
+        .arg(cfg.path())
+        .arg("validate")
+        .arg("--format")
+        .arg("json")
+        .assert()
+        .success();
+
+    temp.close().unwrap();
+}
+
+#[test]
+fn new_cli_filename_template_filters_work() {
+    let temp = assert_fs::TempDir::new().unwrap();
+    let base = temp.child("notes");
+    base.create_dir_all().unwrap();
+    let _cfg = write_base_cfg(&temp, "notes");
+
+    let now = chrono::Local::now().format("%Y-%m").to_string();
+
+    Command::cargo_bin("cli-rag")
+        .unwrap()
+        .current_dir(temp.path())
+        .arg("new")
+        .arg("--schema")
+        .arg("ADR")
+        .arg("--title")
+        .arg("Hello Filters")
+        .arg("--filename-template")
+        .arg("{{now|date:\"%Y-%m\"}}-{{title|snake_case}}.md")
+        .assert()
+        .success();
+
+    base.child(format!("{}-hello_filters.md", now))
+        .assert(predicates::path::exists());
+    Command::cargo_bin("cli-rag")
+        .unwrap()
+        .current_dir(temp.path())
+        .arg("validate")
+        .arg("--format")
+        .arg("json")
+        .assert()
+        .success();
+    temp.close().unwrap();
+}
+
+#[test]
+fn new_schema_filename_template_filters() {
+    let temp = assert_fs::TempDir::new().unwrap();
+    let base = temp.child("notes");
+    base.create_dir_all().unwrap();
+    let cfg = temp.child(".cli-rag.toml");
+    cfg.write_str(&format!(
+        "bases = [\n  '{}'\n]\n\n[[schema]]\nname = 'ADR'\nfile_patterns = ['ADR-*.md']\n[schema.new]\nid_generator = {{ strategy = 'increment', prefix = 'ADR-', padding = 3 }}\nfilename_template = \"{{schema.name|kebab-case}}-{{title|PascalCase}}-{{id}}.md\"\n",
+        base.path().display()
+    ))
+    .unwrap();
+
+    Command::cargo_bin("cli-rag")
+        .unwrap()
+        .arg("--config")
+        .arg(cfg.path())
+        .arg("new")
+        .arg("--schema")
+        .arg("ADR")
+        .arg("--title")
+        .arg("hello world")
+        .assert()
+        .success();
+
+    base.child("adr-HelloWorld-ADR-0001.md")
+        .assert(predicates::path::exists());
+
+    Command::cargo_bin("cli-rag")
+        .unwrap()
+        .arg("--config")
+        .arg(cfg.path())
+        .arg("validate")
+        .arg("--format")
+        .arg("json")
+        .assert()
+        .success();
+    temp.close().unwrap();
+}

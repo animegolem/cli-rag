@@ -10,6 +10,7 @@ use crate::discovery::docs_with_source;
 use crate::util::try_open_editor;
 #[allow(unused_imports)]
 use mlua::{Function as LuaFunction, Table as LuaTable};
+use uuid::Uuid;
 
 fn render_template(mut s: String, id: &str, title: &str) -> String {
     s = s.replace("{{id}}", id);
@@ -67,8 +68,9 @@ fn render_template(mut s: String, id: &str, title: &str) -> String {
     s
 }
 
-fn compute_next_id(prefix: &str, docs: &Vec<crate::model::AdrDoc>) -> String {
-    let re = Regex::new(&format!(r"^{}-(\d+)$", regex::escape(prefix))).unwrap();
+fn compute_next_id(prefix: &str, docs: &Vec<crate::model::AdrDoc>, padding: usize) -> String {
+    // prefix is used verbatim before the numeric counter (e.g., "ADR-", "RFC-")
+    let re = Regex::new(&format!(r"^{}(\d+)$", regex::escape(prefix))).unwrap();
     let mut max_n: usize = 0;
     for d in docs {
         if let Some(id) = &d.id {
@@ -83,7 +85,7 @@ fn compute_next_id(prefix: &str, docs: &Vec<crate::model::AdrDoc>) -> String {
             }
         }
     }
-    format!("{}-{:03}", prefix, max_n + 1)
+    format!("{}{:0width$}", prefix, max_n + 1, width = padding)
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -126,7 +128,44 @@ pub fn run(
         &cfg.bases[0]
     };
     let (docs, _used_unified) = docs_with_source(cfg, cfg_path)?;
-    let mut id = compute_next_id(&schema, &docs);
+    // Determine id based on schema.new.id_generator if present
+    let schema_cfg = cfg.schema.iter().find(|s| s.name == schema);
+    let mut id = if let Some(scfg) = schema_cfg
+        .and_then(|s| s.new.as_ref())
+        .and_then(|n| n.id_generator.as_ref())
+    {
+        let strategy = scfg.strategy.as_str();
+        match strategy {
+            "increment" => {
+                let prefix = scfg
+                    .prefix
+                    .clone()
+                    .unwrap_or_else(|| format!("{}-", &schema));
+                let padding = scfg.padding.unwrap_or(3);
+                compute_next_id(&prefix, &docs, padding)
+            }
+            "datetime" => {
+                let prefix = scfg
+                    .prefix
+                    .clone()
+                    .unwrap_or_else(|| format!("{}-", &schema));
+                let ts = chrono::Local::now().format("%Y%m%d%H%M%S").to_string();
+                format!("{}{}", prefix, ts)
+            }
+            "uuid" => {
+                let prefix = scfg
+                    .prefix
+                    .clone()
+                    .unwrap_or_else(|| format!("{}-", &schema));
+                let u = Uuid::new_v4().simple().to_string();
+                format!("{}{}", prefix, u)
+            }
+            _ => compute_next_id(&format!("{}-", &schema), &docs, 3),
+        }
+    } else {
+        // default increment with schema- prefix
+        compute_next_id(&format!("{}-", &schema), &docs, 3)
+    };
     let mut title = title_opt.unwrap_or_else(|| id.clone());
     if normalize_title {
         use heck::ToTitleCase;
@@ -182,28 +221,78 @@ pub fn run(
             }
         }
     }
-    // Determine filename template: CLI flag takes precedence, else per-schema config
-    let schema_tpl: Option<String> = if filename_template.is_none() {
+    // Determine filename template: CLI flag > schema.new.filename_template > schema.filename_template
+    let schema_tpl_from_new: Option<String> = if filename_template.is_none() {
         cfg.schema
             .iter()
             .find(|s| s.name == schema)
-            .and_then(|s| s.filename_template.clone())
+            .and_then(|s| s.new.as_ref())
+            .and_then(|n| n.filename_template.clone())
     } else {
         None
     };
-    let tpl_eff: Option<String> = filename_template.or(schema_tpl);
+    let schema_tpl_legacy: Option<String> =
+        if filename_template.is_none() && schema_tpl_from_new.is_none() {
+            cfg.schema
+                .iter()
+                .find(|s| s.name == schema)
+                .and_then(|s| s.filename_template.clone())
+        } else {
+            None
+        };
+    let tpl_eff: Option<String> = filename_template
+        .or(schema_tpl_from_new)
+        .or(schema_tpl_legacy);
     // Compute target filename with optional template
     fn sanitize_filename_component(s: &str) -> String {
         let out = s.replace('/', "-").replace(['\n', '\r'], " ");
         out.trim().to_string()
     }
-    let initial_name = if let Some(tpl) = &tpl_eff {
-        let mut f = tpl.replace("{{id}}", &id).replace("{{title}}", &title);
-        f = sanitize_filename_component(&f);
+    fn render_filename_template(tpl: &str, id: &str, title: &str, schema: &str) -> String {
+        use heck::{
+            ToKebabCase, ToLowerCamelCase, ToShoutySnakeCase, ToSnakeCase, ToUpperCamelCase,
+        };
+        let now = chrono::Local::now();
+        let re = Regex::new(r"\{\{\s*([a-zA-Z0-9_.]+)\s*(?:\|\s*([^}]+))?\s*\}\}").unwrap();
+        let rendered = re
+            .replace_all(tpl, |caps: &regex::Captures| {
+                let var = caps.get(1).map(|m| m.as_str()).unwrap_or("");
+                let modifier = caps.get(2).map(|m| m.as_str().trim());
+                let raw = match var {
+                    "id" => id.to_string(),
+                    "title" => title.to_string(),
+                    "now" => now.format("%Y-%m-%dT%H:%M:%S").to_string(),
+                    "schema.name" => schema.to_string(),
+                    _ => String::new(),
+                };
+                if let Some(mods) = modifier {
+                    match mods {
+                        "kebab-case" => raw.to_kebab_case(),
+                        "snake_case" => raw.to_snake_case(),
+                        "SCREAMING_SNAKE_CASE" => raw.to_shouty_snake_case(),
+                        "camelCase" => raw.to_lower_camel_case(),
+                        "PascalCase" => raw.to_upper_camel_case(),
+                        m if m.starts_with("date:") => {
+                            // Support date:"%Y-%m-%d" or date:'%Y-%m-%d'
+                            let pat = m.splitn(2, ':').nth(1).unwrap_or("").trim();
+                            let pat = pat.trim_matches('"').trim_matches('\'');
+                            now.format(pat).to_string()
+                        }
+                        _ => raw,
+                    }
+                } else {
+                    raw
+                }
+            })
+            .to_string();
+        let mut f = sanitize_filename_component(&rendered);
         if !f.ends_with(".md") {
             f.push_str(".md");
         }
         f
+    }
+    let initial_name = if let Some(tpl) = &tpl_eff {
+        render_filename_template(tpl, &id, &title, &schema)
     } else {
         format!("{}.md", id)
     };
@@ -258,12 +347,7 @@ pub fn run(
                 let newid = format!("{}-{:03}", prefix, n);
                 // Recompute filename if template provided
                 let cand_name = if let Some(tpl) = &tpl_eff {
-                    let mut f = tpl.replace("{{id}}", &newid).replace("{{title}}", &title);
-                    f = sanitize_filename_component(&f);
-                    if !f.ends_with(".md") {
-                        f.push_str(".md");
-                    }
-                    f
+                    render_filename_template(tpl, &newid, &title, &schema)
                 } else {
                     format!("{}.md", newid)
                 };
@@ -297,12 +381,7 @@ pub fn run(
                 n += 1;
                 let newid = format!("{}-{:03}", prefix, n);
                 let cand_name = if let Some(tpl) = &tpl_eff {
-                    let mut f = tpl.replace("{{id}}", &newid).replace("{{title}}", &title);
-                    f = sanitize_filename_component(&f);
-                    if !f.ends_with(".md") {
-                        f.push_str(".md");
-                    }
-                    f
+                    render_filename_template(tpl, &newid, &title, &schema)
                 } else {
                     format!("{}.md", newid)
                 };

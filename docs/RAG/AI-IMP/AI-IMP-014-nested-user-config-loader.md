@@ -6,12 +6,12 @@ tags:
   - config
   - loader
   - contracts
-kanban_status: backlog
+kanban_status: done
 depends_on:
   - AI-EPIC-001
 confidence_score: 0.82
 created_date: 2025-09-15
-close_date:
+close_date: 2025-09-16
 ---
 
 # AI-IMP-014-nested-user-config-loader
@@ -39,14 +39,13 @@ The contracts define a nested user config shape (`[config.scan|authoring|graph|t
 Before marking an item complete on the checklist MUST **stop** and **think**. Have you validated all aspects are **implemented** and **tested**? 
 </CRITICAL_RULE>
 
-- [ ] Add nested parse path in loader; map scan/authoring/graph/templates to internal `Config`.
-- [ ] Precedence: CLI/env overrides > nested > flat; document in comments.
-- [ ] Tests: nested-only config; flat-only config; both present; env `CLI_RAG_FILEPATHS` still works.
-- [ ] CI: add step to run validate using a nested-only config and assert resolved snapshot path/fields.
+- [x] Add nested parse path in loader; map scan/authoring/graph/templates to internal `Config`.
+- [x] Precedence: CLI/env overrides > nested > flat; document in comments.
+- [x] Tests: nested-only config; flat-only config; both present; env `CLI_RAG_FILEPATHS` still works.
+- [x] CI: add step to run validate using a nested-only config and assert resolved snapshot path/fields.
 
 ### Acceptance Criteria
 GIVEN a `.cli-rag.toml` using only nested `[config.scan]` and `[config.graph]`, WHEN running `cli-rag validate --format json`, THEN no loader errors occur, the unified index is written to the mapped `index_path`, and `.cli-rag/resolved.json` fields match `contracts/v1/config/resolved_config.json`.
 
 ### Issues Encountered
 {LOC|20}
-
