@@ -5,13 +5,14 @@ use std::path::PathBuf;
 use std::time::SystemTime;
 
 use crate::commands::lua_integration::lua_new_hooks;
-use crate::commands::new_helpers::{compute_next_id, render_filename_template, render_template};
+use crate::commands::new_helpers::{
+    generate_initial_id, render_filename_template, render_template,
+};
 use crate::config::Config;
 use crate::discovery::docs_with_source;
 use crate::util::try_open_editor;
 #[allow(unused_imports)]
 use mlua::{Function as LuaFunction, Table as LuaTable};
-use uuid::Uuid;
 
 #[allow(clippy::too_many_arguments)]
 pub fn run(
@@ -54,43 +55,7 @@ pub fn run(
     };
     let (docs, _used_unified) = docs_with_source(cfg, cfg_path)?;
     // Determine id based on schema.new.id_generator if present
-    let schema_cfg = cfg.schema.iter().find(|s| s.name == schema);
-    let mut id = if let Some(scfg) = schema_cfg
-        .and_then(|s| s.new.as_ref())
-        .and_then(|n| n.id_generator.as_ref())
-    {
-        let strategy = scfg.strategy.as_str();
-        match strategy {
-            "increment" => {
-                let prefix = scfg
-                    .prefix
-                    .clone()
-                    .unwrap_or_else(|| format!("{}-", &schema));
-                let padding = scfg.padding.unwrap_or(3);
-                compute_next_id(&prefix, &docs, padding)
-            }
-            "datetime" => {
-                let prefix = scfg
-                    .prefix
-                    .clone()
-                    .unwrap_or_else(|| format!("{}-", &schema));
-                let ts = chrono::Local::now().format("%Y%m%d%H%M%S").to_string();
-                format!("{}{}", prefix, ts)
-            }
-            "uuid" => {
-                let prefix = scfg
-                    .prefix
-                    .clone()
-                    .unwrap_or_else(|| format!("{}-", &schema));
-                let u = Uuid::new_v4().simple().to_string();
-                format!("{}{}", prefix, u)
-            }
-            _ => compute_next_id(&format!("{}-", &schema), &docs, 3),
-        }
-    } else {
-        // default increment with schema- prefix
-        compute_next_id(&format!("{}-", &schema), &docs, 3)
-    };
+    let mut id = generate_initial_id(cfg, &schema, &docs);
     let mut title = title_opt.unwrap_or_else(|| id.clone());
     if normalize_title {
         use heck::ToTitleCase;

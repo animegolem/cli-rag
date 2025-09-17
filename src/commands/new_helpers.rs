@@ -1,6 +1,10 @@
 use chrono::Local;
 use heck::{ToKebabCase, ToLowerCamelCase, ToShoutySnakeCase, ToSnakeCase, ToUpperCamelCase};
 use regex::Regex;
+use uuid::Uuid;
+
+use crate::config::Config;
+use crate::model::AdrDoc;
 
 pub fn render_template(mut s: String, id: &str, title: &str) -> String {
     s = s.replace("{{id}}", id);
@@ -52,7 +56,7 @@ pub fn render_template(mut s: String, id: &str, title: &str) -> String {
     s
 }
 
-pub fn compute_next_id(prefix: &str, docs: &Vec<crate::model::AdrDoc>, padding: usize) -> String {
+pub fn compute_next_id(prefix: &str, docs: &Vec<AdrDoc>, padding: usize) -> String {
     let re = Regex::new(&format!(r"^{}(\d+)$", regex::escape(prefix))).unwrap();
     let mut max_n: usize = 0;
     for d in docs {
@@ -67,6 +71,31 @@ pub fn compute_next_id(prefix: &str, docs: &Vec<crate::model::AdrDoc>, padding: 
         }
     }
     format!("{}{:0width$}", prefix, max_n + 1, width = padding)
+}
+
+pub fn generate_initial_id(cfg: &Config, schema: &str, docs: &Vec<AdrDoc>) -> String {
+    if let Some(schema_cfg) = cfg.schema.iter().find(|s| s.name == schema) {
+        if let Some(new_cfg) = schema_cfg.new.as_ref() {
+            if let Some(id_cfg) = new_cfg.id_generator.as_ref() {
+                let prefix_default = format!("{}-", schema);
+                let prefix = id_cfg.prefix.clone().unwrap_or(prefix_default.clone());
+                let padding = id_cfg.padding.unwrap_or(3);
+                return match id_cfg.strategy.as_str() {
+                    "increment" | "" => compute_next_id(&prefix, docs, padding),
+                    "datetime" => {
+                        let ts = chrono::Local::now().format("%Y%m%d%H%M%S").to_string();
+                        format!("{}{}", prefix, ts)
+                    }
+                    "uuid" => {
+                        let u = Uuid::new_v4().simple().to_string();
+                        format!("{}{}", prefix, u)
+                    }
+                    _ => compute_next_id(&prefix, docs, padding),
+                };
+            }
+        }
+    }
+    compute_next_id(&format!("{}-", schema), docs, 3)
 }
 
 fn sanitize_filename_component(s: &str) -> String {

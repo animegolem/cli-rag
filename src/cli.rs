@@ -1,4 +1,4 @@
-use clap::{Args, Parser, Subcommand, ValueEnum};
+use clap::{ArgGroup, Args, Parser, Subcommand, ValueEnum};
 use std::path::PathBuf;
 
 #[derive(ValueEnum, Debug, Clone, Copy)]
@@ -201,6 +201,79 @@ pub enum Commands {
         #[arg(long, default_value_t = false)]
         dry_run: bool,
     },
+    /// AI-oriented workflows (authoring, retrieval, etc.)
+    Ai {
+        #[command(subcommand)]
+        command: AiCommands,
+    },
+}
+
+#[derive(Subcommand, Debug)]
+pub enum AiCommands {
+    /// AI authoring helpers for managed drafts
+    New {
+        #[command(subcommand)]
+        command: AiNewCommands,
+    },
+}
+
+#[derive(Subcommand, Debug)]
+pub enum AiNewCommands {
+    /// Start an AI draft, reserving ID/filename and returning constraints
+    Start(AiNewStartArgs),
+    /// Submit an AI draft with rendered sections/frontmatter to finalize the note
+    Submit(AiNewSubmitArgs),
+    /// Cancel an AI draft and release its reservation
+    Cancel(AiNewCancelArgs),
+    /// List active drafts (optionally filtering by staleness)
+    List(AiNewListArgs),
+}
+
+#[derive(Args, Debug)]
+pub struct AiNewStartArgs {
+    /// Schema name to use (e.g., ADR, IMP)
+    #[arg(long)]
+    pub schema: String,
+    /// Optional title to seed template and filename rendering
+    #[arg(long)]
+    pub title: Option<String>,
+    /// Optional explicit ID override; otherwise engine assigns via schema rules
+    #[arg(long)]
+    pub id: Option<String>,
+}
+
+#[derive(Args, Debug)]
+#[command(group = ArgGroup::new("submit_input").args(["stdin", "sections", "from_file"]).required(true))]
+pub struct AiNewSubmitArgs {
+    /// Draft identifier returned by `ai new start`
+    #[arg(long)]
+    pub draft: String,
+    /// Read structured JSON payload from stdin
+    #[arg(long, default_value_t = false)]
+    pub stdin: bool,
+    /// Path to structured JSON payload file ({frontmatter, sections})
+    #[arg(long, value_name = "PATH")]
+    pub sections: Option<std::path::PathBuf>,
+    /// Path to Markdown note to parse into sections
+    #[arg(long = "from-file", value_name = "PATH")]
+    pub from_file: Option<std::path::PathBuf>,
+    /// Allow writing even if line-count constraints fail (marks needs_attention)
+    #[arg(long, default_value_t = false)]
+    pub allow_oversize: bool,
+}
+
+#[derive(Args, Debug)]
+pub struct AiNewCancelArgs {
+    /// Draft identifier to cancel
+    #[arg(long)]
+    pub draft: String,
+}
+
+#[derive(Args, Debug)]
+pub struct AiNewListArgs {
+    /// Optional staleness filter in days (show only drafts older than N days)
+    #[arg(long, value_name = "DAYS")]
+    pub stale_days: Option<u64>,
 }
 
 #[derive(Args, Debug)]

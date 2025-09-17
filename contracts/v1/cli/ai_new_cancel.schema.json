@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "contracts/cli/v1/ai_new_cancel.schema.json",
+  "title": "ai new cancel response v1",
+  "type": "object",
+  "required": ["ok", "draftId"],
+  "properties": {
+    "ok": { "type": "boolean" },
+    "draftId": { "type": "string" }
+  },
+  "additionalProperties": false
+}

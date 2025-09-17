@@ -5,19 +5,19 @@ tags:
   - Implementation
   - ai-new
   - authoring
-kanban_status: backlog
+kanban_status: done
 depends_on:
   - AI-EPIC-001
   - ADR-003d
 confidence_score: 0.76
 created_date: 2025-09-15
-close_date:
+close_date: 2025-09-17
 ---
 
 # AI-IMP-018-ai-new-start-submit-cancel-list
 
 ## Summary of Issue #1
-Implement minimal `ai new` flows aligned to ADR-003d: start (reserve ID/filename, emit contract), submit (validate structured sections/frontmatter before writing), cancel (drop draft), list (inspect drafts). Outcome: agents can prepare content off-disk and commit atomically.
+Implement minimal `ai new` flows aligned to ADR-003d: start (reserve ID/filename, emit contract), submit (validate structured sections/frontmatter before writing), cancel (drop draft), list (inspect drafts). Outcome: agents can prepare content off-disk and commit atomically. Draft metadata now persists in `.cli-rag/drafts/`, JSON schemas cover the new surfaces, and integration tests exercise start→submit plus cancel/list cases.
 
 ### Out of Scope
 - Rich validation policies beyond existing schema rules; multi-draft workflows; editor integrations.
@@ -42,14 +42,13 @@ Implement minimal `ai new` flows aligned to ADR-003d: start (reserve ID/filename
 Before marking an item complete on the checklist MUST **stop** and **think**. Have you validated all aspects are **implemented** and **tested**? 
 </CRITICAL_RULE>
 
-- [ ] Define JSON contracts minimally consistent with ADR; wire clap surfaces.
-- [ ] Implement draft store; TTL handling; ID strategy.
-- [ ] Validate submit shapes via existing parser/validator; write file atomically.
-- [ ] Tests for happy path and error exits (2/4/5 codes where applicable).
+- [x] Define JSON contracts minimally consistent with ADR; wire clap surfaces.
+- [x] Implement draft store; TTL handling; ID strategy.
+- [x] Validate submit shapes via existing parser/validator; write file atomically.
+- [x] Tests for happy path and error exits (2/4/5 codes where applicable).
 
 ### Acceptance Criteria
 GIVEN `ai new start --schema ADR --title X`, WHEN called, THEN returns a JSON envelope with `draftId`, `noteTemplate`, and constraints; WHEN `ai new submit --draft dft_x --sections @p.json`, THEN the file is written and `validate` passes.
 
 ### Issues Encountered
 {LOC|20}
-

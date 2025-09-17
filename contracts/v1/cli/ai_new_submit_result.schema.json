@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "contracts/cli/v1/ai_new_submit_result.schema.json",
+  "title": "ai new submit result v1",
+  "type": "object",
+  "required": ["ok"],
+  "properties": {
+    "ok": { "type": "boolean" }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": { "ok": { "const": true } }
+      },
+      "then": {
+        "required": ["path", "id", "schema"],
+        "properties": {
+          "path": { "type": "string" },
+          "id": { "type": "string" },
+          "schema": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
+    },
+    {
+      "if": {
+        "properties": { "ok": { "const": false } }
+      },
+      "then": {
+        "required": ["draftId", "diagnostics"],
+        "properties": {
+          "draftId": { "type": "string" },
+          "diagnostics": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["severity", "code", "message"],
+              "properties": {
+                "severity": { "type": "string" },
+                "code": { "type": "string" },
+                "message": { "type": "string" },
+                "heading": { "type": ["string", "null"] },
+                "max": { "type": ["integer", "null"], "minimum": 0 },
+                "actual": { "type": ["integer", "null"], "minimum": 0 }
+              },
+              "additionalProperties": false
+            }
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  ]
+}

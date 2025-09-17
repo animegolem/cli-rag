@@ -1,7 +1,8 @@
 use anyhow::Result;
 use clap::{CommandFactory, Parser};
 
-use cli_rag::cli::{Cli, Commands};
+use cli_rag::cli::{AiCommands, AiNewCommands, AiNewSubmitArgs, Cli, Commands};
+use cli_rag::commands::ai_new::{SubmitInput, SubmitRequest};
 use cli_rag::config::load_config;
 
 fn main() -> Result<()> {
@@ -185,6 +186,51 @@ fn main() -> Result<()> {
                 dry_run,
             )?;
         }
+        Commands::Ai { command } => match command {
+            AiCommands::New { command } => match command {
+                AiNewCommands::Start(args) => {
+                    let (cfg, cfg_path) = load_config(&cli.config, &cli.base, cli.no_lua)?;
+                    cli_rag::commands::ai_new::start(
+                        &cfg,
+                        &cfg_path,
+                        args.schema,
+                        args.title,
+                        args.id,
+                        &cli.format,
+                    )?;
+                }
+                AiNewCommands::Submit(args) => {
+                    let (cfg, cfg_path) = load_config(&cli.config, &cli.base, cli.no_lua)?;
+                    let AiNewSubmitArgs {
+                        draft,
+                        stdin,
+                        sections,
+                        from_file,
+                        allow_oversize,
+                    } = args;
+                    let input = match (stdin, sections, from_file) {
+                        (true, _, _) => SubmitInput::Stdin,
+                        (false, Some(path), _) => SubmitInput::Sections(path),
+                        (false, None, Some(path)) => SubmitInput::Markdown(path),
+                        _ => unreachable!("clap guarantees one submit input"),
+                    };
+                    let request = SubmitRequest {
+                        draft_id: draft,
+                        input,
+                        allow_oversize,
+                    };
+                    cli_rag::commands::ai_new::submit(&cfg, &cfg_path, request, &cli.format)?;
+                }
+                AiNewCommands::Cancel(args) => {
+                    let (cfg, cfg_path) = load_config(&cli.config, &cli.base, cli.no_lua)?;
+                    cli_rag::commands::ai_new::cancel(&cfg, &cfg_path, args.draft, &cli.format)?;
+                }
+                AiNewCommands::List(args) => {
+                    let (cfg, cfg_path) = load_config(&cli.config, &cli.base, cli.no_lua)?;
+                    cli_rag::commands::ai_new::list(&cfg, &cfg_path, args.stale_days, &cli.format)?;
+                }
+            },
+        },
     }
     Ok(())
 }

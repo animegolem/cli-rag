@@ -1,0 +1,74 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "contracts/cli/v1/ai_new_start.schema.json",
+  "title": "ai new start response v1",
+  "type": "object",
+  "required": [
+    "draftId",
+    "schema",
+    "id",
+    "title",
+    "filename",
+    "noteTemplate",
+    "seedFrontmatter",
+    "constraints",
+    "instructions",
+    "ttlSeconds",
+    "contentHash"
+  ],
+  "properties": {
+    "draftId": { "type": "string" },
+    "schema": { "type": "string" },
+    "id": { "type": "string" },
+    "title": { "type": "string" },
+    "filename": { "type": "string" },
+    "noteTemplate": { "type": "string" },
+    "seedFrontmatter": { "type": "object", "additionalProperties": true },
+    "constraints": {
+      "type": "object",
+      "required": ["headings", "headingStrictness", "frontmatter"],
+      "properties": {
+        "headings": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name", "maxLines"],
+            "properties": {
+              "name": { "type": "string" },
+              "maxLines": { "type": "integer", "minimum": 0 }
+            },
+            "additionalProperties": false
+          }
+        },
+        "headingStrictness": { "type": "string" },
+        "frontmatter": {
+          "type": "object",
+          "required": ["allowed", "readonly", "enums"],
+          "properties": {
+            "allowed": {
+              "type": "array",
+              "items": { "type": "string" }
+            },
+            "readonly": {
+              "type": "array",
+              "items": { "type": "string" }
+            },
+            "enums": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "array",
+                "items": { "type": "string" }
+              }
+            }
+          },
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": true
+    },
+    "instructions": { "type": "string" },
+    "ttlSeconds": { "type": "integer", "minimum": 0 },
+    "contentHash": { "type": "string" }
+  },
+  "additionalProperties": false
+}
