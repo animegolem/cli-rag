@@ -405,7 +405,7 @@ fn new_schema_filename_template_filters() {
     base.create_dir_all().unwrap();
     let cfg = temp.child(".cli-rag.toml");
     cfg.write_str(&format!(
-        "bases = [\n  '{}'\n]\n\n[[schema]]\nname = 'ADR'\nfile_patterns = ['ADR-*.md']\n[schema.new]\nid_generator = {{ strategy = 'increment', prefix = 'ADR-', padding = 3 }}\nfilename_template = \"{{schema.name|kebab-case}}-{{title|PascalCase}}-{{id}}.md\"\n",
+        "bases = [\n  '{}'\n]\n\n[[schema]]\nname = 'ADR'\nfile_patterns = ['ADR-*.md']\n[schema.new]\nid_generator = {{ strategy = 'increment', prefix = 'ADR-', padding = 3 }}\nfilename_template = \"{{{{schema.name|kebab-case}}}}-{{{{title|PascalCase}}}}-{{{{id}}}}.md\"\n",
         base.path().display()
     ))
     .unwrap();
@@ -422,8 +422,20 @@ fn new_schema_filename_template_filters() {
         .assert()
         .success();
 
-    base.child("adr-HelloWorld-ADR-0001.md")
-        .assert(predicates::path::exists());
+    let names: Vec<String> = std::fs::read_dir(base.path())
+        .unwrap()
+        .map(|e| e.unwrap().path())
+        .filter_map(|p| {
+            p.file_name()
+                .and_then(|s| s.to_str())
+                .map(|s| s.to_string())
+        })
+        .collect();
+    assert!(
+        names.iter().any(|n| n == "adr-HelloWorld-ADR-001.md"),
+        "expected adr-HelloWorld-ADR-001.md; got {:?}",
+        names
+    );
 
     Command::cargo_bin("cli-rag")
         .unwrap()

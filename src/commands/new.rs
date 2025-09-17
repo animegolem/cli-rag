@@ -5,88 +5,13 @@ use std::path::PathBuf;
 use std::time::SystemTime;
 
 use crate::commands::lua_integration::lua_new_hooks;
+use crate::commands::new_helpers::{compute_next_id, render_filename_template, render_template};
 use crate::config::Config;
 use crate::discovery::docs_with_source;
 use crate::util::try_open_editor;
 #[allow(unused_imports)]
 use mlua::{Function as LuaFunction, Table as LuaTable};
 use uuid::Uuid;
-
-fn render_template(mut s: String, id: &str, title: &str) -> String {
-    s = s.replace("{{id}}", id);
-    s = s.replace("{{title}}", title);
-    let now = chrono::Local::now();
-    s = s.replace("{{date}}", &now.format("%Y-%m-%d").to_string());
-    s = s.replace("{{time}}", &now.format("%H:%M").to_string());
-    // Minimal LOC token: {{LOC|N}} -> N blank lines
-    // We do a simple scan for patterns; non-greedy
-    let re = Regex::new(r"\{\{LOC\|(\d+)\}\}").ok();
-    if let Some(re) = re {
-        s = re
-            .replace_all(&s, |caps: &regex::Captures| {
-                let n: usize = caps
-                    .get(1)
-                    .and_then(|m| m.as_str().parse().ok())
-                    .unwrap_or(0);
-                "\n".repeat(n)
-            })
-            .to_string();
-    }
-    // Frontmatter injection token: ((frontmatter)) -> YAML key-value lines (no --- guards)
-    if s.contains("((frontmatter))") {
-        let fm = format!(
-            "id: {}\n{}{}{}",
-            id, "tags: []\n", "status: draft\n", "depends_on: []\n"
-        );
-        s = s.replace("((frontmatter))", &fm);
-    }
-    // Merge/ensure YAML frontmatter keys (between first pair of --- guards)
-    if s.starts_with("---\n") {
-        if let Some(end) = s.find("\n---\n") {
-            let fm_content = &s[4..end];
-            let rest = &s[end + 5..];
-            if let Ok(val) = serde_yaml::from_str::<serde_yaml::Value>(fm_content) {
-                use serde_yaml::{Mapping, Value};
-                let mut map = match val {
-                    Value::Mapping(m) => m,
-                    _ => Mapping::new(),
-                };
-                // System precedence: id always set to computed
-                map.insert(Value::String("id".into()), Value::String(id.into()));
-                map.entry(Value::String("tags".into()))
-                    .or_insert_with(|| Value::Sequence(vec![]));
-                map.entry(Value::String("status".into()))
-                    .or_insert_with(|| Value::String("draft".into()));
-                map.entry(Value::String("depends_on".into()))
-                    .or_insert_with(|| Value::Sequence(vec![]));
-                let yaml = serde_yaml::to_string(&Value::Mapping(map)).unwrap_or_default();
-                let front = format!("---\n{}---\n", yaml);
-                s = format!("{}{}", front, rest);
-            }
-        }
-    }
-    s
-}
-
-fn compute_next_id(prefix: &str, docs: &Vec<crate::model::AdrDoc>, padding: usize) -> String {
-    // prefix is used verbatim before the numeric counter (e.g., "ADR-", "RFC-")
-    let re = Regex::new(&format!(r"^{}(\d+)$", regex::escape(prefix))).unwrap();
-    let mut max_n: usize = 0;
-    for d in docs {
-        if let Some(id) = &d.id {
-            if let Some(caps) = re.captures(id) {
-                if let Some(m) = caps.get(1) {
-                    if let Ok(n) = m.as_str().parse::<usize>() {
-                        if n > max_n {
-                            max_n = n;
-                        }
-                    }
-                }
-            }
-        }
-    }
-    format!("{}{:0width$}", prefix, max_n + 1, width = padding)
-}
 
 #[allow(clippy::too_many_arguments)]
 pub fn run(
@@ -243,54 +168,6 @@ pub fn run(
     let tpl_eff: Option<String> = filename_template
         .or(schema_tpl_from_new)
         .or(schema_tpl_legacy);
-    // Compute target filename with optional template
-    fn sanitize_filename_component(s: &str) -> String {
-        let out = s.replace('/', "-").replace(['\n', '\r'], " ");
-        out.trim().to_string()
-    }
-    fn render_filename_template(tpl: &str, id: &str, title: &str, schema: &str) -> String {
-        use heck::{
-            ToKebabCase, ToLowerCamelCase, ToShoutySnakeCase, ToSnakeCase, ToUpperCamelCase,
-        };
-        let now = chrono::Local::now();
-        let re = Regex::new(r"\{\{\s*([a-zA-Z0-9_.]+)\s*(?:\|\s*([^}]+))?\s*\}\}").unwrap();
-        let rendered = re
-            .replace_all(tpl, |caps: &regex::Captures| {
-                let var = caps.get(1).map(|m| m.as_str()).unwrap_or("");
-                let modifier = caps.get(2).map(|m| m.as_str().trim());
-                let raw = match var {
-                    "id" => id.to_string(),
-                    "title" => title.to_string(),
-                    "now" => now.format("%Y-%m-%dT%H:%M:%S").to_string(),
-                    "schema.name" => schema.to_string(),
-                    _ => String::new(),
-                };
-                if let Some(mods) = modifier {
-                    match mods {
-                        "kebab-case" => raw.to_kebab_case(),
-                        "snake_case" => raw.to_snake_case(),
-                        "SCREAMING_SNAKE_CASE" => raw.to_shouty_snake_case(),
-                        "camelCase" => raw.to_lower_camel_case(),
-                        "PascalCase" => raw.to_upper_camel_case(),
-                        m if m.starts_with("date:") => {
-                            // Support date:"%Y-%m-%d" or date:'%Y-%m-%d'
-                            let pat = m.splitn(2, ':').nth(1).unwrap_or("").trim();
-                            let pat = pat.trim_matches('"').trim_matches('\'');
-                            now.format(pat).to_string()
-                        }
-                        _ => raw,
-                    }
-                } else {
-                    raw
-                }
-            })
-            .to_string();
-        let mut f = sanitize_filename_component(&rendered);
-        if !f.ends_with(".md") {
-            f.push_str(".md");
-        }
-        f
-    }
     let initial_name = if let Some(tpl) = &tpl_eff {
         render_filename_template(tpl, &id, &title, &schema)
     } else {
@@ -369,7 +246,7 @@ pub fn run(
         // Non-edit path: write immediately
         // Ensure we don't overwrite an existing file; bump numeric suffix if needed
         if out_path.exists() {
-            let prefix = schema;
+            let prefix = schema.clone();
             let re = Regex::new(&format!(r"^{}-(\d+)$", regex::escape(&prefix))).unwrap();
             let mut n: usize = 1;
             if let Some(caps) = re.captures(&id) {
