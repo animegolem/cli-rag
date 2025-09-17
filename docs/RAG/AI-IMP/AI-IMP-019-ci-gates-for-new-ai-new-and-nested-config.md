@@ -39,14 +39,13 @@ Extend the contracts compliance workflow to validate nested config acceptance an
 Before marking an item complete on the checklist MUST **stop** and **think**. Have you validated all aspects are **implemented** and **tested**? 
 </CRITICAL_RULE>
 
-- [ ] CI: nested config fixture and validation.
-- [ ] CI: `new` smoke: create note then validate.
-- [ ] CI: `ai new` smoke: start then cancel.
-- [ ] Docs: brief note in README for CI surfaces.
+- [x] CI: nested config fixture and validation.
+- [x] CI: `new` smoke: create note then validate.
+- [x] CI: `ai new` smoke: start then cancel.
+- [x] Docs: brief note in README for CI surfaces.
 
 ### Acceptance Criteria
 CI passes with added steps across ubuntu-latest; other OS in the main matrix unaffected.
 
 ### Issues Encountered
 {LOC|20}
-

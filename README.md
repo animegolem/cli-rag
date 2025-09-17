@@ -15,6 +15,10 @@ You've found this way too early! Nothing here is ready for production. :) This w
 - `ai-index-plan` – compute AI Index clusters and write a plan JSON
 - `ai-index-apply` – apply a plan: write cache and optional tags
 
+## CI Contracts Gates
+
+The `contracts` job in `.github/workflows/ci.yml` now spins up a nested user config fixture, runs `validate --format json` to assert the resolved snapshot, exercises `new` id generators and filename templates, and checks `ai new start/list/cancel` flows against the schemas in `contracts/v1/cli/*.schema.json`. Extend this job when you add new contract surfaces so the smoke coverage stays representative.
+
 ### ai-index-plan
 
 Compute communities (clusters) over the unified graph and emit a plan JSON for labeling/summarization.
@@ -53,4 +57,3 @@ Notes:
 - Writes cache to `.cli-rag/cache/ai-index.json` by default.
 - Tag writes: enable with `--write-frontmatter`. Additive and require an existing `tags` field in frontmatter; otherwise exit 4.
 - Apply report matches `contracts/v1/cli/ai_index_apply_report.schema.json`.
-
