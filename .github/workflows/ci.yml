@@ -141,12 +141,12 @@ jobs:
           './target/release/cli-rag', '--config', f'{workdir}/.cli-rag.toml', 'watch', '--debounce-ms', '200', '--dry-run', '--json'
           ], stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True)
           try:
-          line = p.stdout.readline().strip()
-          obj = json.loads(line)
-          assert obj.get('event') == 'watch_start', obj
-          assert obj.get('protocolVersion') == 1, obj
+              line = p.stdout.readline().strip()
+              obj = json.loads(line)
+              assert obj.get('event') == 'watch_start', obj
+              assert obj.get('protocolVersion') == 1, obj
           finally:
-          p.kill()
+              p.kill()
           print('watch handshake OK')
           PY
 
