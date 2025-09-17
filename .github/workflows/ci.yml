@@ -363,57 +363,9 @@ jobs:
           START_JSON=$(./target/release/cli-rag --config "$CFG" ai new start --schema ADR --title "CI Draft")
           export START_JSON
           DRAFT_ID=$(python - <<'PY'
-<<<<<<< HEAD
-import json, os
-from jsonschema import validate, Draft202012Validator
-
-schema = json.load(open("contracts/v1/cli/ai_new_start.schema.json"))
-Draft202012Validator.check_schema(schema)
-data = json.loads(os.environ["START_JSON"])
-validate(instance=data, schema=schema)
-print(data["draftId"])
-PY
-)
-          LIST_JSON=$(./target/release/cli-rag --config "$CFG" ai new list)
-          export LIST_JSON
-          python - <<'PY'
-import json, os
-from jsonschema import validate, Draft202012Validator
-
-schema = json.load(open("contracts/v1/cli/ai_new_list.schema.json"))
-Draft202012Validator.check_schema(schema)
-data = json.loads(os.environ["LIST_JSON"])
-validate(instance=data, schema=schema)
-assert data["drafts"], "expected at least one draft in list"
-PY
-          CANCEL_JSON=$(./target/release/cli-rag --config "$CFG" ai new cancel --draft "$DRAFT_ID")
-          export CANCEL_JSON
-          python - <<'PY'
-import json, os
-from jsonschema import validate, Draft202012Validator
-
-schema = json.load(open("contracts/v1/cli/ai_new_cancel.schema.json"))
-Draft202012Validator.check_schema(schema)
-data = json.loads(os.environ["CANCEL_JSON"])
-validate(instance=data, schema=schema)
-assert data.get("ok") is True
-PY
-          LIST_JSON=$(./target/release/cli-rag --config "$CFG" ai new list)
-          export LIST_JSON
-          python - <<'PY'
-import json, os
-from jsonschema import validate, Draft202012Validator
-
-schema = json.load(open("contracts/v1/cli/ai_new_list.schema.json"))
-Draft202012Validator.check_schema(schema)
-data = json.loads(os.environ["LIST_JSON"])
-validate(instance=data, schema=schema)
-assert not data["drafts"], "expected drafts list to be empty after cancel"
-PY
-=======
           import json, os
           from jsonschema import validate, Draft202012Validator
-          
+
           schema = json.load(open("contracts/v1/cli/ai_new_start.schema.json"))
           Draft202012Validator.check_schema(schema)
           data = json.loads(os.environ["START_JSON"])
@@ -426,7 +378,7 @@ PY
           python - <<'PY'
           import json, os
           from jsonschema import validate, Draft202012Validator
-          
+
           schema = json.load(open("contracts/v1/cli/ai_new_list.schema.json"))
           Draft202012Validator.check_schema(schema)
           data = json.loads(os.environ["LIST_JSON"])
@@ -438,7 +390,7 @@ PY
           python - <<'PY'
           import json, os
           from jsonschema import validate, Draft202012Validator
-          
+
           schema = json.load(open("contracts/v1/cli/ai_new_cancel.schema.json"))
           Draft202012Validator.check_schema(schema)
           data = json.loads(os.environ["CANCEL_JSON"])
@@ -450,14 +402,13 @@ PY
           python - <<'PY'
           import json, os
           from jsonschema import validate, Draft202012Validator
-          
+
           schema = json.load(open("contracts/v1/cli/ai_new_list.schema.json"))
           Draft202012Validator.check_schema(schema)
           data = json.loads(os.environ["LIST_JSON"])
           validate(instance=data, schema=schema)
           assert not data["drafts"], "expected drafts list to be empty after cancel"
           PY
->>>>>>> bc4baab (feat: add ai new draft workflow)
           unset START_JSON CANCEL_JSON LIST_JSON
       - name: Validate unified index JSON matches schema
         run: |
