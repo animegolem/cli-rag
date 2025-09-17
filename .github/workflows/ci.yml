@@ -332,18 +332,27 @@ jobs:
           test -f "$WORKDIR/.cli-rag/resolved.json"
           python - <<'PY'
           import json, os
-          p=os.environ['WORKDIR']+"/.cli-rag/resolved.json"
-          data=json.load(open(p))
-          assert data.get('overlays',{}).get('enabled') is True
+          workdir = os.environ['WORKDIR']
+          resolved_path = os.path.join(workdir, '.cli-rag', 'resolved.json')
+          data = json.load(open(resolved_path))
+          overlays = data.get('overlays', {})
+          assert overlays.get('enabled') is True
+          expected_repo = os.path.join(workdir, '.cli-rag.lua')
+          assert overlays.get('repoPath') == expected_repo, overlays
+          assert overlays.get('userPath') is None
           print('overlays enabled OK')
           PY
           # Now run with --no-lua to disable overlays and rewrite snapshot
           ./target/release/cli-rag --config "$CFG" --no-lua validate --format json >/dev/null
           python - <<'PY'
           import json, os
-          p=os.environ['WORKDIR']+"/.cli-rag/resolved.json"
-          data=json.load(open(p))
-          assert data.get('overlays',{}).get('enabled') is False
+          workdir = os.environ['WORKDIR']
+          resolved_path = os.path.join(workdir, '.cli-rag', 'resolved.json')
+          data = json.load(open(resolved_path))
+          overlays = data.get('overlays', {})
+          assert overlays.get('enabled') is False
+          assert overlays.get('repoPath') is None
+          assert overlays.get('userPath') is None
           print('overlays disabled OK')
           PY
       - name: Validate unified index JSON matches schema

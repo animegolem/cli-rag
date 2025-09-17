@@ -31,6 +31,20 @@ fn info_json(cfg: &Config, cfg_path: &Option<PathBuf>) -> serde_json::Value {
         "deprecated": false,
     });
 
+    let overlays = serde_json::json!({
+        "enabled": cfg.overlays.enabled,
+        "repoPath": cfg
+            .overlays
+            .repo_path
+            .as_ref()
+            .map(|p| p.display().to_string()),
+        "userPath": cfg
+            .overlays
+            .user_path
+            .as_ref()
+            .map(|p| p.display().to_string()),
+    });
+
     let obj = serde_json::json!({
         "protocolVersion": protocol_version,
         "config": cfg_meta,
@@ -42,6 +56,7 @@ fn info_json(cfg: &Config, cfg_path: &Option<PathBuf>) -> serde_json::Value {
             "aiIndexPath": ai_index_path.display().to_string(),
             "exists": ai_index_exists,
         },
+        "overlays": overlays,
         "capabilities": {
             "watchNdjson": true,
             "aiGet": { "retrievalVersion": 1 },
@@ -80,6 +95,26 @@ pub fn run(cfg: &Config, cfg_path: &Option<PathBuf>, format: &OutputFormat) -> R
                         .get("exists")
                         .and_then(|v| v.as_bool())
                         .unwrap_or(false)
+                );
+            }
+            if let Some(overlays) = j.get("overlays").and_then(|v| v.as_object()) {
+                let enabled = overlays
+                    .get("enabled")
+                    .and_then(|v| v.as_bool())
+                    .unwrap_or(false);
+                let repo = overlays
+                    .get("repoPath")
+                    .and_then(|v| v.as_str())
+                    .filter(|s| !s.is_empty())
+                    .unwrap_or("<none>");
+                let user = overlays
+                    .get("userPath")
+                    .and_then(|v| v.as_str())
+                    .filter(|s| !s.is_empty())
+                    .unwrap_or("<none>");
+                println!(
+                    "Overlays: enabled={}, repo={}, user={}",
+                    enabled, repo, user
                 );
             }
         }

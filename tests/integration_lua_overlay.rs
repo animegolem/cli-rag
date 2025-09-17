@@ -31,6 +31,9 @@ fn overlays_enabled_when_repo_lua_present() {
         .clone();
     let v: serde_json::Value = serde_json::from_slice(&out).unwrap();
     assert!(v["capabilities"]["overlaysEnabled"].as_bool().unwrap());
+    let info_repo = v["overlays"]["repoPath"].as_str().unwrap();
+    assert!(info_repo.ends_with(".cli-rag.lua"));
+    assert!(v["overlays"]["userPath"].is_null());
 
     // validate writes resolved.json with overlays metadata
     Command::cargo_bin("cli-rag")
@@ -47,8 +50,8 @@ fn overlays_enabled_when_repo_lua_present() {
     let resolved: serde_json::Value =
         serde_json::from_str(&std::fs::read_to_string(resolved_path.path()).unwrap()).unwrap();
     assert!(resolved["overlays"]["enabled"].as_bool().unwrap());
-    let repo_path = resolved["overlays"]["repoPath"].as_str().unwrap_or("");
-    assert!(repo_path.ends_with(".cli-rag.lua"));
+    let repo_path = resolved["overlays"]["repoPath"].as_str().unwrap();
+    assert_eq!(repo_path, info_repo);
 
     temp.close().unwrap();
 }
@@ -80,6 +83,8 @@ fn overlays_disabled_with_flag_or_env() {
         .clone();
     let v: serde_json::Value = serde_json::from_slice(&out).unwrap();
     assert!(!v["capabilities"]["overlaysEnabled"].as_bool().unwrap());
+    assert!(v["overlays"]["repoPath"].is_null());
+    assert!(v["overlays"]["userPath"].is_null());
 
     Command::cargo_bin("cli-rag")
         .unwrap()
@@ -96,6 +101,8 @@ fn overlays_disabled_with_flag_or_env() {
     let resolved: serde_json::Value =
         serde_json::from_str(&std::fs::read_to_string(resolved_path.path()).unwrap()).unwrap();
     assert!(!resolved["overlays"]["enabled"].as_bool().unwrap());
+    assert!(resolved["overlays"]["repoPath"].is_null());
+    assert!(resolved["overlays"]["userPath"].is_null());
 
     // Case B: env CLI_RAG_NO_LUA=1 disables overlays
     let out = Command::cargo_bin("cli-rag")
@@ -113,6 +120,8 @@ fn overlays_disabled_with_flag_or_env() {
         .clone();
     let v2: serde_json::Value = serde_json::from_slice(&out).unwrap();
     assert!(!v2["capabilities"]["overlaysEnabled"].as_bool().unwrap());
+    assert!(v2["overlays"]["repoPath"].is_null());
+    assert!(v2["overlays"]["userPath"].is_null());
 
     temp.close().unwrap();
 }

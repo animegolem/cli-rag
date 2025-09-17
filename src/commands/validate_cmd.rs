@@ -268,14 +268,12 @@ pub fn run(
                     .overlays
                     .repo_path
                     .as_ref()
-                    .map(|p| p.display().to_string())
-                    .unwrap_or_else(|| "".into()),
+                    .map(|p| p.display().to_string()),
                 "userPath": cfg
                     .overlays
                     .user_path
                     .as_ref()
-                    .map(|p| p.display().to_string())
-                    .unwrap_or_else(|| "".into()),
+                    .map(|p| p.display().to_string()),
             });
             let resolved = serde_json::json!({
                 "protocolVersion": crate::protocol::PROTOCOL_VERSION,

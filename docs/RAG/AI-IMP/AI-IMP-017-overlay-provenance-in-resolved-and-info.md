@@ -6,18 +6,19 @@ tags:
   - overlays
   - resolved
   - info
-kanban_status: backlog
+kanban_status: done
 depends_on:
   - AI-EPIC-001
 confidence_score: 0.83
 created_date: 2025-09-15
-close_date:
+close_date: 2025-09-17
 ---
 
 # AI-IMP-017-overlay-provenance-in-resolved-and-info
 
 ## Summary of Issue #1
 Expose overlay provenance in resolved snapshot (repo_path, user_path) and keep `info` alignment (capabilities.overlaysEnabled true/false). CI already smokes overlays on/off; add provenance assertion.
+`info --format json` should emit an `overlays` block mirroring the resolved snapshot to support scripting.
 
 ### Out of Scope
 - Executing overlay code beyond loading/merging tables; keep current safety posture.
@@ -38,13 +39,12 @@ Expose overlay provenance in resolved snapshot (repo_path, user_path) and keep `
 Before marking an item complete on the checklist MUST **stop** and **think**. Have you validated all aspects are **implemented** and **tested**? 
 </CRITICAL_RULE>
 
-- [ ] Confirm overlays paths written in resolved.json and adjust if necessary.
-- [ ] Tests: with/without overlay files; paths present/empty.
-- [ ] CI: assert resolved overlays paths when overlay exists in fixture workdir.
+- [x] Confirm overlays paths written in resolved.json and adjust if necessary.
+- [x] Tests: with/without overlay files; paths present/empty.
+- [x] CI: assert resolved overlays paths when overlay exists in fixture workdir.
 
 ### Acceptance Criteria
 GIVEN a repo `.cli-rag.lua`, WHEN running `validate`, THEN `.cli-rag/resolved.json.overlays.repoPath` equals the overlay path; WHEN `--no-lua`, THEN `enabled=false` and paths remain unchanged or empty.
 
 ### Issues Encountered
 {LOC|20}
-

@@ -6,12 +6,12 @@ tags:
   - validate
   - frontmatter
   - gtd
-kanban_status: backlog
+kanban_status: done
 depends_on:
   - AI-EPIC-001
 confidence_score: 0.78
 created_date: 2025-09-15
-close_date:
+close_date: 2025-09-17
 ---
 
 # AI-IMP-016-frontmatter-policy-gtd-and-user-system
@@ -38,10 +38,10 @@ Support schema-modeled frontmatter: declare user-controlled fields and a small s
 Before marking an item complete on the checklist MUST **stop** and **think**. Have you validated all aspects are **implemented** and **tested**? 
 </CRITICAL_RULE>
 
-- [ ] Schema: add user_frontmatter and frontmatter.gtd subset to SchemaCfg.
-- [ ] Validate: enforce shapes and optional presence per schema.
-- [ ] Tests: validate errors for wrong shapes and acceptance for correct ones.
-- [ ] Search tests: confirm kanban fields appear when present.
+- [x] Schema: add user_frontmatter and frontmatter.gtd subset to SchemaCfg.
+- [x] Validate: enforce shapes and optional presence per schema.
+- [x] Tests: validate errors for wrong shapes and acceptance for correct ones.
+- [x] Search tests: confirm kanban fields appear when present.
 
 ### Acceptance Criteria
 GIVEN a schema declaring `frontmatter.gtd.kanban_status=[...]` WHEN a note contains an invalid status, THEN `validate` emits an error; WHEN valid, THEN `search --kanban` reflects the values in results.
