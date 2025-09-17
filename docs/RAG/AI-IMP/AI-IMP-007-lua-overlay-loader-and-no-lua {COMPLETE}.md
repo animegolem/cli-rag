@@ -6,13 +6,13 @@ tags:
   - lua
   - config
   - cli
-kanban_status: in-progress
+kanban_status: done
 depends_on:
   - ADR-003d
   - ADR-006
 confidence_score: 0.78
 created_date: 2025-09-14
-close_date: 
+close_date:
 ---
 
 # AI-IMP-007-lua-overlay-loader-and-no-lua
