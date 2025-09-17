@@ -7,6 +7,9 @@ cargo fmt --all -- --check
 echo "[pre-commit] Running clippy (deny warnings)..."
 cargo clippy --all-targets --all-features -- -D warnings
 
+echo "[pre-commit] Checking YAML syntax/format..."
+scripts/check_yaml_format.py
+
 echo "[pre-commit] Running line-length guard..."
 scripts/line_guard.sh
 
