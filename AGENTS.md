@@ -1,8 +1,11 @@
 # Repository Guidelines (cli-rag)
 
+## Scope & Precedence
+- This AGENTS.md applies to the whole repo. Nested AGENTS.md files apply to their subtrees and take precedence for files they cover.
+
 ## Contracts‑First Development
 - Authoritative interfaces live in `contracts/`.
-- JSON outputs use camelCase and MUST validate against `contracts/cli/*.schema.json`.
+- JSON outputs use camelCase and MUST validate against `contracts/v1/**/*.schema.json` (e.g., `contracts/v1/index/index.schema.json`, `contracts/v1/config/resolved_config.json`, and CLI responses under `contracts/v1/cli/`).
 - TOML and Lua use snake_case; ResolvedConfig emitted to JSON must match `contracts/v1/resolved_config.json`.
 - Prefer updating contracts over ADR docs; ADRs may drift and are not the source of truth.
 
@@ -10,6 +13,10 @@
 - This project is alpha/non‑prod with no users. Do not be conservative during refactors.
 - Remove dead code rather than leaving TODO hooks for later; keep surfaces aligned to `contracts/`.
 - Prioritize matching schemas, exit codes, ordering, and NDJSON conventions defined in `contracts/global-conventions.md`.
+
+## Stop Points & Change Control
+- Any change to contracts (schemas under `contracts/` or `contracts/global-conventions.md`) requires prior discussion and a logged entry in `contracts/changelog.md` with rationale and impact.
+- Coordinate before changing exit codes, NDJSON handshake/event order, or protocol version signaling fields.
 
 ## Project Structure & Module Organization
 - `src/bin/cli-rag.rs`: Thin binary wiring CLI to library.
