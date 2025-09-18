@@ -1,5 +1,6 @@
 use assert_cmd::prelude::*;
 use assert_fs::prelude::*;
+use std::path::PathBuf;
 use std::process::Command;
 
 fn write_base_cfg(dir: &assert_fs::TempDir, base_rel: &str) -> assert_fs::fixture::ChildPath {
@@ -112,6 +113,15 @@ fn new_print_body_prints() {
     base.create_dir_all().unwrap();
     let _cfg = write_base_cfg(&temp, "notes");
 
+    let manifest_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+    let tmpl_src = manifest_dir.join(".cli-rag/templates/ADR.md");
+    let tmpl_dir = temp.child(".cli-rag/templates");
+    tmpl_dir.create_dir_all().unwrap();
+    tmpl_dir
+        .child("ADR.md")
+        .write_str(&std::fs::read_to_string(tmpl_src).unwrap())
+        .unwrap();
+
     let out = Command::cargo_bin("cli-rag")
         .unwrap()
         .current_dir(temp.path())
@@ -126,7 +136,10 @@ fn new_print_body_prints() {
         .clone();
     let s = String::from_utf8(out).unwrap();
     assert!(s.contains("id: ADR-001"));
-    assert!(s.contains("# ADR-001:"));
+    assert!(s.contains("created_date:"));
+    assert!(s.contains("<!-- A concise statement explaining the goal of this decision. -->"));
+    assert!(s.contains("## Consequences"));
+    assert!(s.contains("## Updates"));
     temp.close().unwrap();
 }
 

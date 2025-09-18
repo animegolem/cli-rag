@@ -22,8 +22,14 @@ The `contracts` job in `.github/workflows/ci.yml` now spins up a nested user con
 ## Dogfooding
 
 - `.cli-rag.toml` in the repo root defines the nested config (scan bases, graph defaults, template imports).
-- Schemas live under `.cli-rag/templates/{ADR,IMP,EPIC}.toml` with paired Markdown templates to keep frontmatter aligned to the contracts.
+- Schemas live under `.cli-rag/templates/{ADR,IMP,EPIC}.toml`; these TOML files define id generators, filename rules, and tracked frontmatter, while their paired Markdown files provide the authored content scaffolds and guidance comments.
 - Use `cli-rag new --schema ADR|IMP|EPIC --title ...` when drafting new work so the generated notes stay schema-compliant.
+
+Preview a schema's scaffold without writing a file:
+
+```
+cli-rag new --schema ADR --title "Template Parity" --print-body
+```
 
 ### ai index plan
 
