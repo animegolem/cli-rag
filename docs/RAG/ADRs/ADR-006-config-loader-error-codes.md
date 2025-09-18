@@ -5,7 +5,9 @@ tags:
   - config
   - merge_conflict
 status: accepted
-depends_on: ADR-001, ADR-004
+depends_on:
+  - ADR-001
+  - ADR-004
 created_date: 2025-08-27
 last_modified: 2025-08-27
 related_files:

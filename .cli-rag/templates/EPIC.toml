@@ -1,0 +1,33 @@
+[[schema]]
+name = "EPIC"
+config_version = "1.2"
+file_patterns = [
+  "AI-EPIC/AI-EPIC-*.md"
+]
+
+[schema.new]
+id_generator = { strategy = "increment", prefix = "AI-EPIC-", padding = 3 }
+filename_template = "AI-EPIC/{{id}}-{{title|kebab-case}}.md"
+
+[schema.frontmatter]
+user_frontmatter = [
+  "node_id",
+  "tags",
+  "kanban_status",
+  "date_created",
+  "date_completed",
+  "AI_IMP_spawned"
+]
+
+[schema.frontmatter.gtd]
+kanban_status = [
+  "backlog",
+  "planned",
+  "in-progress",
+  "completed",
+  "cancelled"
+]
+kanban_statusline = true
+
+[schema.validate]
+severity = "error"

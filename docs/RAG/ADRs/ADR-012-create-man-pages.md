@@ -1,12 +1,13 @@
 ---
-id: 
+id: ADR-012
 tags:
   - documentation
   - man
   - man-page
   - tldr.sh
 status: accepted
-depends_on: ADR-003b
+depends_on:
+  - ADR-003b
 created_date: 2025-08-27
 last_modified: 2025-08-27
 related_files: []

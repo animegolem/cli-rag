@@ -39,14 +39,13 @@ Adopt the tool in this repo using the new nested config and authoring flows. Mig
 Before marking an item complete on the checklist MUST **stop** and **think**. Have you validated all aspects are **implemented** and **tested**? 
 </CRITICAL_RULE>
 
-- [ ] Migrate `.cli-rag.toml` to nested shape; run validate.
-- [ ] Add ADR/IMP/EPIC schemas and import; run validate; update search examples if needed.
-- [ ] Create initial notes via `new`; ensure validate/search/graph/path remain green.
-- [ ] Update Bridge Plan with dogfooding status.
+- [x] Migrate `.cli-rag.toml` to nested shape; run validate.
+- [x] Add ADR/IMP/EPIC schemas and import; run validate; update search examples if needed.
+- [x] Create initial notes via `new`; ensure validate/search/graph/path remain green.
+- [x] Update Bridge Plan with dogfooding status.
 
 ### Acceptance Criteria
 GIVEN the repo config is nested and schemas are present, WHEN running `validate` and CI, THEN all checks pass; WHEN creating notes via `new`, THEN validate remains ok and new items appear in search.
 
 ### Issues Encountered
 {LOC|20}
-

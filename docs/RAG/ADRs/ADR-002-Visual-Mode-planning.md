@@ -5,10 +5,10 @@ tags:
   - NeoVIM
   - rataTUI
   - Emacs
-status: planning
+status: proposed
 depends_on:
-  - ADR-01
-  - ADR-003
+  - ADR-001
+  - ADR-003a
 created_date: 2025-08-28
 last_modified: 2025-08-28
 related_files: []

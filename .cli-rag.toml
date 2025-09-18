@@ -1,0 +1,41 @@
+[config]
+config_version = "1.2"
+
+[config.scan]
+filepaths = [
+  "docs/RAG"
+]
+index_path = ".cli-rag/index.json"
+index_strategy = "content"
+ignore_globs = [
+  "**/node_modules/**",
+  "**/.obsidian/**",
+  "**/templates/**",
+  "**/tmp/**",
+  "**/legacy-IMP/**"
+]
+
+[config.authoring]
+editor = "nvim"
+background_watch = true
+
+[config.graph]
+depth = 2
+include_bidirectional = true
+
+[config.templates]
+import = [
+  ".cli-rag/templates/ADR.toml",
+  ".cli-rag/templates/IMP.toml",
+  ".cli-rag/templates/EPIC.toml"
+]
+
+file_patterns = [
+  "**/ADR-*.md",
+  "**/ADR-AI-*.md",
+  "**/AI-IMP-*.md",
+  "**/AI-EPIC-*.md",
+  "**/LOG-AI-*.md",
+  "BRIDGE_PLAN_V*.md",
+  "PARKING-LOT.md"
+]

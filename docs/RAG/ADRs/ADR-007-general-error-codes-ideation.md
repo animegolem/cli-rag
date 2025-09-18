@@ -4,7 +4,9 @@ tags:
   - errors
   - error_codes
 status: accepted
-depends_on: ADR-001, AD-003b
+depends_on:
+  - ADR-001
+  - ADR-003b
 created_date: 2025-08-27
 last_modified: 2025-08-27
 related_files: []
@@ -97,4 +99,3 @@ A more predictable and informative cli.
 
 ## Updates
 <!-- Changes that happened when the rubber met the road -->
-

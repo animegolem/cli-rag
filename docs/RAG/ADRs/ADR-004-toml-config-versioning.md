@@ -1,5 +1,5 @@
 ---
-id: ADR-4
+id: ADR-004
 tags:
   - toml
   - config

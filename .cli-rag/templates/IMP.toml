@@ -1,0 +1,45 @@
+[[schema]]
+name = "IMP"
+config_version = "1.2"
+file_patterns = [
+  "AI-IMP/AI-IMP-*.md"
+]
+
+[schema.new]
+id_generator = { strategy = "increment", prefix = "AI-IMP-", padding = 3 }
+filename_template = "AI-IMP/{{id}}-{{title|kebab-case}}.md"
+
+[schema.frontmatter]
+user_frontmatter = [
+  "node_id",
+  "status",
+  "tags",
+  "kanban_status",
+  "kanban_statusline",
+  "depends_on",
+  "confidence_score",
+  "created_date",
+  "close_date"
+]
+
+[schema.frontmatter.edges]
+graph_edges = ["depends_on"]
+
+[schema.frontmatter.gtd]
+kanban_status = [
+  "backlog",
+  "in-progress",
+  "in_progress",
+  "complete",
+  "completed",
+  "done",
+  "blocked",
+  "cancelled"
+]
+kanban_statusline = true
+
+[schema.validate]
+severity = "error"
+
+[schema.validate.edges.depends_on]
+required = "warning"

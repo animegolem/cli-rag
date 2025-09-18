@@ -1,5 +1,6 @@
 ---
 node_id: AI-EPIC-001
+id: AI-EPIC-001
 tags:
   - EPIC
   - AI
@@ -8,7 +9,7 @@ tags:
   - dogfooding
 date_created: 2025-09-15
 date_completed:
-kanban-status: in-progress
+kanban_status: in-progress
 AI_IMP_spawned:
   - AI-IMP-014
   - AI-IMP-015
@@ -17,6 +18,7 @@ AI_IMP_spawned:
   - AI-IMP-018
   - AI-IMP-019
   - AI-IMP-020
+  - AI-IMP-021
 ---
 
 # AI-EPIC-001-contracts-convergence-and-dogfooding
@@ -66,4 +68,3 @@ Converge the loader and surfaces to match contracts while keeping backward compa
 - [ ] AI-IMP-018: `ai new` minimal flows (start/submit/cancel/list) per ADR-003d; contract-aligned outputs; tests.
 - [ ] AI-IMP-019: CI gates for `new`/`ai new` and nested config; update contracts job; fixtures.
 - [ ] AI-IMP-020: Dogfooding: migrate this repo’s config to nested shape; create EPIC/IMP/ADR schemas; use `new` in daily work; update docs.
-

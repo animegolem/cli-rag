@@ -14,6 +14,7 @@ Purpose: track the next phase of work post‑v1 to close remaining gaps, align s
 - Surfaces cleanup: legacy `topics`/`group` removed per ADR-003d.
 - Capability flags accurate (`aiIndex` true).
 - Config versioning: `config_version` read from TOML; exposed in `info` and `resolved.json`.
+- Dogfooding: repo consumers use `.cli-rag.toml` + managed templates when creating new ADR/IMP/EPIC notes.
 
 ## Scope
 - Config/Lua
@@ -57,6 +58,7 @@ Purpose: track the next phase of work post‑v1 to close remaining gaps, align s
 2) ai index plan implementation + CI schema gate. (DONE)
 3) ai index apply implementation + cache write + CI gate. (DONE)
 4) Capability gating + groups removal + doc updates. (DONE)
+5) Dogfooding migration: nested `.cli-rag.toml`, schema imports, and `cli-rag new` adoption. (DONE)
 
 ### Pending (nice-to-haves)
 - Search scoring tweaks; extended diagnostics spans; additional computed fields in index (non-blocking).

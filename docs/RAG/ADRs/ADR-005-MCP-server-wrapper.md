@@ -6,7 +6,10 @@ tags:
   - Agentic
   - Tooling
 status: accepted
-depends_on: ADR-001, ADR-002, ADR-003b
+depends_on:
+  - ADR-001
+  - ADR-002
+  - ADR-003b
 created_date: 2025-08-26
 last_modified: 2025-08-26
 related_files: []

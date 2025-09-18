@@ -39,3 +39,6 @@ dist/
 
 # Generated examples (keep real sources tracked)
 index/*.json
+.cli-rag/index.json
+.cli-rag/resolved.json
+.cli-rag/cache/

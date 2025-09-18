@@ -4,7 +4,8 @@ tags:
   - documentation
   - aesthetics
 status: accepted
-depends_on: ADR-012
+depends_on:
+  - ADR-012
 created_date: 2025-08-29
 last_modified: 2025-08-29
 related_files: [/docs/]

@@ -19,6 +19,12 @@ You've found this way too early! Nothing here is ready for production. :) This w
 
 The `contracts` job in `.github/workflows/ci.yml` now spins up a nested user config fixture, runs `validate --format json` to assert the resolved snapshot, exercises `new` id generators and filename templates, and checks `ai new start/list/cancel` flows against the schemas in `contracts/v1/cli/*.schema.json`. Extend this job when you add new contract surfaces so the smoke coverage stays representative.
 
+## Dogfooding
+
+- `.cli-rag.toml` in the repo root defines the nested config (scan bases, graph defaults, template imports).
+- Schemas live under `.cli-rag/templates/{ADR,IMP,EPIC}.toml` with paired Markdown templates to keep frontmatter aligned to the contracts.
+- Use `cli-rag new --schema ADR|IMP|EPIC --title ...` when drafting new work so the generated notes stay schema-compliant.
+
 ### ai-index-plan
 
 Compute communities (clusters) over the unified graph and emit a plan JSON for labeling/summarization.

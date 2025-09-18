@@ -69,7 +69,9 @@ id_generator = { strategy = "increment", prefix = "ADR-", padding = 3 }
 #: Options are ["increment", "datetime", "uuid"]
 #: Prefix is not mandatory if using the later two options
 filename_template = "{{id}}-{{title|kebab-case}}.md"
-
+#: Define the default write path for notes in this schema. Overides settings in
+#: .cli-rag.toml.
+output_path = [ "docs/RAG/ADR" ]
 #: =============================================================================
 #:                           # --- TEMPLATES --- #
 #: =============================================================================
