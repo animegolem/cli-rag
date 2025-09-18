@@ -1,9 +1,19 @@
 use anyhow::Result;
 use clap::{CommandFactory, Parser};
 
-use cli_rag::cli::{AiCommands, AiNewCommands, AiNewSubmitArgs, Cli, Commands};
+use cli_rag::cli::{
+    AiCommands, AiIndexApplyArgs, AiIndexCommands, AiIndexPlanArgs, AiNewCommands, AiNewSubmitArgs,
+    Cli, Commands,
+};
 use cli_rag::commands::ai_new::{SubmitInput, SubmitRequest};
 use cli_rag::config::load_config;
+
+fn warn_deprecated_alias(subcommand: &str) {
+    eprintln!(
+        "Deprecated: use `cli-rag ai index {}` (alias will be removed in a future release)",
+        subcommand
+    );
+}
 
 fn main() -> Result<()> {
     let cli = Cli::parse();
@@ -154,12 +164,14 @@ fn main() -> Result<()> {
                 args.full_rescan,
             )?;
         }
-        Commands::AiIndexPlan {
-            edges,
-            min_cluster_size,
-            schema,
-            output,
-        } => {
+        Commands::AiIndexPlan(args) => {
+            warn_deprecated_alias("plan");
+            let AiIndexPlanArgs {
+                edges,
+                min_cluster_size,
+                schema,
+                output,
+            } = args;
             let (cfg, cfg_path) = load_config(&cli.config, &cli.base, cli.no_lua)?;
             cli_rag::commands::ai_index_plan::run(
                 &cfg,
@@ -170,12 +182,14 @@ fn main() -> Result<()> {
                 output,
             )?;
         }
-        Commands::AiIndexApply {
-            from,
-            write_cache,
-            write_frontmatter,
-            dry_run,
-        } => {
+        Commands::AiIndexApply(args) => {
+            warn_deprecated_alias("apply");
+            let AiIndexApplyArgs {
+                from,
+                write_cache,
+                write_frontmatter,
+                dry_run,
+            } = args;
             let (cfg, cfg_path) = load_config(&cli.config, &cli.base, cli.no_lua)?;
             cli_rag::commands::ai_index_apply::run(
                 &cfg,
@@ -228,6 +242,42 @@ fn main() -> Result<()> {
                 AiNewCommands::List(args) => {
                     let (cfg, cfg_path) = load_config(&cli.config, &cli.base, cli.no_lua)?;
                     cli_rag::commands::ai_new::list(&cfg, &cfg_path, args.stale_days, &cli.format)?;
+                }
+            },
+            AiCommands::Index { command } => match command {
+                AiIndexCommands::Plan(args) => {
+                    let (cfg, cfg_path) = load_config(&cli.config, &cli.base, cli.no_lua)?;
+                    let AiIndexPlanArgs {
+                        edges,
+                        min_cluster_size,
+                        schema,
+                        output,
+                    } = args;
+                    cli_rag::commands::ai_index_plan::run(
+                        &cfg,
+                        &cfg_path,
+                        edges,
+                        min_cluster_size,
+                        schema,
+                        output,
+                    )?;
+                }
+                AiIndexCommands::Apply(args) => {
+                    let (cfg, cfg_path) = load_config(&cli.config, &cli.base, cli.no_lua)?;
+                    let AiIndexApplyArgs {
+                        from,
+                        write_cache,
+                        write_frontmatter,
+                        dry_run,
+                    } = args;
+                    cli_rag::commands::ai_index_apply::run(
+                        &cfg,
+                        &cfg_path,
+                        from,
+                        write_cache,
+                        write_frontmatter,
+                        dry_run,
+                    )?;
                 }
             },
         },

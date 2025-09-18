@@ -1,5 +1,6 @@
 use assert_cmd::prelude::*;
 use assert_fs::prelude::*;
+use predicates::str::contains;
 use std::process::Command;
 
 #[test]
@@ -43,7 +44,9 @@ fn ai_index_apply_writes_cache_and_reports() {
         .unwrap()
         .arg("--config")
         .arg(cfg.path())
-        .arg("ai-index-plan")
+        .arg("ai")
+        .arg("index")
+        .arg("plan")
         .arg("--min-cluster-size")
         .arg("2")
         .arg("--output")
@@ -56,7 +59,9 @@ fn ai_index_apply_writes_cache_and_reports() {
         .unwrap()
         .arg("--config")
         .arg(cfg.path())
-        .arg("ai-index-apply")
+        .arg("ai")
+        .arg("index")
+        .arg("apply")
         .arg("--from")
         .arg(plan_path.path())
         .arg("--dry-run")
@@ -111,7 +116,9 @@ fn ai_index_apply_writes_frontmatter_tags_and_cache() {
         .unwrap()
         .arg("--config")
         .arg(cfg.path())
-        .arg("ai-index-plan")
+        .arg("ai")
+        .arg("index")
+        .arg("plan")
         .arg("--min-cluster-size")
         .arg("2")
         .arg("--output")
@@ -144,7 +151,9 @@ fn ai_index_apply_writes_frontmatter_tags_and_cache() {
         .unwrap()
         .arg("--config")
         .arg(cfg.path())
-        .arg("ai-index-apply")
+        .arg("ai")
+        .arg("index")
+        .arg("apply")
         .arg("--from")
         .arg(plan_path.path())
         .arg("--write-frontmatter")
@@ -201,7 +210,9 @@ fn ai_index_apply_hash_mismatch_exits_2() {
         .unwrap()
         .arg("--config")
         .arg(cfg.path())
-        .arg("ai-index-plan")
+        .arg("ai")
+        .arg("index")
+        .arg("plan")
         .arg("--min-cluster-size")
         .arg("1")
         .arg("--output")
@@ -219,12 +230,66 @@ fn ai_index_apply_hash_mismatch_exits_2() {
         .unwrap()
         .arg("--config")
         .arg(cfg.path())
-        .arg("ai-index-apply")
+        .arg("ai")
+        .arg("index")
+        .arg("apply")
         .arg("--from")
         .arg(plan_path.path())
         .assert()
         .failure()
         .code(2);
+
+    temp.close().unwrap();
+}
+
+#[test]
+fn ai_index_apply_alias_prints_deprecation() {
+    let temp = assert_fs::TempDir::new().unwrap();
+    let base = temp.child("notes");
+    base.create_dir_all().unwrap();
+    let cfg = temp.child(".cli-rag.toml");
+    cfg.write_str(&format!("bases = [\n  '{}'\n]\n", base.path().display()))
+        .unwrap();
+    base.child("ADR-200.md")
+        .write_str(
+            "---\nid: ADR-200\ntags: []\nstatus: draft\ndepends_on: []\n---\n\n# ADR-200\n\n",
+        )
+        .unwrap();
+
+    Command::cargo_bin("cli-rag")
+        .unwrap()
+        .arg("--config")
+        .arg(cfg.path())
+        .arg("validate")
+        .arg("--format")
+        .arg("json")
+        .assert()
+        .success();
+
+    let plan_path = temp.child("plan_alias.json");
+    Command::cargo_bin("cli-rag")
+        .unwrap()
+        .arg("--config")
+        .arg(cfg.path())
+        .arg("ai-index-plan")
+        .arg("--min-cluster-size")
+        .arg("1")
+        .arg("--output")
+        .arg(plan_path.path())
+        .assert()
+        .success();
+
+    Command::cargo_bin("cli-rag")
+        .unwrap()
+        .arg("--config")
+        .arg(cfg.path())
+        .arg("ai-index-apply")
+        .arg("--from")
+        .arg(plan_path.path())
+        .arg("--dry-run")
+        .assert()
+        .success()
+        .stderr(contains("Deprecated: use `cli-rag ai index apply`"));
 
     temp.close().unwrap();
 }

@@ -6,13 +6,13 @@ tags:
   - ai
   - cli
   - contracts
-kanban_status: planned
+kanban_status: completed
 depends_on:
   - AI-EPIC-003
   - ADR-003d
 confidence_score: 0.82
 created_date: 2025-09-18
-close_date:
+close_date: 2025-09-18
 ---
 
 # AI-IMP-022-ai-subcommand-alignment
@@ -47,16 +47,16 @@ The AI command layout is inconsistent: `ai-index-plan` and `ai-index-apply` live
 Before marking an item complete on the checklist MUST **stop** and **think**. Have you validated all aspects are **implemented** and **tested**? 
 </CRITICAL_RULE> 
 
-- [ ] CLI: add `Ai::Index::{Plan,Apply}` subcommands in `src/cli.rs` with flags mirroring current commands.
-- [ ] CLI: keep `AiIndexPlan/AiIndexApply` top-level variants but tag help as “deprecated; use ai index …”.
-- [ ] Bin wiring: route `Ai::Index::Plan` to `commands::ai_index_plan::run` and `Ai::Index::Apply` to `commands::ai_index_apply::run`.
-- [ ] Deprecation notice: print one-line warning for legacy top-level commands; preserve exit codes and outputs.
-- [ ] Tests: extend integration tests to call `ai index plan|apply` and assert identical JSON (shape + key fields) vs legacy.
-- [ ] Tests: ensure exit codes unchanged for success, dry-run, and hash mismatch cases.
-- [ ] Completions: regenerate to include `ai index` path; verify `--help` tree shows the new hierarchy.
-- [ ] README: update examples and usage to `ai index …`.
-- [ ] CI workflow: switch invocations to the new subcommands (schemas unchanged).
-- [ ] Changelog: note deprecation and new preferred usage.
+- [x] CLI: add `Ai::Index::{Plan,Apply}` subcommands in `src/cli.rs` with flags mirroring current commands.
+- [x] CLI: keep `AiIndexPlan/AiIndexApply` top-level variants but tag help as “deprecated; use ai index …”.
+- [x] Bin wiring: route `Ai::Index::Plan` to `commands::ai_index_plan::run` and `Ai::Index::Apply` to `commands::ai_index_apply::run`.
+- [x] Deprecation notice: print one-line warning for legacy top-level commands; preserve exit codes and outputs.
+- [x] Tests: extend integration tests to call `ai index plan|apply` and assert identical JSON (shape + key fields) vs legacy.
+- [x] Tests: ensure exit codes unchanged for success, dry-run, and hash mismatch cases.
+- [x] Completions: regenerate to include `ai index` path; verify `--help` tree shows the new hierarchy.
+- [x] README: update examples and usage to `ai index …`.
+- [x] CI workflow: switch invocations to the new subcommands (schemas unchanged).
+- [x] Changelog: note deprecation and new preferred usage.
 
 ### Acceptance Criteria
 **Scenario:** Using the unified AI namespace for index operations
@@ -79,4 +79,3 @@ AND shell completions include `ai index plan` and `ai index apply` subpaths.
 
 ### Issues Encountered 
 {LOC|20}
-

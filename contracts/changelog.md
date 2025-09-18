@@ -1,5 +1,16 @@
 # Contracts Change Log
 
+## 2025-09-18: Unified `ai index` namespace and deprecated aliases
+
+### Reason for change
+- Align CLI surfaces with ADR-003d and reduce confusion between top-level `ai-index-*` commands and the `ai` namespace.
+
+### Overview of change
+- CLI: expose `cli-rag ai index plan|apply` as the preferred entrypoints.
+- CLI: retain `ai-index-plan` / `ai-index-apply` as aliases that emit a deprecation warning for one release window.
+- Docs: update README and examples to reference the unified namespace.
+- Completions/help refreshed to match the new hierarchy.
+
 ## 2025-09-12: Add protocolVersion to graph/path
 
 ### Reason for change

@@ -459,7 +459,7 @@ jobs:
           PLAN="$WORKDIR/plan.json"
           # Ensure unified index exists
           ./target/release/cli-rag --config "$CFG" validate --format json >/dev/null
-          ./target/release/cli-rag --config "$CFG" ai-index-plan --min-cluster-size 1 --output "$PLAN"
+          ./target/release/cli-rag --config "$CFG" ai index plan --min-cluster-size 1 --output "$PLAN"
           SCHEMA="contracts/v1/cli/ai_index_plan.schema.json"
           python - "$SCHEMA" "$PLAN" <<'PY'
           import sys, json
@@ -480,7 +480,7 @@ jobs:
           WORKDIR="${{ steps.fx.outputs.workdir }}"
           CFG="$WORKDIR/.cli-rag.toml"
           PLAN="$WORKDIR/plan.json"
-          OUT=$(./target/release/cli-rag --config "$CFG" ai-index-apply --from "$PLAN" --dry-run)
+          OUT=$(./target/release/cli-rag --config "$CFG" ai index apply --from "$PLAN" --dry-run)
           SCHEMA="contracts/v1/cli/ai_index_apply_report.schema.json"
           python - "$SCHEMA" "$OUT" <<'PY'
           import sys, json
@@ -525,7 +525,7 @@ jobs:
           # Build index and plan
           ./target/release/cli-rag --config "$CFG" validate --format json >/dev/null
           PLAN="$WORKDIR/plan_apply.json"
-          ./target/release/cli-rag --config "$CFG" ai-index-plan --min-cluster-size 2 --output "$PLAN"
+          ./target/release/cli-rag --config "$CFG" ai index plan --min-cluster-size 2 --output "$PLAN"
           # Inject a label and remove tags on first cluster to trigger derivation
           python - "$PLAN" <<'PY'
           import json,sys
@@ -539,7 +539,7 @@ jobs:
           PY
           # Apply with frontmatter writes; capture JSON report to file
           REPORT="$WORKDIR/apply_report.json"
-          ./target/release/cli-rag --config "$CFG" ai-index-apply --from "$PLAN" --write-frontmatter > "$REPORT"
+          ./target/release/cli-rag --config "$CFG" ai index apply --from "$PLAN" --write-frontmatter > "$REPORT"
           SCHEMA="contracts/v1/cli/ai_index_apply_report.schema.json"
           python - "$SCHEMA" "$REPORT" <<'PY'
           import sys, json

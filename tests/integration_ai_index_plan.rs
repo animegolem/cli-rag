@@ -1,5 +1,6 @@
 use assert_cmd::prelude::*;
 use assert_fs::prelude::*;
+use predicates::str::contains;
 use std::process::Command;
 
 #[test]
@@ -47,13 +48,15 @@ fn ai_index_plan_writes_schema_compliant_shape() {
         .assert()
         .success();
 
-    // Run ai index plan
+    // Run ai index plan via new subcommand path
     let out_path = temp.child("plan.json");
     Command::cargo_bin("cli-rag")
         .unwrap()
         .arg("--config")
         .arg(cfg.path())
-        .arg("ai-index-plan")
+        .arg("ai")
+        .arg("index")
+        .arg("plan")
         .arg("--min-cluster-size")
         .arg("2")
         .arg("--output")
@@ -87,5 +90,49 @@ fn ai_index_plan_writes_schema_compliant_shape() {
     sorted.sort();
     assert_eq!(sorted, original);
 
+    temp.close().unwrap();
+}
+
+#[test]
+fn ai_index_plan_alias_prints_deprecation() {
+    let temp = assert_fs::TempDir::new().unwrap();
+    let base = temp.child("notes");
+    base.create_dir_all().unwrap();
+
+    let cfg = temp.child(".cli-rag.toml");
+    cfg.write_str(&format!("bases = [\n  '{}'\n]\n", base.path().display()))
+        .unwrap();
+
+    base.child("ADR-100.md")
+        .write_str(
+            "---\nid: ADR-100\ntags: []\nstatus: draft\ndepends_on: []\n---\n\n# ADR-100\n\n",
+        )
+        .unwrap();
+
+    Command::cargo_bin("cli-rag")
+        .unwrap()
+        .arg("--config")
+        .arg(cfg.path())
+        .arg("validate")
+        .arg("--format")
+        .arg("json")
+        .assert()
+        .success();
+
+    let plan_path = temp.child("plan_alias.json");
+    Command::cargo_bin("cli-rag")
+        .unwrap()
+        .arg("--config")
+        .arg(cfg.path())
+        .arg("ai-index-plan")
+        .arg("--min-cluster-size")
+        .arg("1")
+        .arg("--output")
+        .arg(plan_path.path())
+        .assert()
+        .success()
+        .stderr(contains("Deprecated: use `cli-rag ai index plan`"));
+
+    assert!(plan_path.path().exists());
     temp.close().unwrap();
 }
