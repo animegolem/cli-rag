@@ -75,6 +75,9 @@ pub fn run(
             "No bases configured; please run `cli-rag init` first"
         ));
     }
+    if std::env::var_os("CLI_RAG_SILENCE_DEPRECATIONS").is_none() {
+        eprintln!("Deprecated: use `cli-rag ai new` (alias will be removed in a future release)");
+    }
     let cfg_dir = cfg_path.as_ref().and_then(|p| p.parent());
     let resolved_bases: Vec<PathBuf> = cfg
         .bases

@@ -24,6 +24,16 @@
 - Templates: repository schemas now set `output_path` and use basename-only filename templates.
 - README/config samples updated to document the new keys and precedence.
 
+## 2025-09-19: Deprecate legacy `new` command
+
+### Reason for change
+- Reduce duplication by steering authors to the AI draft workflow.
+
+### Overview of change
+- CLI: `cli-rag new` now prints a deprecation warning pointing to `cli-rag ai new …`; honors `CLI_RAG_SILENCE_DEPRECATIONS=1` as an escape hatch.
+- Docs/tests: README and integration coverage updated to highlight AI-first authoring.
+- Removal target: TBD in a future release once migration completes.
+
 ## 2025-09-18: Unified `ai index` namespace and deprecated aliases
 
 ### Reason for change

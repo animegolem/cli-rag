@@ -35,7 +35,7 @@ fn new_creates_note_from_template() {
         .success();
 
     // Create note
-    Command::cargo_bin("cli-rag")
+    let cmd = Command::cargo_bin("cli-rag")
         .unwrap()
         .current_dir(temp.path())
         .arg("new")
@@ -44,7 +44,12 @@ fn new_creates_note_from_template() {
         .arg("--title")
         .arg("Hello World")
         .assert()
-        .success();
+        .success()
+        .get_output()
+        .stderr
+        .clone();
+    let stderr = String::from_utf8(cmd).unwrap();
+    assert!(stderr.contains("Deprecated: use `cli-rag ai new`"));
 
     // Verify file exists and content replaced
     let f = base.child("ADR-001.md");
@@ -105,6 +110,29 @@ fn new_twice_increments_id() {
 
     base.child("ADR-001.md").assert(predicates::path::exists());
     base.child("ADR-002.md").assert(predicates::path::exists());
+    temp.close().unwrap();
+}
+
+#[test]
+fn new_warning_can_be_silenced() {
+    let temp = assert_fs::TempDir::new().unwrap();
+    let base = temp.child("notes");
+    base.create_dir_all().unwrap();
+    let _cfg = write_base_cfg(&temp, "notes");
+
+    Command::cargo_bin("cli-rag")
+        .unwrap()
+        .current_dir(temp.path())
+        .env("CLI_RAG_SILENCE_DEPRECATIONS", "1")
+        .arg("new")
+        .arg("--schema")
+        .arg("ADR")
+        .arg("--title")
+        .arg("Silent")
+        .assert()
+        .success()
+        .stderr(predicates::str::is_empty());
+
     temp.close().unwrap();
 }
 
