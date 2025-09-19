@@ -20,19 +20,18 @@
 
 ### Overview of change
 - config schema: new `[config.authoring.destinations]` mapping and per-schema `output_path` (string or array) override.
-- CLI: `new` resolves destinations with precedence `--dest-base` > schema `output_path` > authoring destinations > first base; rejects paths outside configured bases (exit 4).
+- AI authoring (`ai new start/submit`): resolves destinations with precedence schema `output_path` > authoring destinations > first base; rejects paths outside configured bases (exit 4).
 - Templates: repository schemas now set `output_path` and use basename-only filename templates.
 - README/config samples updated to document the new keys and precedence.
 
-## 2025-09-19: Deprecate legacy `new` command
+## 2025-09-19: Remove legacy `new` command
 
 ### Reason for change
-- Reduce duplication by steering authors to the AI draft workflow.
+- Eliminate the duplicated authoring surface now that AI-first flows cover note creation.
 
 ### Overview of change
-- CLI: `cli-rag new` now prints a deprecation warning pointing to `cli-rag ai new …`; honors `CLI_RAG_SILENCE_DEPRECATIONS=1` as an escape hatch.
-- Docs/tests: README and integration coverage updated to highlight AI-first authoring.
-- Removal target: TBD in a future release once migration completes.
+- CLI: `cli-rag new` subcommand removed; authors must use `cli-rag ai new start|submit|cancel|list`.
+- Docs/tests: README and integration coverage updated to reference AI-first authoring; legacy env toggles removed.
 
 ## 2025-09-18: Unified `ai index` namespace and deprecated aliases
 

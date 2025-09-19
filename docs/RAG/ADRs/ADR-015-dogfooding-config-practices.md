@@ -16,7 +16,7 @@ related_files:
 The repository previously relied on `.adr-rag.toml`, which no longer reflects the contracts-first loader. Without an updated config we could not safely dogfood new surfaces or rely on CI to enforce schema rules.
 
 ## Decision
-Adopt `.cli-rag.toml` with the nested `[config.scan|authoring|graph|templates]` structure, import dedicated ADR/IMP/EPIC schemas, and require that future notes are authored through `cli-rag new` so that contract-aligned templates stay authoritative.
+Adopt `.cli-rag.toml` with the nested `[config.scan|authoring|graph|templates]` structure, import dedicated ADR/IMP/EPIC schemas, and require that future notes are authored through `cli-rag ai new` so that contract-aligned templates stay authoritative.
 
 ## Consequences
 - Dogfooding exercises the same config that CI validates, reducing drift between the repo and the contracts job.

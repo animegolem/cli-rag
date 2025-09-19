@@ -17,7 +17,7 @@ close_date: 2025-09-16
 # AI-IMP-015-new-id-generator-and-filename-template
 
 ## Summary of Issue #1
-Implement `new` authoring features required by contracts/templates: id generation strategies (increment, datetime, uuid) and `filename_template` interpolation with common filters. Outcome: `cli-rag new --schema ADR --title X` emits deterministic filenames and IDs per schema config.
+Implement authoring features required by contracts/templates: id generation strategies (increment, datetime, uuid) and `filename_template` interpolation with common filters. Outcome: `cli-rag ai new start --schema ADR --title X --format json` reserves deterministic filenames and IDs per schema config.
 
 ### Out of Scope
 - Advanced template prompts and rich body rendering (keep minimal).

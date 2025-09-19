@@ -18,17 +18,17 @@ We need to anchor the repository on the contracts-aligned config so that ongoing
 
 ## Proposed Solution(s)
 - Maintain the nested `.cli-rag.toml` and template imports under version control.
-- Encourage contributors to rely on `cli-rag new` with the managed schemas for ADR/IMP/EPIC notes.
+- Encourage contributors to rely on `cli-rag ai new` with the managed schemas for ADR/IMP/EPIC notes.
 - Track progress through AI-IMP-021 and follow-up implementation tasks.
 
 ## Success Metrics
-- All new docs are created via `cli-rag new`.
+- All new docs are created via `cli-rag ai new`.
 - `validate --format json` is clean on every branch.
 - CI continues to gate the dogfooding flows.
 
 ## Requirements
 - Migrate config/templates into the repo (`AI-IMP-020`).
-- Create initial ADR/IMP/EPIC notes via `cli-rag new`.
+- Create initial ADR/IMP/EPIC notes via `cli-rag ai new`.
 - Update Bridge Plan and README to document the dogfooding milestone.
 
 {{LOC|100}}

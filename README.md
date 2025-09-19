@@ -29,7 +29,8 @@ The `contracts` job in `.github/workflows/ci.yml` now spins up a nested user con
 Preview a schema's scaffold without writing a file:
 
 ```
-cli-rag new --schema ADR --title "Template Parity" --print-body
+cli-rag ai new start --schema ADR --title "Template Parity" --format json \
+  | jq -r '.noteTemplate'
 ```
 
 ### ai index plan

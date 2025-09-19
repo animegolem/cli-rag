@@ -8,7 +8,6 @@ pub mod graph;
 pub mod info;
 pub mod init;
 pub mod lua_integration;
-pub mod new;
 pub mod new_helpers;
 pub mod output;
 pub mod path;

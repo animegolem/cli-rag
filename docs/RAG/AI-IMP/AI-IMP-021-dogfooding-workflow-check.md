@@ -17,11 +17,11 @@ status: in-progress
 # AI-IMP-021: Dogfooding Workflow Check
 
 ## Summary
-Ensure the repository actively uses the nested `.cli-rag.toml`, schema imports, and `cli-rag new` flows so that our dogfooding efforts mirror the CI contracts.
+Ensure the repository actively uses the nested `.cli-rag.toml`, schema imports, and `cli-rag ai new` flows so that our dogfooding efforts mirror the CI contracts.
 
 ## Acceptance Criteria
 - `.cli-rag.toml` migrated to the nested structure and tracked in git.
-- ADR/IMP/EPIC templates live under `.cli-rag/templates/` and are exercised via `cli-rag new`.
+- ADR/IMP/EPIC templates live under `.cli-rag/templates/` and are exercised via `cli-rag ai new`.
 - `cli-rag validate --format json` runs clean after creating the seed notes.
 
 ## Notes

@@ -1,6 +1,8 @@
+use anyhow::{anyhow, Result};
 use chrono::Local;
 use heck::{ToKebabCase, ToLowerCamelCase, ToShoutySnakeCase, ToSnakeCase, ToUpperCamelCase};
 use regex::Regex;
+use std::path::{Component, Path, PathBuf};
 use uuid::Uuid;
 
 use crate::config::Config;
@@ -141,4 +143,92 @@ pub fn render_filename_template(tpl: &str, id: &str, title: &str, schema: &str) 
         f.push_str(".md");
     }
     f
+}
+
+fn normalize_path<P: AsRef<Path>>(path: P) -> PathBuf {
+    let mut out = PathBuf::new();
+    for comp in path.as_ref().components() {
+        match comp {
+            Component::Prefix(prefix) => out.push(prefix.as_os_str()),
+            Component::RootDir => out.push(comp.as_os_str()),
+            Component::CurDir => {}
+            Component::ParentDir => {
+                out.pop();
+            }
+            Component::Normal(part) => out.push(part),
+        }
+    }
+    out
+}
+
+fn resolve_config_path<P: AsRef<Path>>(path: P, cfg_dir: Option<&Path>) -> PathBuf {
+    let p = path.as_ref();
+    if p.is_absolute() {
+        return normalize_path(p);
+    }
+    if let Some(dir) = cfg_dir {
+        return normalize_path(dir.join(p));
+    }
+    if let Ok(cwd) = std::env::current_dir() {
+        return normalize_path(cwd.join(p));
+    }
+    normalize_path(p)
+}
+
+fn path_within(candidate: &Path, base: &Path) -> bool {
+    candidate == base || candidate.starts_with(base)
+}
+
+pub fn resolve_destination_dir(
+    cfg: &Config,
+    cfg_path: &Option<PathBuf>,
+    schema: &str,
+    dest_override: Option<&Path>,
+) -> Result<PathBuf> {
+    if cfg.bases.is_empty() {
+        return Err(anyhow!(
+            "No bases configured; please run `cli-rag init` first"
+        ));
+    }
+    let cfg_dir = cfg_path.as_ref().and_then(|p| p.parent());
+    let resolved_bases: Vec<PathBuf> = cfg
+        .bases
+        .iter()
+        .map(|b| resolve_config_path(b, cfg_dir))
+        .collect();
+    let candidate = if let Some(dest) = dest_override {
+        resolve_config_path(dest, cfg_dir)
+    } else {
+        let schema_output = cfg
+            .schema
+            .iter()
+            .find(|s| s.name == schema)
+            .and_then(|s| s.new.as_ref())
+            .and_then(|n| n.output_path.as_ref())
+            .and_then(|paths| paths.first().cloned());
+        let mut destination =
+            schema_output.or_else(|| cfg.authoring.destinations.get(schema).cloned());
+        if destination.is_none() {
+            destination = cfg.authoring.output_path.clone();
+        }
+        if let Some(dest_str) = destination {
+            resolve_config_path(Path::new(&dest_str), cfg_dir)
+        } else {
+            resolved_bases
+                .first()
+                .cloned()
+                .expect("config bases should be non-empty")
+        }
+    };
+
+    let inside_any = resolved_bases
+        .iter()
+        .any(|base| path_within(&candidate, base));
+    if !inside_any {
+        return Err(anyhow!(
+            "E410: destination '{}' resolves outside configured bases",
+            candidate.display()
+        ));
+    }
+    Ok(candidate)
 }

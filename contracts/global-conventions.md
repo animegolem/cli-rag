@@ -48,7 +48,7 @@
 - Variables: {{id}}, {{title}}, {{schema.name}}, {{now | date:"%Y-%m-%d"}}
 - Directives: ((frontmatter)) injects generated/system/user frontmatter. {{LOC|N}} caps lines per heading.
 - filename_template uses same variable filters (| kebab-case, | snake_case, etc.).
-- Destinations: `[config.authoring.destinations]` maps schema names to relative output directories; `[schema.new] output_path` (string or array) overrides per-schema and should contain paths within the configured bases. CLI flag `--dest-base` remains the highest-precedence override.
+- Destinations: `[config.authoring.destinations]` maps schema names to relative output directories; `[schema.new] output_path` (string or array) overrides per-schema and should contain paths within the configured bases.
 - Headings policy labels: exact | missing_only | ignore.
 
 ### Validation semantics

@@ -2,7 +2,8 @@ use anyhow::{anyhow, Context, Result};
 use std::fs;
 use std::path::PathBuf;
 
-use crate::commands::new_helpers::{generate_initial_id, render_template};
+use crate::commands::lua_integration::lua_new_hooks;
+use crate::commands::new_helpers::{generate_initial_id, render_template, resolve_destination_dir};
 use crate::commands::output::print_json;
 use crate::config::Config;
 use crate::discovery::docs_with_source;
@@ -27,13 +28,13 @@ pub fn start(
     if cfg.bases.is_empty() {
         return Err(anyhow!("No bases configured; run `cli-rag init` first"));
     }
-    let base = cfg.bases[0].clone();
     let project_root = resolve_project_root(cfg_path)?;
     let drafts_dir = project_root.join(".cli-rag/drafts");
     fs::create_dir_all(&drafts_dir).ok();
+    let destination_dir = resolve_destination_dir(cfg, cfg_path, &schema, None)?;
 
     let (docs, _used_unified) = docs_with_source(cfg, cfg_path)?;
-    let id = if let Some(explicit) = id_override {
+    let mut id = if let Some(explicit) = id_override {
         explicit
     } else {
         generate_initial_id(cfg, &schema, &docs)
@@ -46,8 +47,34 @@ pub fn start(
         title = id.clone();
     }
 
+    let (lua_id_override, fm_overrides) = lua_new_hooks(cfg, cfg_path, &schema, &title, &docs);
+    if let Some(newid) = lua_id_override {
+        id = newid;
+    }
+
     let template_raw = load_schema_template(cfg_path, &schema)?;
-    let note_template = render_template(template_raw.clone(), &id, &title);
+    let mut note_template = render_template(template_raw.clone(), &id, &title);
+    if let Some(fm_map) = fm_overrides {
+        if note_template.starts_with("---\n") {
+            if let Some(end) = note_template.find("\n---\n") {
+                let fm_content = &note_template[4..end];
+                let rest = &note_template[end + 5..];
+                if let Ok(val) = serde_yaml::from_str::<serde_yaml::Value>(fm_content) {
+                    use serde_yaml::{Mapping, Value};
+                    let mut map = match val {
+                        Value::Mapping(m) => m,
+                        _ => Mapping::new(),
+                    };
+                    for (k, v) in fm_map {
+                        map.insert(Value::String(k), v);
+                    }
+                    let yaml = serde_yaml::to_string(&Value::Mapping(map)).unwrap_or_default();
+                    let front = format!("---\n{}---\n", yaml);
+                    note_template = format!("{}{}", front, rest);
+                }
+            }
+        }
+    }
     let seed_frontmatter = extract_frontmatter_json(&note_template)?;
     let constraints = build_constraints(&template_raw, &seed_frontmatter);
     let instructions = format!(
@@ -63,7 +90,7 @@ pub fn start(
         id: id.clone(),
         title: title.clone(),
         filename: filename.clone(),
-        base: path_to_string(&base),
+        base: path_to_string(&destination_dir),
         created_at: chrono::Utc::now().timestamp(),
         ttl_seconds: DEFAULT_TTL_SECONDS,
         note_template: note_template.clone(),

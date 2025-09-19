@@ -114,30 +114,6 @@ fn main() -> Result<()> {
                 include_bidirectional,
             )?;
         }
-        Commands::New {
-            schema,
-            title,
-            filename_template,
-            dest_base,
-            normalize_title,
-            print_body,
-            dry_run,
-            edit,
-        } => {
-            let (cfg, cfg_path) = load_config(&cli.config, &cli.base, cli.no_lua)?;
-            cli_rag::commands::new::run(
-                &cfg,
-                &cfg_path,
-                schema,
-                title,
-                filename_template,
-                dest_base,
-                normalize_title,
-                print_body,
-                dry_run,
-                edit,
-            )?;
-        }
         Commands::Watch {
             full_rescan,
             debounce_ms,

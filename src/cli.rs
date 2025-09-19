@@ -109,33 +109,6 @@ pub enum Commands {
         #[arg(long, default_value_t = 5)]
         max_depth: usize,
     },
-    /// Create a new note from a schema template
-    New {
-        /// Schema name to use (e.g., ADR, IMP)
-        #[arg(long)]
-        schema: String,
-        /// Optional title for the note (used in template)
-        #[arg(long)]
-        title: Option<String>,
-        /// Optional filename template, e.g. "{{id}}-{{title}}.md"
-        #[arg(long, value_name = "TEMPLATE")]
-        filename_template: Option<String>,
-        /// Destination base directory to write the note (must match a configured base)
-        #[arg(long, value_name = "PATH")]
-        dest_base: Option<std::path::PathBuf>,
-        /// Normalize title to Title Case before rendering
-        #[arg(long, default_value_t = false)]
-        normalize_title: bool,
-        /// Print rendered body only; do not write a file
-        #[arg(long, default_value_t = false)]
-        print_body: bool,
-        /// Do not write; print what would be done
-        #[arg(long, default_value_t = false)]
-        dry_run: bool,
-        /// Open the created file in EDITOR/visual
-        #[arg(long, default_value_t = false)]
-        edit: bool,
-    },
     /// Export a dependency graph (mermaid|dot|json)
     Graph {
         #[arg(long)]

@@ -195,3 +195,231 @@ fn ai_new_cancel_and_list() {
 
     temp.close().unwrap();
 }
+
+#[test]
+fn ai_new_destination_mapping_routes_notes() {
+    let temp = assert_fs::TempDir::new().unwrap();
+    let notes = temp.child("notes");
+    notes.create_dir_all().unwrap();
+    let cfg_path = temp.child(".cli-rag.toml");
+    cfg_path
+        .write_str(
+            r#"bases = ["notes"]
+
+[authoring.destinations]
+ADR = "notes/adr"
+
+[[schema]]
+name = "ADR"
+file_patterns = ["ADR-*.md"]
+
+[schema.new]
+filename_template = "{{id}}.md"
+"#,
+        )
+        .unwrap();
+
+    let start_out = Command::cargo_bin("cli-rag")
+        .unwrap()
+        .current_dir(temp.path())
+        .args([
+            "--config",
+            cfg_path.path().to_str().unwrap(),
+            "ai",
+            "new",
+            "start",
+            "--schema",
+            "ADR",
+            "--title",
+            "Destination Mapping",
+            "--format",
+            "json",
+        ])
+        .assert()
+        .success()
+        .get_output()
+        .stdout
+        .clone();
+    let start_json: Value = serde_json::from_slice(&start_out).unwrap();
+    let draft_id = start_json["draftId"].as_str().unwrap();
+    let filename = start_json["filename"].as_str().unwrap();
+
+    // submit using same payload strategy as base test
+    let mut sections = JsonMap::new();
+    if let Some(headings) = start_json["constraints"]["headings"].as_array() {
+        for h in headings {
+            let name = h["name"].as_str().unwrap();
+            sections.insert(name.to_string(), Value::String("Body".into()));
+        }
+    }
+    let mut payload_obj = JsonMap::new();
+    payload_obj.insert("frontmatter".into(), Value::Object(JsonMap::new()));
+    payload_obj.insert("sections".into(), Value::Object(sections));
+    let payload = Value::Object(payload_obj);
+
+    let mut submit = Command::cargo_bin("cli-rag")
+        .unwrap()
+        .current_dir(temp.path())
+        .args([
+            "--config",
+            cfg_path.path().to_str().unwrap(),
+            "ai",
+            "new",
+            "submit",
+            "--draft",
+            draft_id,
+            "--stdin",
+        ])
+        .stdin(std::process::Stdio::piped())
+        .stdout(std::process::Stdio::piped())
+        .stderr(std::process::Stdio::piped())
+        .spawn()
+        .unwrap();
+    if let Some(mut stdin) = submit.stdin.take() {
+        serde_json::to_writer(&mut stdin, &payload).unwrap();
+        stdin.write_all(b"\n").unwrap();
+    }
+    let output = submit.wait_with_output().unwrap();
+    assert!(output.status.success());
+
+    notes
+        .child(format!("adr/{}", filename))
+        .assert(predicate::path::exists());
+    temp.close().unwrap();
+}
+
+#[test]
+fn ai_new_schema_output_path_overrides_global() {
+    let temp = assert_fs::TempDir::new().unwrap();
+    let notes = temp.child("notes");
+    notes.create_dir_all().unwrap();
+    let cfg_path = temp.child(".cli-rag.toml");
+    cfg_path
+        .write_str(
+            r#"bases = ["notes"]
+
+[authoring.destinations]
+ADR = "notes/adr"
+
+[[schema]]
+name = "ADR"
+file_patterns = ["ADR-*.md"]
+
+[schema.new]
+filename_template = "{{id}}.md"
+output_path = ["notes/custom"]
+"#,
+        )
+        .unwrap();
+
+    let start_out = Command::cargo_bin("cli-rag")
+        .unwrap()
+        .current_dir(temp.path())
+        .args([
+            "--config",
+            cfg_path.path().to_str().unwrap(),
+            "ai",
+            "new",
+            "start",
+            "--schema",
+            "ADR",
+            "--title",
+            "Schema Override",
+            "--format",
+            "json",
+        ])
+        .assert()
+        .success()
+        .get_output()
+        .stdout
+        .clone();
+    let start_json: Value = serde_json::from_slice(&start_out).unwrap();
+    let draft_id = start_json["draftId"].as_str().unwrap();
+    let filename = start_json["filename"].as_str().unwrap();
+
+    let mut sections = JsonMap::new();
+    if let Some(headings) = start_json["constraints"]["headings"].as_array() {
+        for h in headings {
+            let name = h["name"].as_str().unwrap();
+            sections.insert(name.to_string(), Value::String("Body".into()));
+        }
+    }
+    let mut payload_obj = JsonMap::new();
+    payload_obj.insert("frontmatter".into(), Value::Object(JsonMap::new()));
+    payload_obj.insert("sections".into(), Value::Object(sections));
+    let payload = Value::Object(payload_obj);
+
+    let mut submit = Command::cargo_bin("cli-rag")
+        .unwrap()
+        .current_dir(temp.path())
+        .args([
+            "--config",
+            cfg_path.path().to_str().unwrap(),
+            "ai",
+            "new",
+            "submit",
+            "--draft",
+            draft_id,
+            "--stdin",
+        ])
+        .stdin(std::process::Stdio::piped())
+        .stdout(std::process::Stdio::piped())
+        .stderr(std::process::Stdio::piped())
+        .spawn()
+        .unwrap();
+    if let Some(mut stdin) = submit.stdin.take() {
+        serde_json::to_writer(&mut stdin, &payload).unwrap();
+        stdin.write_all(b"\n").unwrap();
+    }
+    let output = submit.wait_with_output().unwrap();
+    assert!(output.status.success());
+
+    notes
+        .child(format!("custom/{}", filename))
+        .assert(predicate::path::exists());
+    temp.close().unwrap();
+}
+
+#[test]
+fn ai_new_rejects_destination_outside_base() {
+    let temp = assert_fs::TempDir::new().unwrap();
+    let notes = temp.child("notes");
+    notes.create_dir_all().unwrap();
+    let cfg_path = temp.child(".cli-rag.toml");
+    cfg_path
+        .write_str(
+            r#"bases = ["notes"]
+
+[[schema]]
+name = "ADR"
+file_patterns = ["ADR-*.md"]
+
+[schema.new]
+output_path = ["../escape"]
+"#,
+        )
+        .unwrap();
+
+    Command::cargo_bin("cli-rag")
+        .unwrap()
+        .current_dir(temp.path())
+        .args([
+            "--config",
+            cfg_path.path().to_str().unwrap(),
+            "ai",
+            "new",
+            "start",
+            "--schema",
+            "ADR",
+            "--title",
+            "Escape Hatch",
+            "--format",
+            "json",
+        ])
+        .assert()
+        .failure()
+        .stderr(predicates::str::contains("outside configured bases"));
+
+    notes.assert(predicate::path::is_dir());
+    temp.close().unwrap();
+}
