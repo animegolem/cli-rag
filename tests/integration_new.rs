@@ -1,6 +1,9 @@
 use assert_cmd::prelude::*;
 use assert_fs::prelude::*;
+use std::path::PathBuf;
 use std::process::Command;
+
+const ADR_TEMPLATE_FALLBACK: &str = include_str!("fixtures/templates/ADR.md");
 
 fn write_base_cfg(dir: &assert_fs::TempDir, base_rel: &str) -> assert_fs::fixture::ChildPath {
     let cfg = dir.child(".cli-rag.toml");
@@ -114,12 +117,21 @@ fn new_print_body_prints() {
 
     let tmpl_dir = temp.child(".cli-rag/templates");
     tmpl_dir.create_dir_all().unwrap();
+    let manifest_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+    let repo_template = manifest_dir.join(".cli-rag/templates/ADR.md");
+    let template_contents = match std::fs::read_to_string(&repo_template) {
+        Ok(contents) => {
+            assert_eq!(
+                contents, ADR_TEMPLATE_FALLBACK,
+                "ADR template drifted; update tests/fixtures/templates/ADR.md"
+            );
+            contents
+        }
+        Err(_) => ADR_TEMPLATE_FALLBACK.to_string(),
+    };
     tmpl_dir
         .child("ADR.md")
-        .write_str(include_str!(concat!(
-            env!("CARGO_MANIFEST_DIR"),
-            "/.cli-rag/templates/ADR.md"
-        )))
+        .write_str(&template_contents)
         .unwrap();
 
     let out = Command::cargo_bin("cli-rag")
