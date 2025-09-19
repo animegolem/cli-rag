@@ -150,6 +150,7 @@ pub fn run(
                 }));
             }
             let obj = serde_json::json!({
+                "protocolVersion": crate::protocol::PROTOCOL_VERSION,
                 "ok": report.ok,
                 "docCount": docs.len(),
                 "diagnostics": diagnostics,

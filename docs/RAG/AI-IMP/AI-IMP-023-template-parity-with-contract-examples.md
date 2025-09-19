@@ -17,12 +17,12 @@ close_date:
 # AI-IMP-023-template-parity-with-contract-examples
 
 ## Summary of Issue #1
-Our Markdown templates (`.cli-rag/templates/{ADR,IMP,EPIC}.md`) are minimal and lack the contract-aligned prompting and guidance shown in `contracts/v1/config/user_config/templates/ADR.toml` (hidden comments, section scaffolds, and `((frontmatter))`). Scope: bring the repo templates to parity with the contract examples so that `cli-rag new` yields high-quality, structured drafts without manual boilerplate. Done when `cli-rag new --schema ADR --print-body` shows the contract guidance blocks and all generated notes validate with no new errors. {LOC|20}
+Our Markdown templates (`.cli-rag/templates/{ADR,IMP,EPIC}.md`) are minimal and lack the contract-aligned prompting and guidance shown in `contracts/v1/config/user_config/templates/ADR.toml` (hidden comments, section scaffolds, and `((frontmatter))`). Scope: bring the repo templates to parity with the contract examples so that `cli-rag new` yields high-quality, structured drafts without manual boilerplate. Done when `cli-rag new --schema ADR --print-body` shows the contract guidance blocks and all generated notes validate with no new errors.
 
 ### Out of Scope 
 - Changes to JSON outputs, exit codes, or retrieval behavior.
 - New Lua hooks or prompt orchestration (we keep current hook surface).
-- File placement logic (handled in AI-IMP-024). {LOC|10}
+- File placement logic (handled in AI-IMP-024).
 
 ### Design/Approach  
 - Source of truth: mirror the “template” content and guidance patterns from the contract example into our Markdown files, preserving:
@@ -31,7 +31,7 @@ Our Markdown templates (`.cli-rag/templates/{ADR,IMP,EPIC}.md`) are minimal and 
   - Standard variables `{{id}}`, `{{title}}`, dates via `{{date}}` (supported by the renderer).
 - Keep template tone concise and professional; align headings with ADR-003d examples in docs/RAG/templates.
 - Add a short README note documenting how TOML schema links to Markdown bodies in this repo (TOML defines id/filename/frontmatter rules; Markdown defines the authored content).
-- Optional: add a `--print-body` example to README to show expected output for onboarding. {LOC|25}
+- Optional: add a `--print-body` example to README to show expected output for onboarding. 
 
 ### Files to Touch
 - `.cli-rag/templates/ADR.md`: replace body with contract-parity scaffold (hidden guidance, sections, ((frontmatter)), LOC caps).

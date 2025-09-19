@@ -3,8 +3,9 @@
   "$id": "contracts/cli/v1/validate_result.schema.json",
   "title": "validate result v1",
   "type": "object",
-  "required": ["ok", "docCount", "diagnostics"],
+  "required": ["protocolVersion", "ok", "docCount", "diagnostics"],
   "properties": {
+    "protocolVersion": { "type": "integer", "minimum": 1 },
     "ok": { "type": "boolean" },
     "docCount": { "type": "integer", "minimum": 0 },
     "diagnostics": {
@@ -16,7 +17,7 @@
           "severity": { "type": "string", "enum": ["error", "warning", "info"] },
           "code": { "type": "string" },
           "msg": { "type": "string" },
-          "path": { "type": "string" },
+          "path": { "type": ["string", "null"] },
           "span": {
             "type": "array",
             "items": { "type": "integer", "minimum": 0 },

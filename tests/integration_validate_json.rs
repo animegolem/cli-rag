@@ -1,5 +1,6 @@
 use assert_cmd::prelude::*;
 use assert_fs::prelude::*;
+use cli_rag::protocol::PROTOCOL_VERSION;
 use std::process::Command;
 
 #[test]
@@ -28,6 +29,10 @@ fn validate_json_shape_and_writes_groups() {
         .clone();
 
     let v: serde_json::Value = serde_json::from_slice(&out).unwrap();
+    assert_eq!(
+        v["protocolVersion"].as_u64().unwrap(),
+        PROTOCOL_VERSION as u64
+    );
     assert!(v["ok"].as_bool().unwrap());
     assert_eq!(v["docCount"].as_u64().unwrap(), 0);
     assert!(v["diagnostics"].as_array().unwrap().is_empty());

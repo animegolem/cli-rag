@@ -1,5 +1,18 @@
 # Contracts Change Log
 
+## 2025-09-19: Validate JSON envelope parity and info schema cleanup
+
+### Reason for change
+- Align `validate --format json` with global conventions by emitting `protocolVersion`.
+- Ensure diagnostics tolerate `null` paths when a file cannot be located.
+- Remove duplicate property definitions in `info` schema to avoid drift.
+
+### Overview of change
+- cli/validate_result.schema.json: require top-level `protocolVersion` (integer ≥1) and allow diagnostic `path` to be `string|null`.
+- src/commands/validate_cmd.rs: emit `protocolVersion` alongside doc counts and diagnostics.
+- tests/integration_validate_json.rs: assert the presence of `protocolVersion`.
+- cli/info.schema.json: remove the duplicate `cache` property block.
+
 ## 2025-09-18: Unified `ai index` namespace and deprecated aliases
 
 ### Reason for change
