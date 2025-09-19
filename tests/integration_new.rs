@@ -116,7 +116,10 @@ fn new_print_body_prints() {
     tmpl_dir.create_dir_all().unwrap();
     tmpl_dir
         .child("ADR.md")
-        .write_str(include_str!("../.cli-rag/templates/ADR.md"))
+        .write_str(include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/.cli-rag/templates/ADR.md"
+        )))
         .unwrap();
 
     let out = Command::cargo_bin("cli-rag")
