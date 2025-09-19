@@ -7,7 +7,8 @@ file_patterns = [
 
 [schema.new]
 id_generator = { strategy = "increment", prefix = "AI-EPIC-", padding = 3 }
-filename_template = "AI-EPIC/{{id}}-{{title|kebab-case}}.md"
+filename_template = "{{id}}-{{title|kebab-case}}.md"
+output_path = ["docs/RAG/AI-EPIC"]
 
 [schema.frontmatter]
 user_frontmatter = [

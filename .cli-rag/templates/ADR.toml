@@ -8,7 +8,8 @@ file_patterns = [
 
 [schema.new]
 id_generator = { strategy = "increment", prefix = "ADR-", padding = 3 }
-filename_template = "ADRs/{{id}}-{{title|kebab-case}}.md"
+filename_template = "{{id}}-{{title|kebab-case}}.md"
+output_path = ["docs/RAG/ADRs"]
 
 [schema.frontmatter]
 user_frontmatter = [

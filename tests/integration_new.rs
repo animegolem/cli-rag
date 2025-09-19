@@ -241,6 +241,92 @@ fn new_writes_to_specified_dest_base() {
 }
 
 #[test]
+fn new_authoring_destinations_route_notes() {
+    let temp = assert_fs::TempDir::new().unwrap();
+    let notes = temp.child("notes");
+    notes.create_dir_all().unwrap();
+    let cfg = temp.child(".cli-rag.toml");
+    cfg.write_str("bases = [\"notes\"]\n\n[authoring.destinations]\nADR = \"notes/adr\"\n")
+        .unwrap();
+
+    Command::cargo_bin("cli-rag")
+        .unwrap()
+        .current_dir(temp.path())
+        .arg("new")
+        .arg("--schema")
+        .arg("ADR")
+        .arg("--title")
+        .arg("Destination Mapping")
+        .assert()
+        .success();
+
+    notes
+        .child("adr/ADR-001.md")
+        .assert(predicates::path::exists());
+    temp.close().unwrap();
+}
+
+#[test]
+fn new_schema_output_path_overrides_global_mapping() {
+    let temp = assert_fs::TempDir::new().unwrap();
+    let notes = temp.child("notes");
+    notes.create_dir_all().unwrap();
+    let cfg = temp.child(".cli-rag.toml");
+    cfg.write_str(
+        "bases = [\"notes\"]\n\n[authoring.destinations]\nADR = \"notes/adr\"\n\n[[schema]]\nname = \"ADR\"\nfile_patterns = [\"ADR-*.md\"]\n\n[schema.new]\noutput_path = [\"notes/custom\"]\n"
+    )
+    .unwrap();
+
+    Command::cargo_bin("cli-rag")
+        .unwrap()
+        .current_dir(temp.path())
+        .arg("new")
+        .arg("--schema")
+        .arg("ADR")
+        .arg("--title")
+        .arg("Schema Override")
+        .assert()
+        .success();
+
+    notes
+        .child("custom/ADR-001.md")
+        .assert(predicates::path::exists());
+    temp.close().unwrap();
+}
+
+#[test]
+fn new_rejects_destination_outside_base() {
+    let temp = assert_fs::TempDir::new().unwrap();
+    let notes = temp.child("notes");
+    notes.create_dir_all().unwrap();
+    let cfg = temp.child(".cli-rag.toml");
+    cfg.write_str(
+        "bases = [\"notes\"]\n\n[[schema]]\nname = \"ADR\"\nfile_patterns = [\"ADR-*.md\"]\n\n[schema.new]\noutput_path = [\"../escape\"]\n"
+    )
+    .unwrap();
+
+    Command::cargo_bin("cli-rag")
+        .unwrap()
+        .current_dir(temp.path())
+        .arg("new")
+        .arg("--schema")
+        .arg("ADR")
+        .arg("--title")
+        .arg("Escape Hatch")
+        .assert()
+        .failure()
+        .code(4)
+        .stderr(predicates::str::contains(
+            "resolves outside configured bases",
+        ));
+
+    notes
+        .child("ADR-001.md")
+        .assert(predicates::path::missing());
+    temp.close().unwrap();
+}
+
+#[test]
 fn new_injects_frontmatter_when_token_present() {
     let temp = assert_fs::TempDir::new().unwrap();
     let base = temp.child("notes");

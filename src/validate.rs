@@ -136,6 +136,7 @@ mod tests {
             allowed_statuses: default_allowed_statuses(),
             defaults: default_defaults(),
             schema: Vec::new(),
+            authoring: crate::config::schema::AuthoringCfg::default(),
             overlays: crate::config::schema::OverlayInfo::default(),
         };
         let d1 = AdrDoc {
@@ -241,6 +242,7 @@ mod tests {
             allowed_statuses: default_allowed_statuses(),
             defaults: default_defaults(),
             schema: vec![sc_adr, sc_imp],
+            authoring: crate::config::schema::AuthoringCfg::default(),
             overlays: crate::config::schema::OverlayInfo::default(),
         };
 
@@ -302,6 +304,7 @@ mod tests {
             allowed_statuses: default_allowed_statuses(),
             defaults: default_defaults(),
             schema: Vec::new(),
+            authoring: crate::config::schema::AuthoringCfg::default(),
             overlays: crate::config::schema::OverlayInfo::default(),
         };
         let d = AdrDoc {

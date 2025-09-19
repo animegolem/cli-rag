@@ -1,7 +1,7 @@
 use anyhow::{anyhow, Context, Result};
 use regex::Regex;
 use std::fs;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::time::SystemTime;
 
 use crate::commands::lua_integration::lua_new_hooks;
@@ -13,6 +13,49 @@ use crate::discovery::docs_with_source;
 use crate::util::try_open_editor;
 #[allow(unused_imports)]
 use mlua::{Function as LuaFunction, Table as LuaTable};
+
+fn normalize_path<P: AsRef<Path>>(path: P) -> PathBuf {
+    use std::path::Component;
+
+    let mut out = PathBuf::new();
+    for comp in path.as_ref().components() {
+        match comp {
+            Component::Prefix(prefix) => out.push(prefix.as_os_str()),
+            Component::RootDir => {
+                out.push(comp.as_os_str());
+            }
+            Component::CurDir => {}
+            Component::ParentDir => {
+                out.pop();
+            }
+            Component::Normal(part) => out.push(part),
+        }
+    }
+    out
+}
+
+fn resolve_config_path<P: AsRef<Path>>(path: P, cfg_dir: Option<&Path>) -> PathBuf {
+    let p = path.as_ref();
+    if p.is_absolute() {
+        return normalize_path(p);
+    }
+    if let Some(dir) = cfg_dir {
+        return normalize_path(dir.join(p));
+    }
+    if let Ok(cwd) = std::env::current_dir() {
+        return normalize_path(cwd.join(p));
+    }
+    normalize_path(p)
+}
+
+fn path_within(candidate: &Path, base: &Path) -> bool {
+    candidate == base || candidate.starts_with(base)
+}
+
+fn exit_invalid_destination(message: &str) -> ! {
+    eprintln!("{}", message);
+    std::process::exit(4);
+}
 
 #[allow(clippy::too_many_arguments)]
 pub fn run(
@@ -32,26 +75,56 @@ pub fn run(
             "No bases configured; please run `cli-rag init` first"
         ));
     }
-    // Determine destination base
-    let base = if let Some(dest) = dest_base {
-        // Try to find matching configured base (canonicalized)
-        let dest_c = std::fs::canonicalize(&dest).unwrap_or(dest.clone());
-        let mut found: Option<&std::path::PathBuf> = None;
-        for b in &cfg.bases {
-            let bc = std::fs::canonicalize(b).unwrap_or(b.clone());
-            if bc == dest_c {
-                found = Some(b);
-                break;
-            }
-        }
-        found.ok_or_else(|| {
+    let cfg_dir = cfg_path.as_ref().and_then(|p| p.parent());
+    let resolved_bases: Vec<PathBuf> = cfg
+        .bases
+        .iter()
+        .map(|b| resolve_config_path(b, cfg_dir))
+        .collect();
+    // Determine destination base/directory for the new note
+    let base_dir = if let Some(dest) = dest_base {
+        let dest_resolved = resolve_config_path(&dest, cfg_dir);
+        let matched = resolved_bases
+            .iter()
+            .find(|candidate| *candidate == &dest_resolved)
+            .cloned();
+        matched.ok_or_else(|| {
             anyhow!(
                 "--dest-base does not match any configured base: {}",
-                dest_c.display()
+                dest.display()
             )
         })?
     } else {
-        &cfg.bases[0]
+        let schema_output_path = cfg
+            .schema
+            .iter()
+            .find(|s| s.name == schema)
+            .and_then(|s| s.new.as_ref())
+            .and_then(|n| n.output_path.as_ref())
+            .and_then(|paths| paths.first().cloned());
+        let mut destination =
+            schema_output_path.or_else(|| cfg.authoring.destinations.get(&schema).cloned());
+        if destination.is_none() {
+            destination = cfg.authoring.output_path.clone();
+        }
+        if let Some(dest_str) = destination {
+            let resolved = resolve_config_path(Path::new(&dest_str), cfg_dir);
+            let inside_base = resolved_bases
+                .iter()
+                .any(|base| path_within(&resolved, base));
+            if !inside_base {
+                exit_invalid_destination(&format!(
+                    "E410: destination '{}' resolves outside configured bases",
+                    dest_str
+                ));
+            }
+            resolved
+        } else {
+            resolved_bases
+                .first()
+                .cloned()
+                .expect("config bases should be non-empty")
+        }
     };
     let (docs, _used_unified) = docs_with_source(cfg, cfg_path)?;
     // Determine id based on schema.new.id_generator if present
@@ -138,7 +211,7 @@ pub fn run(
     } else {
         format!("{}.md", id)
     };
-    let mut out_path = base.join(&initial_name);
+    let mut out_path = base_dir.join(&initial_name);
 
     if print_body {
         print!("{}", body);
@@ -193,7 +266,7 @@ pub fn run(
                 } else {
                     format!("{}.md", newid)
                 };
-                let candidate = base.join(&cand_name);
+                let candidate = base_dir.join(&cand_name);
                 if !candidate.exists() {
                     out_path = candidate;
                     break;
@@ -227,7 +300,7 @@ pub fn run(
                 } else {
                     format!("{}.md", newid)
                 };
-                let candidate = base.join(&cand_name);
+                let candidate = base_dir.join(&cand_name);
                 if !candidate.exists() {
                     out_path = candidate;
                     break;

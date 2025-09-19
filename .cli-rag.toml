@@ -19,6 +19,11 @@ ignore_globs = [
 editor = "nvim"
 background_watch = true
 
+[config.authoring.destinations]
+ADR = "docs/RAG/ADRs"
+IMP = "docs/RAG/AI-IMP"
+EPIC = "docs/RAG/AI-EPIC"
+
 [config.graph]
 depth = 2
 include_bidirectional = true

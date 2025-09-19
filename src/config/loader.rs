@@ -101,6 +101,9 @@ fn normalize_nested_user_config(mut tv: toml::Value) -> toml::Value {
                 root.insert("import".into(), v.clone());
             }
         }
+        if let Some(V::Table(authoring)) = cfg_tbl.get("authoring") {
+            root.insert("authoring".into(), V::Table(authoring.clone()));
+        }
         // We've consumed the nested table; not re-inserting keeps the normalized shape.
     }
     tv
@@ -148,6 +151,7 @@ pub fn load_config(
             allowed_statuses: default_allowed_statuses(),
             defaults: default_defaults(),
             schema: Vec::new(),
+            authoring: super::schema::AuthoringCfg::default(),
             overlays: super::schema::OverlayInfo::default(),
         }
     };

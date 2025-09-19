@@ -1,4 +1,5 @@
 use serde::Deserialize;
+use std::collections::HashMap;
 use std::path::PathBuf;
 
 #[derive(Debug, Deserialize, Clone)]
@@ -19,6 +20,8 @@ pub struct SchemaNewCfg {
     pub filename_template: Option<String>,
     #[serde(default)]
     pub lua_generator: Option<String>,
+    #[serde(default)]
+    pub output_path: Option<Vec<String>>,
 }
 
 #[derive(Debug, Clone, Default)]
@@ -26,6 +29,18 @@ pub struct OverlayInfo {
     pub enabled: bool,
     pub repo_path: Option<PathBuf>,
     pub user_path: Option<PathBuf>,
+}
+
+#[derive(Debug, Deserialize, Clone, Default)]
+pub struct AuthoringCfg {
+    #[serde(default)]
+    pub editor: Option<String>,
+    #[serde(default)]
+    pub background_watch: Option<bool>,
+    #[serde(default)]
+    pub output_path: Option<String>,
+    #[serde(default)]
+    pub destinations: HashMap<String, String>,
 }
 
 #[derive(Debug, Deserialize, Clone)]
@@ -102,6 +117,8 @@ pub struct Config {
     pub defaults: DefaultsCfg,
     #[serde(default)]
     pub schema: Vec<SchemaCfg>,
+    #[serde(default)]
+    pub authoring: AuthoringCfg,
 
     // Runtime-only overlay metadata (not part of TOML)
     #[serde(skip)]

@@ -7,7 +7,8 @@ file_patterns = [
 
 [schema.new]
 id_generator = { strategy = "increment", prefix = "AI-IMP-", padding = 3 }
-filename_template = "AI-IMP/{{id}}-{{title|kebab-case}}.md"
+filename_template = "{{id}}-{{title|kebab-case}}.md"
+output_path = ["docs/RAG/AI-IMP"]
 
 [schema.frontmatter]
 user_frontmatter = [

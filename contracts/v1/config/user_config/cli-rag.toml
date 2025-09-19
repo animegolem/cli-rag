@@ -60,9 +60,12 @@ editor = "nvim"
 #: runs the `watch` command as a background process for live updates when
 #: visual mode is open and active. default = true
 background_watch = true
-#: Define the default write path for all new notes. Can be overidden per
-#: schema.
-output_path = "docs/RAG"
+
+[config.authoring.destinations]
+#: Map schema names to write paths relative to this config.
+ADR = "docs/RAG/ADRs"
+IMP = "docs/RAG/AI-IMP"
+EPIC = "docs/RAG/AI-EPIC"
 
 #: =============================================================================
 #:                             # --- GRAPH --- #

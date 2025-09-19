@@ -13,6 +13,17 @@
 - tests/integration_validate_json.rs: assert the presence of `protocolVersion`.
 - cli/info.schema.json: remove the duplicate `cache` property block.
 
+## 2025-09-19: Authoring destination keys
+
+### Reason for change
+- Decouple note placement from filename templates and make destinations declarative.
+
+### Overview of change
+- config schema: new `[config.authoring.destinations]` mapping and per-schema `output_path` (string or array) override.
+- CLI: `new` resolves destinations with precedence `--dest-base` > schema `output_path` > authoring destinations > first base; rejects paths outside configured bases (exit 4).
+- Templates: repository schemas now set `output_path` and use basename-only filename templates.
+- README/config samples updated to document the new keys and precedence.
+
 ## 2025-09-18: Unified `ai index` namespace and deprecated aliases
 
 ### Reason for change

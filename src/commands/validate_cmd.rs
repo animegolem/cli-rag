@@ -247,8 +247,14 @@ pub fn run(
                 "ignoreSymlinks": true
             });
             let authoring = serde_json::json!({
-                "editor": "nvim",
-                "backgroundWatch": true
+                "editor": cfg
+                    .authoring
+                    .editor
+                    .clone()
+                    .unwrap_or_else(|| "nvim".to_string()),
+                "backgroundWatch": cfg.authoring.background_watch.unwrap_or(true),
+                "outputPath": cfg.authoring.output_path.clone(),
+                "destinations": cfg.authoring.destinations.clone()
             });
             let graph = serde_json::json!({
                 "depth": cfg.defaults.depth as i64,
