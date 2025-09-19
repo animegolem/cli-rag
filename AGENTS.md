@@ -58,6 +58,7 @@
 
 ## Commit & Pull Request Guidelines
 - Commits: imperative mood, concise subject; include a focused body when changing behavior (why + brief what).
+- Assistants must never amend commits or rewrite published history; always add new commits instead.
 - Reference issues with `Fixes #123` when applicable.
 - PRs must include: summary, rationale, notable tradeoffs, and a short demo (e.g., command and output snippet) for CLI changes.
 - CI hygiene: ensure `cargo fmt`, `cargo clippy`, and `cargo test` pass locally.
