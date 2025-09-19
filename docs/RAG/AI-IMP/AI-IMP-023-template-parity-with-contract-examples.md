@@ -46,12 +46,12 @@ Our Markdown templates (`.cli-rag/templates/{ADR,IMP,EPIC}.md`) are minimal and 
 Before marking an item complete on the checklist MUST **stop** and **think**. Have you validated all aspects are **implemented** and **tested**? 
 </CRITICAL_RULE> 
 
-- [ ] Update `.cli-rag/templates/ADR.md` with contract guidance: hidden comments, section headers, `((frontmatter))`, and `{{LOC|100}}` caps.
-- [ ] Update `.cli-rag/templates/IMP.md` with IMP-specific sections and LOC caps.
-- [ ] Update `.cli-rag/templates/EPIC.md` with EPIC-specific sections per docs/RAG/templates/AI-EPIC.md.
-- [ ] README: document TOML↔Markdown template linkage and demonstrate preview via `ai new start --format json`.
-- [ ] Tests: extend AI new coverage to assert that `noteTemplate` contains expected headings and guidance markers.
-- [ ] CI: no schema changes; ensure tests pass across OS matrix.
+- [x] Update `.cli-rag/templates/ADR.md` with contract guidance: hidden comments, section headers, `((frontmatter))`, and `{{LOC|100}}` caps.
+- [x] Update `.cli-rag/templates/IMP.md` with IMP-specific sections and LOC caps.
+- [x] Update `.cli-rag/templates/EPIC.md` with EPIC-specific sections per docs/RAG/templates/AI-EPIC.md.
+- [x] README: document TOML↔Markdown template linkage and demonstrate preview via `ai new start --format json`.
+- [ ] Tests: extend AI new coverage to assert that `noteTemplate` contains expected headings and guidance markers. *(Still pending; integration suite exercises destinations but not template scaffolds.)*
+- [x] CI: no schema changes; ensure tests pass across OS matrix.
 
 ### Acceptance Criteria
 **Scenario:** Contract-parity ADR template

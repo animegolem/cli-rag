@@ -50,16 +50,16 @@ File placement currently piggybacks on `filename_template` (e.g., prefixing `AI-
 Before marking an item complete on the checklist MUST **stop** and **think**. Have you validated all aspects are **implemented** and **tested**? 
 </CRITICAL_RULE> 
 
-- [ ] Model: add `authoring.destinations` (HashMap<String,String>) to `Config`; add `output_path` (Option<String>) to `SchemaNewCfg`.
-- [ ] Loader: parse nested TOML for these keys; normalize to absolute paths at runtime by joining with config dir; store relative for serialization.
-- [ ] AI draft flow: implement destination resolution precedence in `ai new start/submit`; ensure final path is within a configured base (canonicalize + prefix check). Exit 4 on violation with actionable message.
-- [ ] Back-compat: if no destination keys are set, behavior remains unchanged; if both keys and folder segments in `filename_template` are present, the segments append under the resolved destination.
-- [ ] Tests: 
+- [x] Model: add `authoring.destinations` (HashMap<String,String>) to `Config`; add `output_path` (Option<String>) to `SchemaNewCfg`.
+- [x] Loader: parse nested TOML for these keys; normalize to absolute paths at runtime by joining with config dir; store relative for serialization.
+- [x] AI draft flow: implement destination resolution precedence in `ai new start/submit`; ensure final path is within a configured base (canonicalize + prefix check). Exit 4 on violation with actionable message.
+- [x] Back-compat: if no destination keys are set, behavior remains unchanged; if both keys and folder segments in `filename_template` are present, the segments append under the resolved destination.
+- [x] Tests: 
   - Global mapping writes ADR to `docs/RAG/ADRs`, IMP to `docs/RAG/AI-IMP`.
   - Per-schema `output_path` overrides global mapping.
   - Path traversal protection rejects `../../outside`.
-- [ ] README: document the keys, precedence order, examples; steer users away from hardcoding folders in `filename_template`.
-- [ ] CI: adapt contracts job or add a small step exercising destination keys (optional if covered by tests).
+- [x] README: document the keys, precedence order, examples; steer users away from hardcoding folders in `filename_template`.
+- [x] CI: adapt contracts job or add a small step exercising destination keys (optional if covered by tests).
 
 ### Acceptance Criteria
 **Scenario:** Global destinations mapping
