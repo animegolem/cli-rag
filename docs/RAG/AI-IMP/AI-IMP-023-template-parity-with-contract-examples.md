@@ -50,7 +50,7 @@ Before marking an item complete on the checklist MUST **stop** and **think**. Ha
 - [x] Update `.cli-rag/templates/IMP.md` with IMP-specific sections and LOC caps.
 - [x] Update `.cli-rag/templates/EPIC.md` with EPIC-specific sections per docs/RAG/templates/AI-EPIC.md.
 - [x] README: document TOML↔Markdown template linkage and demonstrate preview via `ai new start --format json`.
-- [ ] Tests: extend AI new coverage to assert that `noteTemplate` contains expected headings and guidance markers. *(Still pending; integration suite exercises destinations but not template scaffolds.)*
+- [x] Tests: extend AI new coverage to assert that `noteTemplate` contains expected headings and guidance markers.
 - [x] CI: no schema changes; ensure tests pass across OS matrix.
 
 ### Acceptance Criteria

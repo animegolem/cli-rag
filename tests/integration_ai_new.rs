@@ -3,6 +3,7 @@ use assert_fs::prelude::*;
 use predicates::prelude::*;
 use serde_json::{Map as JsonMap, Value};
 use std::io::Write;
+use std::path::PathBuf;
 use std::process::Command;
 
 fn write_basic_config(temp: &assert_fs::TempDir) {
@@ -21,6 +22,15 @@ unknown_policy = "ignore"
 "#,
     )
     .unwrap();
+}
+
+fn copy_repo_template(temp: &assert_fs::TempDir, schema: &str) {
+    let repo_template = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join(".cli-rag/templates")
+        .join(format!("{}.md", schema));
+    let dest_dir = temp.path().join(".cli-rag/templates");
+    std::fs::create_dir_all(&dest_dir).unwrap();
+    std::fs::copy(repo_template, dest_dir.join(format!("{}.md", schema))).unwrap();
 }
 
 #[test]
@@ -421,5 +431,105 @@ output_path = ["../escape"]
         .stderr(predicates::str::contains("outside configured bases"));
 
     notes.assert(predicate::path::is_dir());
+    temp.close().unwrap();
+}
+
+#[test]
+fn ai_new_note_template_includes_contract_guidance() {
+    let temp = assert_fs::TempDir::new().unwrap();
+    let notes = temp.child("notes");
+    notes.create_dir_all().unwrap();
+
+    let cfg_path = temp.child(".cli-rag.toml");
+    cfg_path
+        .write_str(
+            r#"bases = ["notes"]
+
+[[schema]]
+name = "ADR"
+file_patterns = ["ADR-*.md"]
+
+[[schema]]
+name = "IMP"
+file_patterns = ["AI-IMP-*.md"]
+
+[[schema]]
+name = "EPIC"
+file_patterns = ["AI-EPIC-*.md"]
+"#,
+        )
+        .unwrap();
+
+    for schema in ["ADR", "IMP", "EPIC"] {
+        copy_repo_template(&temp, schema);
+    }
+
+    let expectations = [
+        (
+            "ADR",
+            "<!-- Keep this record concise and professional.",
+            "## Objective",
+        ),
+        (
+            "IMP",
+            "<!-- Fill out the YAML frontmatter in full before drafting sections.",
+            "## Summary of Issue #1",
+        ),
+        (
+            "EPIC",
+            "<!-- Fill out the YAML frontmatter above.",
+            "## Problem Statement/Feature Scope",
+        ),
+    ];
+
+    for (schema, guidance_snippet, heading) in expectations {
+        let output = Command::cargo_bin("cli-rag")
+            .unwrap()
+            .current_dir(temp.path())
+            .args([
+                "--config",
+                cfg_path.path().to_str().unwrap(),
+                "ai",
+                "new",
+                "start",
+                "--schema",
+                schema,
+                "--title",
+                "Template Check",
+                "--format",
+                "json",
+            ])
+            .assert()
+            .success()
+            .get_output()
+            .stdout
+            .clone();
+        let start_json: Value = serde_json::from_slice(&output).unwrap();
+        let note_template = start_json["noteTemplate"].as_str().unwrap();
+
+        assert!(
+            note_template.starts_with("---\n"),
+            "missing frontmatter block for {}",
+            schema
+        );
+        assert!(
+            note_template.contains(&format!("id: {}-", schema)),
+            "expected id insertion for {} template",
+            schema
+        );
+        assert!(
+            note_template.contains(guidance_snippet),
+            "missing guidance comment '{}' for {} template",
+            guidance_snippet,
+            schema
+        );
+        assert!(
+            note_template.contains(heading),
+            "missing heading '{}' for {} template",
+            heading,
+            schema
+        );
+    }
+
     temp.close().unwrap();
 }

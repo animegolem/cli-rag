@@ -43,10 +43,10 @@ The legacy `new` command duplicates authoring behavior while the project is movi
 Before marking an item complete on the checklist MUST **stop** and **think**. Have you validated all aspects are **implemented** and **tested**? 
 </CRITICAL_RULE> 
 
-- [ ] Remove `cli-rag new` subcommand and associated code paths.
-- [ ] README: replace authoring walkthroughs with AI-first examples; keep a short migration section.
-- [ ] Tests: ensure AI new coverage exercises destination and template behavior.
-- [ ] Changelog: document removal and new guidance.
+- [x] Remove `cli-rag new` subcommand and associated code paths.
+- [x] README: replace authoring walkthroughs with AI-first examples; keep a short migration section.
+- [x] Tests: ensure AI new coverage exercises destination and template behavior.
+- [x] Changelog: document removal and new guidance.
 
 ### Acceptance Criteria
 **Scenario:** Legacy command removed

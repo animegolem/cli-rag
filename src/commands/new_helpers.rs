@@ -14,6 +14,12 @@ pub fn render_template(mut s: String, id: &str, title: &str) -> String {
     let now = Local::now();
     s = s.replace("{{date}}", &now.format("%Y-%m-%d").to_string());
     s = s.replace("{{time}}", &now.format("%H:%M").to_string());
+    let placeholder_present = if s.contains("((frontmatter))") {
+        s = s.replace("((frontmatter))", "");
+        true
+    } else {
+        false
+    };
     if let Ok(re) = Regex::new(r"\{\{LOC\|(\d+)\}\}") {
         s = re
             .replace_all(&s, |caps: &regex::Captures| {
@@ -24,13 +30,6 @@ pub fn render_template(mut s: String, id: &str, title: &str) -> String {
                 "\n".repeat(n)
             })
             .to_string();
-    }
-    if s.contains("((frontmatter))") {
-        let fm = format!(
-            "id: {}\n{}{}{}",
-            id, "tags: []\n", "status: draft\n", "depends_on: []\n"
-        );
-        s = s.replace("((frontmatter))", &fm);
     }
     if s.starts_with("---\n") {
         if let Some(end) = s.find("\n---\n") {
@@ -43,12 +42,14 @@ pub fn render_template(mut s: String, id: &str, title: &str) -> String {
                     _ => Mapping::new(),
                 };
                 map.insert(Value::String("id".into()), Value::String(id.into()));
-                map.entry(Value::String("tags".into()))
-                    .or_insert_with(|| Value::Sequence(vec![]));
-                map.entry(Value::String("status".into()))
-                    .or_insert_with(|| Value::String("draft".into()));
-                map.entry(Value::String("depends_on".into()))
-                    .or_insert_with(|| Value::Sequence(vec![]));
+                if placeholder_present {
+                    map.entry(Value::String("tags".into()))
+                        .or_insert_with(|| Value::Sequence(vec![]));
+                    map.entry(Value::String("status".into()))
+                        .or_insert_with(|| Value::String("draft".into()));
+                    map.entry(Value::String("depends_on".into()))
+                        .or_insert_with(|| Value::Sequence(vec![]));
+                }
                 let yaml = serde_yaml::to_string(&Value::Mapping(map)).unwrap_or_default();
                 let front = format!("---\n{}---\n", yaml);
                 s = format!("{}{}", front, rest);
