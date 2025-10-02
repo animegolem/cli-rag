@@ -1,5 +1,16 @@
 # Contracts Change Log
 
+## 2025-09-21: Help text, README, and completions refresh
+
+### Reason for change
+- Surface the unified `cli-rag ai …` workflows consistently across help output and docs after retiring the legacy `new` command.
+- Provide migration guidance and explicit shell completion examples for the updated command tree.
+
+### Overview of change
+- src/cli.rs: add descriptive help strings for top-level commands while keeping deprecated aliases labelled.
+- README.md: expand AI authoring quickstart, add migration notes, and document completions generation.
+- Documentation checklist (AI-IMP-026): marked as complete now that help/docs/completions are aligned.
+
 ## 2025-09-19: Validate JSON envelope parity and info schema cleanup
 
 ### Reason for change

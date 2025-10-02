@@ -43,6 +43,7 @@ pub struct Cli {
 
 #[derive(Subcommand, Debug)]
 pub enum Commands {
+    /// Scaffold a project config and optional schema templates
     Init {
         /// Optional path to write config (defaults to ./.cli-rag.toml)
         #[arg(long)]
@@ -61,7 +62,9 @@ pub enum Commands {
         #[arg(long, default_value_t = false)]
         separate: bool,
     },
+    /// Inspect resolved config, cache entries, and capabilities
     Info {},
+    /// Search notes with fuzzy text matching and filters
     Search {
         #[arg(long, short = 'q')]
         query: String,
@@ -78,6 +81,7 @@ pub enum Commands {
         #[arg(long, value_delimiter = ',')]
         tag: Option<Vec<String>>,
     },
+    /// Retrieve a note with its neighborhood for AI workflows
     Get {
         #[arg(long)]
         id: String,
@@ -93,6 +97,7 @@ pub enum Commands {
         #[arg(long, value_name = "N")]
         max_fanout: Option<usize>,
     },
+    /// Explore dependency clusters around a given note
     Cluster {
         #[arg(long)]
         id: String,
@@ -101,6 +106,7 @@ pub enum Commands {
         #[arg(long)]
         include_bidirectional: Option<bool>,
     },
+    /// Compute the shortest dependency path between notes
     Path {
         #[arg(long, value_name = "FROM")]
         from: String,
@@ -121,6 +127,7 @@ pub enum Commands {
         #[arg(long = "graph-format", value_enum, default_value_t = GraphFormat::Mermaid, help = "Output format (json is the machine/AI surface)")]
         graph_format: GraphFormat,
     },
+    /// Build or print the unified index and run validation checks
     Validate(ValidateArgs),
 
     /// Watch bases and incrementally validate + update indexes on changes

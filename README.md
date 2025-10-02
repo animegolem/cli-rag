@@ -6,18 +6,19 @@ You've found this way too early! Nothing here is ready for production. :) This w
 
 ## Commands (overview)
 
-- `init` – scaffold `.cli-rag.toml` and templates
-- `validate` – build unified index and run checks
-- `info` – show config/index/cache and capabilities
-- `search` – fuzzy browse with TODO/Kanban emitters
-- `graph` / `path` – dependency views and shortest path
-- `get` – AI-oriented neighborhood retrieval
-- `ai index plan` – compute AI Index clusters and write a plan JSON
-- `ai index apply` – apply a plan: write cache and optional tags
+- `init` – scaffold `.cli-rag.toml` and optional schema templates
+- `info` – inspect resolved config, caches, overlays, and capabilities
+- `validate` – rebuild the unified index and surface validation diagnostics
+- `watch` – stream incremental validation/graph updates while editing
+- `search` – fuzzy browse notes with TODO/Kanban emitters
+- `get` – retrieve a note plus its neighbors for AI prompting contexts
+- `graph` / `path` – render dependency graphs or the shortest path between notes
+- `ai new start|submit|cancel|list` – managed authoring drafts with schema guidance
+- `ai index plan|apply` – cluster graph neighborhoods and persist AI index caches
 
 ## CI Contracts Gates
 
-The `contracts` job in `.github/workflows/ci.yml` now spins up a nested user config fixture, runs `validate --format json` to assert the resolved snapshot, exercises `new` id generators and filename templates, and checks `ai new start/list/cancel` flows against the schemas in `contracts/v1/cli/*.schema.json`. Extend this job when you add new contract surfaces so the smoke coverage stays representative.
+The `contracts` job in `.github/workflows/ci.yml` spins up a nested user config fixture, runs `validate --format json` to assert the resolved snapshot, exercises schema id generators/filename templates through `ai new start`, and checks `ai new start/list/cancel` flows against the schemas in `contracts/v1/cli/*.schema.json`. Extend this job when you add new contract surfaces so the smoke coverage stays representative.
 
 ## Dogfooding
 
@@ -31,6 +32,49 @@ Preview a schema's scaffold without writing a file:
 ```
 cli-rag ai new start --schema ADR --title "Template Parity" --format json \
   | jq -r '.noteTemplate'
+```
+
+> **Migrating from `cli-rag new`** – The legacy `new` subcommand has been removed. Use `cli-rag ai new start|submit|cancel|list` for all authoring flows. Existing templates, Lua overrides, and filename rules continue to apply through the AI draft surfaces.
+
+### ai new start / submit / cancel / list
+
+Manage schema-guided drafts without writing files until you are ready:
+
+```
+# Reserve an ADR draft and inspect guidance
+cli-rag --config ./.cli-rag.toml ai new start \
+  --schema ADR \
+  --title "Circuit Breaker" \
+  --format json \
+  > start.json
+
+jq -r '.noteTemplate' start.json
+
+# Prepare sections/frontmatter payload for submission
+cat >payload.json <<'JSON'
+{
+  "frontmatter": {
+    "tags": ["ai", "adr"],
+    "priority": "high"
+  },
+  "sections": {
+    "Objective": "Document fallback strategy for unstable dependencies.",
+    "Context": "Service calls external dependency with intermittent timeouts...",
+    "Decision": "Introduce a circuit breaker using library X...",
+    "Consequences": "Allows graceful degradation but adds operational tuning.",
+    "Updates": "Populate after rollout"
+  }
+}
+JSON
+
+# Finalize the draft using the reserved ID (or pipe with --stdin)
+cli-rag --config ./.cli-rag.toml ai new submit \
+  --draft "$(jq -r '.draftId' start.json)" \
+  --sections payload.json
+
+# List or cancel active drafts when needed
+cli-rag ai new list
+cli-rag ai new cancel --draft "$(jq -r '.draftId' start.json)"
 ```
 
 ### ai index plan
@@ -72,3 +116,14 @@ Notes:
 - Legacy aliases `ai-index-plan` / `ai-index-apply` remain available for one release and print a deprecation warning.
 - Tag writes: enable with `--write-frontmatter`. Additive and require an existing `tags` field in frontmatter; otherwise exit 4.
 - Apply report matches `contracts/v1/cli/ai_index_apply_report.schema.json`.
+
+## Shell Completions
+
+Generate completions to streamline the new command layout:
+
+```
+cli-rag completions bash > ~/.local/share/bash-completion/cli-rag
+cli-rag completions zsh  > ~/.zsh/completions/_cli-rag
+```
+
+Each invocation reflects the latest `ai new` and `ai index` subcommands. Re-run after upgrading the CLI to refresh the definitions.

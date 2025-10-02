@@ -45,12 +45,12 @@ After unifying AI commands and deprecating legacy `new`, the CLI’s help text, 
 Before marking an item complete on the checklist MUST **stop** and **think**. Have you validated all aspects are **implemented** and **tested**? 
 </CRITICAL_RULE> 
 
-- [ ] Help: update subcommand descriptions to reflect unified AI layout; tag deprecated aliases.
-- [ ] Completions: regenerate and validate basic generation in CI for bash and zsh.
-- [ ] README: update usage sections and examples to `cli-rag ai index …` and `cli-rag ai new …`; add migration box.
-- [ ] README: include a `new --print-body` example to showcase template guidance.
-- [ ] CI: confirm completions generation still executes successfully.
-- [ ] Changelog: capture the docs/help alignment changes.
+- [x] Help: update subcommand descriptions to reflect unified AI layout; tag deprecated aliases.
+- [x] Completions: regenerate and validate basic generation in CI for bash and zsh.
+- [x] README: update usage sections and examples to `cli-rag ai index …` and `cli-rag ai new …`; add migration box.
+- [x] README: include an `ai new start --format json | jq '.noteTemplate'` example to showcase template guidance.
+- [x] CI: confirm completions generation still executes successfully.
+- [x] Changelog: capture the docs/help alignment changes.
 
 ### Acceptance Criteria
 **Scenario:** Help output reflects unified commands
@@ -71,4 +71,3 @@ THEN `index` and `new` are offered with their subcommands.
 
 ### Issues Encountered 
 {LOC|20}
-
