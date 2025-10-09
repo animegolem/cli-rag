@@ -13,8 +13,27 @@ You've found this way too early! Nothing here is ready for production. :) This w
 - `search` – fuzzy browse notes with TODO/Kanban emitters
 - `get` – retrieve a note plus its neighbors for AI prompting contexts
 - `graph` / `path` – render dependency graphs or the shortest path between notes
-- `ai new start|submit|cancel|list` – managed authoring drafts with schema guidance
-- `ai index plan|apply` – cluster graph neighborhoods and persist AI index caches
+- `ai` – umbrella for AI-first workflows (`new` and `index` subcommands)
+
+## Quickstart: AI authoring
+
+1. Make sure your repository has a `.cli-rag.toml` configured (or run `cli-rag init` to scaffold one).
+2. Rebuild the unified index and contracts snapshot:
+   ```bash
+   cli-rag validate --format json
+   ```
+3. Reserve a draft with schema-specific guidance:
+   ```bash
+   cli-rag ai new start --schema ADR --title "Circuit Breaker" --format json > start.json
+   ```
+4. Inspect the scaffold and prepare content (JSON or Markdown):
+   ```bash
+   jq -r '.noteTemplate' start.json
+   ```
+5. Submit the filled sections/frontmatter to finalize the note:
+   ```bash
+   cli-rag ai new submit --draft "$(jq -r '.draftId' start.json)" --sections payload.json
+   ```
 
 ## CI Contracts Gates
 
@@ -24,6 +43,7 @@ The `contracts` job in `.github/workflows/ci.yml` spins up a nested user config 
 
 - `.cli-rag.toml` in the repo root defines the nested config (scan bases, graph defaults, template imports).
 - Schemas live under `.cli-rag/templates/{ADR,IMP,EPIC}.toml`; these TOML files define id generators, filename rules, and tracked frontmatter, while their paired Markdown files provide the authored content scaffolds and guidance comments.
+- Authoring linkage: the TOML and Markdown files share the same stem (e.g., `ADR.toml` + `ADR.md`). The schema TOML configures discovery/id/frontmatter/output rules, and `cli-rag ai new start` returns the Markdown scaffold via `.noteTemplate`, injecting frontmatter with `{{frontmatter}}` and respecting `{{LOC|N}}` caps.
 - Configure `[config.authoring.destinations]` in `.cli-rag.toml` so each schema writes to the correct folder (e.g., `ADR = "docs/RAG/ADRs"`), keeping `filename_template` focused on the basename like `{{id}}-{{title|kebab-case}}.md`.
 - Prefer the AI workflow: `cli-rag ai new start --schema ADR --title ...`, edit the generated draft, then `cli-rag ai new submit --draft <id> --sections note.md`.
 
@@ -76,6 +96,8 @@ cli-rag --config ./.cli-rag.toml ai new submit \
 cli-rag ai new list
 cli-rag ai new cancel --draft "$(jq -r '.draftId' start.json)"
 ```
+
+> Tip: `cli-rag ai new cancel` without `--draft` will automatically cancel the lone active draft. If multiple drafts exist, the command returns a structured error listing the available IDs so you can choose explicitly.
 
 ### ai index plan
 

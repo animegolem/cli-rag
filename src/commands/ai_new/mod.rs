@@ -2,8 +2,9 @@ mod cancel;
 mod list;
 mod payload;
 mod start;
-mod store;
+pub mod store;
 mod submit;
+pub mod template_utils;
 mod utils;
 
 pub use cancel::cancel;

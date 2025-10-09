@@ -2,8 +2,11 @@ use anyhow::{anyhow, Context, Result};
 use std::fs;
 use std::path::PathBuf;
 
-use crate::commands::lua_integration::lua_new_hooks;
-use crate::commands::new_helpers::{generate_initial_id, render_template, resolve_destination_dir};
+use crate::commands::lua_integration::{lua_new_hooks, LuaNewArtifacts};
+use crate::commands::new_helpers::{
+    generate_initial_id, render_template, render_text_with_vars, resolve_destination_dir,
+    TemplateVars,
+};
 use crate::commands::output::print_json;
 use crate::config::Config;
 use crate::discovery::docs_with_source;
@@ -15,6 +18,7 @@ use super::utils::{
     determine_filename, generate_draft_id, path_to_string, resolve_project_root, sha256_hex,
 };
 use crate::cli::OutputFormat;
+use crate::commands::ai_new::template_utils::{default_template, load_repo_template};
 
 pub fn start(
     cfg: &Config,
@@ -47,43 +51,82 @@ pub fn start(
         title = id.clone();
     }
 
-    let (lua_id_override, fm_overrides) = lua_new_hooks(cfg, cfg_path, &schema, &title, &docs);
-    if let Some(newid) = lua_id_override {
-        id = newid;
+    let LuaNewArtifacts {
+        id_override: lua_id_override,
+        frontmatter_overrides: fm_overrides,
+        template_prompt: lua_template_prompt,
+        template_note: lua_template_note,
+    } = lua_new_hooks(cfg, cfg_path, &schema, &title, &docs);
+
+    if let Some(ref newid) = lua_id_override {
+        id = newid.clone();
     }
 
-    let template_raw = load_schema_template(cfg_path, &schema)?;
-    let mut note_template = render_template(template_raw.clone(), &id, &title);
-    if let Some(fm_map) = fm_overrides {
+    let schema_cfg = cfg.schema.iter().find(|s| s.name == schema);
+    let toml_template_note = schema_cfg
+        .and_then(|sc| sc.new.as_ref())
+        .and_then(|n| n.template.as_ref())
+        .and_then(|t| t.note.as_ref())
+        .and_then(|p| p.template.clone());
+    let toml_template_prompt = schema_cfg
+        .and_then(|sc| sc.new.as_ref())
+        .and_then(|n| n.template.as_ref())
+        .and_then(|t| t.prompt.as_ref())
+        .and_then(|p| p.template.clone());
+
+    let repo_template = load_repo_template(cfg_path, &schema)?;
+    let template_source = lua_template_note
+        .clone()
+        .or(toml_template_note)
+        .or(repo_template)
+        .unwrap_or_else(default_template);
+
+    let instructions_source = lua_template_prompt
+        .clone()
+        .or(toml_template_prompt)
+        .unwrap_or_else(|| {
+            format!(
+                "Generate content for {} using the reserved id {} and provided headings.",
+                schema, id
+            )
+        });
+
+    let filename = determine_filename(cfg, &schema, &id, &title);
+    let template_vars = TemplateVars {
+        id: &id,
+        title: &title,
+        schema: &schema,
+        filename: &filename,
+    };
+    let instructions = render_text_with_vars(&instructions_source, &template_vars);
+    let mut note_template = render_template(template_source.clone(), &template_vars);
+
+    if let Some(map) = fm_overrides {
         if note_template.starts_with("---\n") {
             if let Some(end) = note_template.find("\n---\n") {
                 let fm_content = &note_template[4..end];
                 let rest = &note_template[end + 5..];
                 if let Ok(val) = serde_yaml::from_str::<serde_yaml::Value>(fm_content) {
                     use serde_yaml::{Mapping, Value};
-                    let mut map = match val {
+                    let mut merged = match val {
                         Value::Mapping(m) => m,
                         _ => Mapping::new(),
                     };
-                    for (k, v) in fm_map {
-                        map.insert(Value::String(k), v);
+                    for (k, v) in map {
+                        merged.insert(Value::String(k), v);
                     }
-                    let yaml = serde_yaml::to_string(&Value::Mapping(map)).unwrap_or_default();
+                    let yaml = serde_yaml::to_string(&Value::Mapping(merged)).unwrap_or_default();
                     let front = format!("---\n{}---\n", yaml);
                     note_template = format!("{}{}", front, rest);
                 }
             }
         }
     }
+
     let seed_frontmatter = extract_frontmatter_json(&note_template)?;
-    let constraints = build_constraints(&template_raw, &seed_frontmatter);
-    let instructions = format!(
-        "Generate content for {} using the reserved id {} and provided headings.",
-        schema, id
-    );
+    let constraints = build_constraints(&template_source, &seed_frontmatter, schema_cfg);
     let content_hash = sha256_hex(note_template.as_bytes());
 
-    let filename = determine_filename(cfg, &schema, &id, &title);
     let record = DraftRecord {
         draft_id: generate_draft_id(),
         schema: schema.clone(),
@@ -98,7 +141,7 @@ pub fn start(
         constraints: constraints.clone(),
         instructions: instructions.clone(),
         content_hash: content_hash.clone(),
-        primary_heading: extract_primary_heading_literal(&template_raw),
+        primary_heading: extract_primary_heading_literal(&template_source),
     };
 
     let target = record.target_path(&project_root);
@@ -128,20 +171,6 @@ pub fn start(
     };
     print_json(&response)?;
     Ok(())
-}
-
-fn load_schema_template(cfg_path: &Option<PathBuf>, schema: &str) -> Result<String> {
-    if let Some(cfgp) = cfg_path {
-        if let Some(dir) = cfgp.parent() {
-            let p = dir
-                .join(".cli-rag/templates")
-                .join(format!("{}.md", schema));
-            if p.exists() {
-                return fs::read_to_string(&p).with_context(|| format!("reading template {:?}", p));
-            }
-        }
-    }
-    Ok("---\nid: {{id}}\ntags: []\nstatus: draft\ndepends_on: []\n---\n\n# {{id}}: {{title}}\n\n## Objective\n{{LOC|80}}\n\n## Context\n{{LOC|200}}\n\n## Decision\n{{LOC|120}}\n\n".to_string())
 }
 
 fn extract_primary_heading_literal(template_raw: &str) -> String {

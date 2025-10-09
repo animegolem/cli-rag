@@ -8,13 +8,6 @@ use cli_rag::cli::{
 use cli_rag::commands::ai_new::{SubmitInput, SubmitRequest};
 use cli_rag::config::load_config;
 
-fn warn_deprecated_alias(subcommand: &str) {
-    eprintln!(
-        "Deprecated: use `cli-rag ai index {}` (alias will be removed in a future release)",
-        subcommand
-    );
-}
-
 fn main() -> Result<()> {
     let cli = Cli::parse();
     match cli.command {
@@ -138,42 +131,6 @@ fn main() -> Result<()> {
                 &args.format,
                 args.dry_run,
                 args.full_rescan,
-            )?;
-        }
-        Commands::AiIndexPlan(args) => {
-            warn_deprecated_alias("plan");
-            let AiIndexPlanArgs {
-                edges,
-                min_cluster_size,
-                schema,
-                output,
-            } = args;
-            let (cfg, cfg_path) = load_config(&cli.config, &cli.base, cli.no_lua)?;
-            cli_rag::commands::ai_index_plan::run(
-                &cfg,
-                &cfg_path,
-                edges,
-                min_cluster_size,
-                schema,
-                output,
-            )?;
-        }
-        Commands::AiIndexApply(args) => {
-            warn_deprecated_alias("apply");
-            let AiIndexApplyArgs {
-                from,
-                write_cache,
-                write_frontmatter,
-                dry_run,
-            } = args;
-            let (cfg, cfg_path) = load_config(&cli.config, &cli.base, cli.no_lua)?;
-            cli_rag::commands::ai_index_apply::run(
-                &cfg,
-                &cfg_path,
-                from,
-                write_cache,
-                write_frontmatter,
-                dry_run,
             )?;
         }
         Commands::Ai { command } => match command {

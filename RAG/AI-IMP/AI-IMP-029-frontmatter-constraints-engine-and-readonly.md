@@ -5,11 +5,11 @@ tags:
   - Implementation
   - validation
   - frontmatter
-kanban_status: planned
+kanban_status: completed
 depends_on: [AI-EPIC-XXX-cli-v1-authoring-contracts, AI-IMP-028]
 confidence_score: 0.84
 created_date: 2025-10-09
-close_date:
+close_date: 2025-10-09
 --- 
 
 # AI-IMP-029-frontmatter-constraints-engine-and-readonly
@@ -41,13 +41,13 @@ close_date:
 Before marking an item complete on the checklist MUST **stop** and **think**. Have you validated all aspects are **implemented** and **tested**? 
 </CRITICAL_RULE> 
 
-- [ ] Add `enum`, `globs`, `integer`, `float` fields to `SchemaRule`; parse from TOML.
-- [ ] Implement enum checking for string(s); globs for string/array (use globset).
-- [ ] Implement integer/float bounds with inclusive min/max; type-check before validating bounds.
-- [ ] Add readonly list for system FM; block overrides during submit; add diagnostics with code `READONLY_FIELD`.
-- [ ] Populate StartResponse.frontmatter with allowed/readonly/enums/bounds.
-- [ ] Tests: positive/negative cases for each validator; submit fails on readonly and enum/globs/bounds violations; validate emits correct severity.
-- [ ] Run `cargo fmt`, `clippy`, full tests.
+- [x] Add `enum`, `globs`, `integer`, `float` fields to `SchemaRule`; parse from TOML.
+- [x] Implement enum checking for string(s); globs for string/array (use globset).
+- [x] Implement integer/float bounds with inclusive min/max; type-check before validating bounds.
+- [x] Add readonly list for system FM; block overrides during submit; add diagnostics with code `READONLY_FIELD`.
+- [x] Populate StartResponse.frontmatter with allowed/readonly/enums/bounds.
+- [x] Tests: positive/negative cases for each validator; submit fails on readonly and enum/globs/bounds violations; validate emits correct severity.
+- [x] Run `cargo fmt`, `clippy`, full tests.
 
 ### Acceptance Criteria
 **Scenario:** Enum + globs validation
@@ -71,5 +71,5 @@ WHEN inspecting the JSON
 THEN `frontmatter.allowed`, `frontmatter.readonly`, and enumerations/bounds are present and accurate. 
 
 ### Issues Encountered 
-{LOC|20}
-
+- Encountered an extra diagnostic when validating numeric/glob violations because regex and enum checks fire together; adjusted the integration assertion to accept the expanded list while still verifying the specific messages.
+- Unit test helper constructing `SchemaRule` instances required explicit initialization of the new fields (`enum_values`, `globs`, `integer`, `float`) to keep compile-time fixtures passing.

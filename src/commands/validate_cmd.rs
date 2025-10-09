@@ -17,7 +17,7 @@ pub fn run(
     full_rescan: bool,
 ) -> Result<()> {
     let docs = incremental_collect_docs(cfg, full_rescan)?;
-    let mut report = validate_docs(cfg, &docs);
+    let mut report = validate_docs(cfg, cfg_path, &docs);
     lua_validate_augment(
         cfg,
         cfg_path,

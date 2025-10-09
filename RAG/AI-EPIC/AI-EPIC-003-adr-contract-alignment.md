@@ -37,11 +37,11 @@ Unify AI surfaces under a single `ai` namespace with `ai index plan|apply` and `
 ## Requirements
 
 ### Functional Requirements
-- [ ] FR-1: Provide `cli-rag ai index plan|apply` under `ai` namespace with identical outputs to current commands.
-- [ ] FR-2: Emit deprecation warnings for `ai-index-plan` and `ai-index-apply` for one release window (no behavior change).
-- [ ] FR-3: Link schema TOML to Markdown templates and copy contract guidance (hidden comments, sections) into templates.
-- [ ] FR-4: Support explicit output destinations: global `[config.authoring.destinations]` and per-schema `[schema.new] output_path` override.
-- [ ] FR-5: Update help/README/completions to reflect the unified AI command layout and template behavior. {LOC|40}
+- [x] FR-1: Provide `cli-rag ai index plan|apply` under `ai` namespace with identical outputs to current commands.
+- [x] FR-2: Emit deprecation warnings for `ai-index-plan` and `ai-index-apply` for one release window (no behavior change).
+- [x] FR-3: Link schema TOML to Markdown templates and copy contract guidance (hidden comments, sections) into templates.
+- [x] FR-4: Support explicit output destinations: global `[config.authoring.destinations]` and per-schema `[schema.new] output_path` override.
+- [x] FR-5: Update help/README/completions to reflect the unified AI command layout and template behavior. {LOC|40}
 
 ### Non-Functional Requirements 
 - Preserve protocolVersion and schema outputs; zero breaking changes in JSON.
@@ -53,4 +53,3 @@ Unify AI surfaces under a single `ai` namespace with `ai index plan|apply` and `
 - AI-IMP-024: Output destination keys (global + per-schema) and docs
 - AI-IMP-025: Deprecate legacy `new` path and steer to AI-first authoring
 - AI-IMP-026: Help/README/completions refresh and migration notes {LOC|25}
-

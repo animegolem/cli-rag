@@ -6,12 +6,12 @@ tags:
   - templates
   - contracts
   - authoring
-kanban_status: planned
+kanban_status: completed
 depends_on:
   - AI-EPIC-003
 confidence_score: 0.86
 created_date: 2025-09-18
-close_date:
+close_date: 2025-10-08
 ---
 
 # AI-IMP-023-template-parity-with-contract-examples

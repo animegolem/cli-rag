@@ -8,18 +8,23 @@ use uuid::Uuid;
 use crate::config::Config;
 use crate::model::AdrDoc;
 
-pub fn render_template(mut s: String, id: &str, title: &str) -> String {
-    s = s.replace("{{id}}", id);
-    s = s.replace("{{title}}", title);
+pub struct TemplateVars<'a> {
+    pub id: &'a str,
+    pub title: &'a str,
+    pub schema: &'a str,
+    pub filename: &'a str,
+}
+
+pub fn render_template(mut s: String, vars: &TemplateVars) -> String {
     let now = Local::now();
-    s = s.replace("{{date}}", &now.format("%Y-%m-%d").to_string());
-    s = s.replace("{{time}}", &now.format("%H:%M").to_string());
-    let placeholder_present = if s.contains("((frontmatter))") {
-        s = s.replace("((frontmatter))", "");
-        true
-    } else {
-        false
-    };
+    let template_snapshot = s.clone();
+    if s.contains("{{frontmatter}}") {
+        let frontmatter_yaml = build_frontmatter_yaml(vars, &template_snapshot);
+        s = s.replace("{{frontmatter}}", &frontmatter_yaml);
+    }
+    // Drop legacy token if encountered
+    s = s.replace("((frontmatter))", "");
+
     if let Ok(re) = Regex::new(r"\{\{LOC\|(\d+)\}\}") {
         s = re
             .replace_all(&s, |caps: &regex::Captures| {
@@ -31,32 +36,76 @@ pub fn render_template(mut s: String, id: &str, title: &str) -> String {
             })
             .to_string();
     }
-    if s.starts_with("---\n") {
-        if let Some(end) = s.find("\n---\n") {
-            let fm_content = &s[4..end];
-            let rest = &s[end + 5..];
-            if let Ok(val) = serde_yaml::from_str::<serde_yaml::Value>(fm_content) {
-                use serde_yaml::{Mapping, Value};
-                let mut map = match val {
-                    Value::Mapping(m) => m,
-                    _ => Mapping::new(),
-                };
-                map.insert(Value::String("id".into()), Value::String(id.into()));
-                if placeholder_present {
-                    map.entry(Value::String("tags".into()))
-                        .or_insert_with(|| Value::Sequence(vec![]));
-                    map.entry(Value::String("status".into()))
-                        .or_insert_with(|| Value::String("draft".into()));
-                    map.entry(Value::String("depends_on".into()))
-                        .or_insert_with(|| Value::Sequence(vec![]));
-                }
-                let yaml = serde_yaml::to_string(&Value::Mapping(map)).unwrap_or_default();
-                let front = format!("---\n{}---\n", yaml);
-                s = format!("{}{}", front, rest);
-            }
-        }
+    substitute_tokens(&s, vars, now)
+}
+
+fn build_frontmatter_yaml(vars: &TemplateVars, template: &str) -> String {
+    use serde_yaml::{Mapping, Value};
+
+    let mut map = Mapping::new();
+    map.insert(
+        Value::String("id".into()),
+        Value::String(vars.id.to_string()),
+    );
+    if !template.contains(
+        "
+tags:",
+    ) {
+        map.insert(Value::String("tags".into()), Value::Sequence(Vec::new()));
     }
-    s
+    if !template.contains(
+        "
+status:",
+    ) {
+        map.insert(
+            Value::String("status".into()),
+            Value::String("draft".into()),
+        );
+    }
+    if !template.contains(
+        "
+depends_on:",
+    ) {
+        map.insert(
+            Value::String("depends_on".into()),
+            Value::Sequence(Vec::new()),
+        );
+    }
+    serde_yaml::to_string(&Value::Mapping(map)).unwrap_or_default()
+}
+
+fn substitute_tokens(s: &str, vars: &TemplateVars, now: chrono::DateTime<Local>) -> String {
+    let var_re = Regex::new(r"\{\{\s*([a-zA-Z0-9_.]+)\s*(?:\|\s*([^}]+))?\s*\}\}").unwrap();
+    var_re
+        .replace_all(s, |caps: &regex::Captures| {
+            let full = caps.get(0).map(|m| m.as_str()).unwrap_or("");
+            let var = caps.get(1).map(|m| m.as_str()).unwrap_or("");
+            let modifier = caps.get(2).map(|m| m.as_str().trim());
+            match var {
+                "id" => vars.id.to_string(),
+                "title" => vars.title.to_string(),
+                "schema.name" => vars.schema.to_string(),
+                "filename" => vars.filename.to_string(),
+                "date" => now.format("%Y-%m-%d").to_string(),
+                "time" => now.format("%H:%M").to_string(),
+                "now" => {
+                    if let Some(mods) = modifier {
+                        if let Some(pat) = mods.strip_prefix("date:") {
+                            let pat = pat.trim().trim_matches('"').trim_matches('\'');
+                            return now.format(pat).to_string();
+                        }
+                    }
+                    now.to_rfc3339()
+                }
+                "LOC" => full.to_string(),
+                _ => full.to_string(),
+            }
+        })
+        .to_string()
+}
+
+pub fn render_text_with_vars(text: &str, vars: &TemplateVars) -> String {
+    substitute_tokens(text, vars, Local::now())
 }
 
 pub fn compute_next_id(prefix: &str, docs: &Vec<AdrDoc>, padding: usize) -> String {

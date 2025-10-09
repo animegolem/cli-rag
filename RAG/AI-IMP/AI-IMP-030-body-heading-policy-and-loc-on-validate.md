@@ -5,11 +5,11 @@ tags:
   - Implementation
   - validation
   - body
-kanban_status: planned
+kanban_status: completed
 depends_on: [AI-EPIC-XXX-cli-v1-authoring-contracts, AI-IMP-028]
 confidence_score: 0.83
 created_date: 2025-10-09
-close_date:
+close_date: 2025-10-09
 --- 
 
 # AI-IMP-030-body-heading-policy-and-loc-on-validate
@@ -45,12 +45,12 @@ We only enforce per-heading LOC during `ai new submit` (on_creation) and do not 
 Before marking an item complete on the checklist MUST **stop** and **think**. Have you validated all aspects are **implemented** and **tested**? 
 </CRITICAL_RULE> 
 
-- [ ] Resolve expected headings from precedence; expose a helper to retrieve the template headings for a schema.
-- [ ] Implement `heading_check` with deterministic messages (exact vs missing_only).
-- [ ] Implement `max_count` for body headings.
-- [ ] Implement `line_count.scan_policy=on_validate` with per-heading LOC checks during validate.
-- [ ] Tests: verify each policy mode and LOC enforcement across submit vs validate.
-- [ ] Run `cargo fmt`, `clippy`, full tests.
+- [x] Resolve expected headings from precedence; expose a helper to retrieve the template headings for a schema.
+- [x] Implement `heading_check` with deterministic messages (exact vs missing_only).
+- [x] Implement `max_count` for body headings.
+- [x] Implement `line_count.scan_policy=on_validate` with per-heading LOC checks during validate.
+- [x] Tests: verify each policy mode and LOC enforcement across submit vs validate.
+- [x] Run `cargo fmt`, `clippy`, full tests.
 
 ### Acceptance Criteria
 **Scenario:** exact heading policy
@@ -69,5 +69,5 @@ WHEN a note exceeds heading count or LOC per heading after edits
 THEN validate emits warnings/errors per severity; submit remains unaffected if not in on_creation.
 
 ### Issues Encountered 
-{LOC|20}
-
+- Raw `format!` strings in tests collapsed `{{ }}` tokens; resolved by escaping braces to ensure templates retain the contract variables (e.g., `{{{{frontmatter}}}}`).
+- Added helper access from validation to ai_new store module; required making the module public and adjusting slice-based signatures to satisfy clippy.

@@ -1,4 +1,5 @@
 use assert_cmd::prelude::*;
+use predicates::str::contains;
 use std::process::Command;
 
 #[test]
@@ -7,7 +8,21 @@ fn cli_help_prints_usage() {
     cmd.arg("--help")
         .assert()
         .success()
-        .stdout(predicates::str::contains("Usage"))
-        .stdout(predicates::str::contains("validate"))
-        .stdout(predicates::str::contains("info"));
+        .stdout(contains("Usage"))
+        .stdout(contains("validate"))
+        .stdout(contains("info"))
+        .stdout(contains("AI-oriented workflows"));
+}
+
+#[test]
+fn cli_ai_help_lists_subcommands() {
+    Command::cargo_bin("cli-rag")
+        .unwrap()
+        .args(["ai", "--help"])
+        .assert()
+        .success()
+        .stdout(contains("new"))
+        .stdout(contains("index"))
+        .stdout(contains("start"))
+        .stdout(contains("plan"));
 }

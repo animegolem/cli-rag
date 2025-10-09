@@ -1,6 +1,8 @@
 use crate::config::Config;
 use crate::model::AdrDoc;
-use mlua::{Function as LuaFunction, Lua, Table as LuaTable};
+use chrono::Utc;
+use heck::{ToKebabCase, ToLowerCamelCase, ToShoutySnakeCase, ToSnakeCase, ToUpperCamelCase};
+use mlua::{Function as LuaFunction, Lua, Table as LuaTable, Value as LuaValue};
 use std::collections::BTreeMap;
 
 fn load_overlay(lua: &Lua) -> Option<LuaTable<'_>> {
@@ -95,15 +97,27 @@ pub fn lua_validate_augment(
     }
 }
 
+pub struct LuaNewArtifacts {
+    pub id_override: Option<String>,
+    pub frontmatter_overrides: Option<BTreeMap<String, serde_yaml::Value>>,
+    pub template_prompt: Option<String>,
+    pub template_note: Option<String>,
+}
+
 pub fn lua_new_hooks(
     cfg: &Config,
     cfg_path: &Option<std::path::PathBuf>,
     schema: &str,
     title: &str,
     docs: &[AdrDoc],
-) -> (Option<String>, Option<BTreeMap<String, serde_yaml::Value>>) {
+) -> LuaNewArtifacts {
     if !cfg.overlays.enabled {
-        return (None, None);
+        return LuaNewArtifacts {
+            id_override: None,
+            frontmatter_overrides: None,
+            template_prompt: None,
+            template_note: None,
+        };
     }
     if let Some(lua) = crate::config::lua::load_overlay_state(cfg_path, &cfg.overlays) {
         if let Some(overlay) = load_overlay(&lua) {
@@ -136,25 +150,110 @@ pub fn lua_new_hooks(
                 .unwrap();
             let _ = idx_tbl.set("next_numeric_id", func);
             let _ = ctx.set("index", idx_tbl);
+            let util_tbl = lua.create_table().unwrap();
+            let _ = util_tbl.set(
+                "kebab_case",
+                lua.create_function(|_, s: String| Ok(s.to_kebab_case()))
+                    .unwrap(),
+            );
+            let _ = util_tbl.set(
+                "snake_case",
+                lua.create_function(|_, s: String| Ok(s.to_snake_case()))
+                    .unwrap(),
+            );
+            let _ = util_tbl.set(
+                "pascal_case",
+                lua.create_function(|_, s: String| Ok(s.to_upper_camel_case()))
+                    .unwrap(),
+            );
+            let _ = util_tbl.set(
+                "camel_case",
+                lua.create_function(|_, s: String| Ok(s.to_lower_camel_case()))
+                    .unwrap(),
+            );
+            let _ = util_tbl.set(
+                "screaming_snake_case",
+                lua.create_function(|_, s: String| Ok(s.to_shouty_snake_case()))
+                    .unwrap(),
+            );
+            let _ = ctx.set("util", util_tbl);
+
+            let clock_tbl = lua.create_table().unwrap();
+            let _ = clock_tbl.set(
+                "today_iso",
+                lua.create_function(|_, ()| Ok(Utc::now().date_naive().to_string()))
+                    .unwrap(),
+            );
+            let _ = clock_tbl.set(
+                "now_iso",
+                lua.create_function(|_, ()| Ok(Utc::now().to_rfc3339()))
+                    .unwrap(),
+            );
+            let _ = ctx.set("clock", clock_tbl);
+
+            let schema_tbl = lua.create_table().unwrap();
+            let _ = schema_tbl.set("name", schema.to_string());
+            let _ = ctx.set("schema", schema_tbl);
+
+            let cfg_tbl = lua.create_table().unwrap();
+            if let Some(cfg_version) = &cfg.config_version {
+                let _ = cfg_tbl.set("config_version", cfg_version.clone());
+            }
+            if let Some(path) = cfg_path.as_ref().and_then(|p| p.to_str()) {
+                let _ = cfg_tbl.set("path", path.to_string());
+            }
+            let _ = ctx.set("config", cfg_tbl);
 
             // id_generator
+            let mut id_override = None;
             if let Ok(f) = overlay.get::<_, LuaFunction>("id_generator") {
-                if let Ok(mlua::Value::Table(t)) =
-                    f.call::<_, mlua::Value>((schema.to_string(), ctx.clone()))
+                if let Ok(LuaValue::Table(t)) =
+                    f.call::<_, LuaValue>((schema.to_string(), ctx.clone()))
                 {
                     if let Ok(newid) = t.get::<_, String>("id") {
-                        // optional fm next
-                        let fm = render_fm(&overlay, &lua, schema, title, ctx);
-                        return (Some(newid), fm);
+                        id_override = Some(newid);
                     }
                 }
             }
-            // fm only
-            let fm = render_fm(&overlay, &lua, schema, title, ctx);
-            return (None, fm);
+            // FM overrides
+            let fm = render_fm(&overlay, &lua, schema, title, ctx.clone());
+
+            // template prompt/note
+            let template_prompt = if let Ok(func) = overlay.get::<_, LuaFunction>("template_prompt")
+            {
+                match func.call::<_, LuaValue>(ctx.clone()) {
+                    Ok(LuaValue::String(s)) => Some(s.to_str().unwrap_or_default().to_string()),
+                    Ok(LuaValue::Nil) | Err(_) => None,
+                    _ => None,
+                }
+            } else {
+                None
+            };
+
+            let template_note = if let Ok(func) = overlay.get::<_, LuaFunction>("template_note") {
+                match func.call::<_, LuaValue>(ctx.clone()) {
+                    Ok(LuaValue::String(s)) => Some(s.to_str().unwrap_or_default().to_string()),
+                    Ok(LuaValue::Nil) | Err(_) => None,
+                    _ => None,
+                }
+            } else {
+                None
+            };
+
+            return LuaNewArtifacts {
+                id_override,
+                frontmatter_overrides: fm,
+                template_prompt,
+                template_note,
+            };
         }
     }
-    (None, None)
+    LuaNewArtifacts {
+        id_override: None,
+        frontmatter_overrides: None,
+        template_prompt: None,
+        template_note: None,
+    }
 }
 
 fn render_fm(

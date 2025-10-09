@@ -6,14 +6,14 @@ tags:
   - docs
   - help
   - completions
-kanban_status: planned
+kanban_status: completed
 depends_on:
   - AI-EPIC-003
   - AI-IMP-022
   - AI-IMP-025
 confidence_score: 0.88
 created_date: 2025-09-18
-close_date:
+close_date: 2025-10-08
 ---
 
 # AI-IMP-026-help-readme-completions-refresh-and-migration-notes
@@ -45,7 +45,7 @@ After unifying AI commands and deprecating legacy `new`, the CLI’s help text, 
 Before marking an item complete on the checklist MUST **stop** and **think**. Have you validated all aspects are **implemented** and **tested**? 
 </CRITICAL_RULE> 
 
-- [x] Help: update subcommand descriptions to reflect unified AI layout; tag deprecated aliases.
+- [x] Help: update subcommand descriptions to reflect unified AI layout (aliases removed).
 - [x] Completions: regenerate and validate basic generation in CI for bash and zsh.
 - [x] README: update usage sections and examples to `cli-rag ai index …` and `cli-rag ai new …`; add migration box.
 - [x] README: include an `ai new start --format json | jq '.noteTemplate'` example to showcase template guidance.
@@ -56,8 +56,7 @@ Before marking an item complete on the checklist MUST **stop** and **think**. Ha
 **Scenario:** Help output reflects unified commands
 GIVEN a built binary
 WHEN running `cli-rag --help` and `cli-rag ai --help`
-THEN help lists `ai index plan|apply` and `ai new …`
-AND deprecated aliases are labeled as deprecated.
+THEN help lists `ai index plan|apply` and `ai new …` (with no legacy aliases).
 
 **Scenario:** README examples match behavior
 GIVEN the repository README

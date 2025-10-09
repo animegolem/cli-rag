@@ -1,7 +1,7 @@
 use anyhow::{Context, Result};
 use serde::Deserialize;
 use serde_json::{Map as JsonMap, Value as JsonValue};
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::fs;
 use std::io::{self, Read};
 use std::path::PathBuf;
@@ -58,6 +58,7 @@ pub fn load_submit_payload(input: &SubmitInput) -> Result<SubmitPayload> {
 
 pub fn validate_sections(record: &DraftRecord, payload: &SubmitPayload) -> Vec<SubmitDiagnostic> {
     let mut diagnostics = Vec::new();
+    let enforce_loc = record.constraints.line_count_scan_policy != "on_validate";
     for heading in &record.constraints.headings {
         let content = payload
             .sections
@@ -65,9 +66,9 @@ pub fn validate_sections(record: &DraftRecord, payload: &SubmitPayload) -> Vec<S
             .cloned()
             .unwrap_or_default();
         let line_count = content.lines().count() as u64;
-        if heading.max_lines > 0 && line_count > heading.max_lines {
+        if enforce_loc && heading.max_lines > 0 && line_count > heading.max_lines {
             diagnostics.push(SubmitDiagnostic {
-                severity: "error".into(),
+                severity: record.constraints.line_count_severity.clone(),
                 code: "LOC_LIMIT".into(),
                 message: format!(
                     "Section '{}' exceeds max lines ({} > {})",
@@ -76,6 +77,46 @@ pub fn validate_sections(record: &DraftRecord, payload: &SubmitPayload) -> Vec<S
                 heading: Some(heading.name.clone()),
                 max: Some(heading.max_lines),
                 actual: Some(line_count),
+            });
+        }
+    }
+    diagnostics
+}
+
+pub fn check_readonly(record: &DraftRecord, payload: &SubmitPayload) -> Vec<SubmitDiagnostic> {
+    let readonly: HashSet<&str> = record
+        .constraints
+        .frontmatter
+        .readonly
+        .iter()
+        .map(|s| s.as_str())
+        .collect();
+    if readonly.is_empty() {
+        return Vec::new();
+    }
+    let seed_obj = record.seed_frontmatter.as_object();
+    let mut diagnostics = Vec::new();
+    for (key, value) in &payload.frontmatter {
+        if !readonly.contains(key.as_str()) {
+            continue;
+        }
+        let expected = if key == "id" {
+            Some(JsonValue::String(record.id.clone()))
+        } else {
+            seed_obj.and_then(|obj| obj.get(key)).cloned()
+        };
+        let violation = match expected {
+            Some(expected_val) => value != &expected_val,
+            None => true,
+        };
+        if violation {
+            diagnostics.push(SubmitDiagnostic {
+                severity: "error".into(),
+                code: "READONLY_FIELD".into(),
+                message: format!("Field '{}' is readonly and cannot be modified", key),
+                heading: None,
+                max: None,
+                actual: None,
             });
         }
     }

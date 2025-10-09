@@ -1,5 +1,5 @@
 ---
-((frontmatter))
+{{frontmatter}}
 node_id: {{id}}
 kanban_status: backlog
 kanban_statusline: ""

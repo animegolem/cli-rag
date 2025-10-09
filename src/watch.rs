@@ -45,7 +45,7 @@ pub fn run_watch(
     // Initial run
     {
         let docs = incremental_collect_docs(cfg, args.full_rescan)?;
-        let report = validate_docs(cfg, &docs);
+        let report = validate_docs(cfg, cfg_path, &docs);
         if args.json {
             emit(
                 "validated",
@@ -116,7 +116,7 @@ pub fn run_watch(
         while rx.try_recv().is_ok() {}
         std::thread::sleep(debounce);
         let docs = incremental_collect_docs(cfg, false)?;
-        let report = validate_docs(cfg, &docs);
+        let report = validate_docs(cfg, cfg_path, &docs);
         if args.json {
             emit(
                 "validated",

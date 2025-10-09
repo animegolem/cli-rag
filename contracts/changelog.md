@@ -1,15 +1,17 @@
 # Contracts Change Log
 
-## 2025-09-21: Help text, README, and completions refresh
+## 2025-10-08: Help/README/completions alignment for AI namespace + alias removal
 
 ### Reason for change
-- Surface the unified `cli-rag ai …` workflows consistently across help output and docs after retiring the legacy `new` command.
-- Provide migration guidance and explicit shell completion examples for the updated command tree.
+- Reflect the unified `cli-rag ai` hierarchy across help output and docs as we finalize the AI-first surface.
+- Remove the legacy `ai-index-plan` / `ai-index-apply` aliases now that downstream usage has migrated.
+- Provide an explicit migration note and quickstart showcasing the draft workflow.
 
 ### Overview of change
-- src/cli.rs: add descriptive help strings for top-level commands while keeping deprecated aliases labelled.
-- README.md: expand AI authoring quickstart, add migration notes, and document completions generation.
-- Documentation checklist (AI-IMP-026): marked as complete now that help/docs/completions are aligned.
+- src/cli.rs / src/bin/cli-rag.rs: removed legacy alias commands entirely; help output now lists only the unified `ai` hierarchy.
+- README.md: reorganized command overview, added an AI authoring quickstart, refreshed the migration note, and documented `ai new cancel` auto-selection behavior when only one draft exists.
+- ai new cancel: now omits `--draft` when a single draft is active and surfaces a structured error listing options when multiple drafts exist.
+- This work satisfies AI-IMP-026 and AI-IMP-027 prior to closing the tickets; shell completions continue to cover the refreshed hierarchy.
 
 ## 2025-09-19: Validate JSON envelope parity and info schema cleanup
 

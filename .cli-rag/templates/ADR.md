@@ -1,5 +1,5 @@
 ---
-((frontmatter))
+{{frontmatter}}
 created_date: {{date}}
 last_modified: {{date}}
 related_files: []

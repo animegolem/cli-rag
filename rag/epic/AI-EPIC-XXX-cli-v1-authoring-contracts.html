@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+	"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<title>AI-EPIC-XXX-cli-v1-authoring-contracts.html</title>
+<meta http-equiv="Content-Type" content="application/xhtml+xml;charset=utf-8"/>
+<link rel="stylesheet" type="text/css" media="all" href="https://cdn.jsdelivr.net/npm/github-markdown-css/github-markdown.min.css"  />
+<link rel="stylesheet" type="text/css" media="all" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/styles/github.min.css"  /><meta name='viewport' content='width=device-width, initial-scale=1, shrink-to-fit=no'><style> body { box-sizing: border-box; max-width: 740px; width: 100%; margin: 40px auto; padding: 0 10px; } </style><script id='MathJax-script' async src='https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js'></script><script src='https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/highlight.min.js'></script><script>document.addEventListener('DOMContentLoaded', () => { document.body.classList.add('markdown-body'); document.querySelectorAll('pre[lang] > code').forEach((code) => { code.classList.add(code.parentElement.lang); }); document.querySelectorAll('pre > code').forEach((code) => { hljs.highlightBlock(code); }); });</script>
+</head>
+
+<body>
+
+<h1
+id="ai-epic-xxx-cli-v1-authoring-contracts">AI-EPIC-XXX-cli-v1-authoring-contracts</h1>
+<h2 id="problem-statementfeature-scope">Problem Statement/Feature
+Scope</h2>
+<p>The CLI’s AI authoring flow does not yet fully implement the contract
+features defined under
+<code>contracts/v1/config/user_config/templates/ADR.toml</code> and
+related overlay examples
+(<code>ADR-concept.lua</code>/<code>.fnl</code>). We currently consume
+repo-local <code>.cli-rag/templates/{Schema}.toml</code> (schema rules)
+and <code>.md</code> (body scaffolds), and wire a subset of Lua hooks,
+but we do not honor TOML/Lua template prompts/bodies, several
+field-level validators (enum, globs, numeric bounds), nor heading policy
+and wikilinks rules. We must close these gaps to reach a solid v1
+authoring experience aligned with the contracts. {LOC|10}</p>
+<h2 id="proposed-solutions">Proposed Solution(s)</h2>
+<p>Implement a contracts-first authoring pipeline with explicit
+precedence and full validator coverage: - Template precedence for
+instructions and body: Lua
+(<code>template_prompt</code>/<code>template_note</code>) → TOML
+(<code>[schema.new.template.prompt|note]</code>) → repo <code>.md</code>
+scaffold → minimal fallback. - Canonical template variables use
+<code>{{...}}</code>; tokens such as <code>{{frontmatter}}</code> and
+<code>{{LOC|N}}</code> must be supported. - Extend variable DSL for body
+templates: support <code>{{filename}}</code>,
+<code>{{schema.name}}</code>, and <code>{{now | date:"%Y-%m-%d"}}</code>
+alongside existing filters. - Elevate Lua overlay API to spec:
+<code>ctx.util</code>, <code>ctx.clock</code>, <code>ctx.schema</code>,
+<code>ctx.config</code>; wire
+<code>template_prompt</code>/<code>template_note</code> hooks. - Add
+field-level validators and readonly enforcement in submit; expose the
+constraints envelope in StartResponse. - Add body policies
+(heading_check, max_count, LOC scan_policy) and wikilinks min_out/min_in
+rules. - Standardize defaults and docs to <code>RAG/ADR</code> for ADR
+destinations while allowing configuration overrides. {LOC|25}</p>
+<h2 id="paths-not-taken">Path(s) Not Taken</h2>
+<ul>
+<li>Building a new templating DSL: we continue with Markdown scaffolds
+and optional Lua template generation.</li>
+<li>Implementing GUI/TUI integration in this epic: scope is CLI-only;
+visual mode remains future work. {LOC|10}</li>
+</ul>
+<h2 id="success-metrics">Success Metrics</h2>
+<ul>
+<li><code>ai new start</code> surfaces instructions from Lua/TOML when
+present; <code>.noteTemplate</code> reflects the resolved template with
+comments and constraints.</li>
+<li><code>ai new submit</code> enforces readonly FM fields and
+field-level constraints (enum, globs, numeric bounds) and rejects on
+contract violations (exit 2).</li>
+<li><code>validate</code> enforces heading policy
+(exact|missing_only|ignore), max_count, and LOC when
+scan_policy=on_validate, and applies wikilinks min_out/min_in with
+configured severity.</li>
+<li>Lua overlay hooks
+(<code>template_prompt</code>/<code>template_note</code>) work with
+enriched ctx; precedence is deterministic and documented.</li>
+<li>Defaults and README reflect <code>RAG/ADR</code> destinations; all
+tests and CI pass across platforms. {LOC|15}</li>
+</ul>
+<h2 id="requirements">Requirements</h2>
+<h3 id="functional-requirements">Functional Requirements</h3>
+<ul class="task-list">
+<li><label><input type="checkbox" />FR-1 Template precedence
+(instructions): Lua <code>template_prompt(ctx)</code> → TOML
+<code>[schema.new.template.prompt].template</code> → fallback
+generic.</label></li>
+<li><label><input type="checkbox" />FR-2 Template precedence (note
+body): Lua <code>template_note(ctx)</code> → TOML
+<code>[schema.new.template.note].template</code> → repo
+<code>.cli-rag/templates/{Schema}.md</code> → minimal
+fallback.</label></li>
+<li><label><input type="checkbox" />FR-3 Canonical token support: render
+<code>{{frontmatter}}</code>, <code>{{id}}</code>,
+<code>{{title}}</code>, <code>{{schema.name}}</code>,
+<code>{{now|date:"..."}}</code>, and <code>{{filename}}</code> in body
+and filename templates.</label></li>
+<li><label><input type="checkbox" />FR-4 Lua API completeness: provide
+<code>ctx.util</code> (case helpers), <code>ctx.clock</code>
+(<code>today_iso()</code>, <code>now_iso()</code>),
+<code>ctx.schema</code> (resolved schema table), and
+<code>ctx.config</code> (resolved config subset); keep
+<code>ctx.index.next_numeric_id</code>.</label></li>
+<li><label><input type="checkbox" />FR-5 Frontmatter constraints:
+implement per-field <code>enum</code>, <code>globs</code>,
+<code>integer{min,max}</code>, <code>float{min,max}</code> with severity
+overrides; maintain existing <code>regex</code>, <code>array</code>,
+<code>min_items</code>, <code>refers_to_types</code>.</label></li>
+<li><label><input type="checkbox" />FR-6 Readonly enforcement: block
+changes to readonly fields (e.g., <code>id</code>,
+<code>created_date</code>) at submit; return structured
+diagnostics.</label></li>
+<li><label><input type="checkbox" />FR-7 StartResponse fidelity: include
+<code>headingStrictness</code>, <code>frontmatter.allowed</code>,
+<code>frontmatter.readonly</code>, <code>frontmatter.enums</code>, and
+numeric bounds.</label></li>
+<li><label><input type="checkbox" />FR-8 Body heading policy: implement
+<code>heading_check = exact|missing_only|ignore</code>,
+<code>max_count</code>, and
+<code>line_count.scan_policy = on_creation|on_validate</code> using
+headings from the resolved template source.</label></li>
+<li><label><input type="checkbox" />FR-9 Wikilinks policy: parse body
+<code>[[wikilinks]]</code>, enforce <code>min_outgoing</code> and
+<code>min_incoming</code> with severity, and report per-note diagnostics
+in validate.</label></li>
+<li><label><input type="checkbox" />FR-10 Edges policy uplift: support
+per-edge <code>required</code>, per-edge <code>cycle_detection</code>
+(override schema-level), and
+<code>cross_schema.allowed_targets</code>.</label></li>
+<li><label><input type="checkbox" />FR-11 Defaults/docs: standardize
+examples/presets to <code>RAG/ADR</code> for ADR; document destination
+precedence and template precedence.</label></li>
+</ul>
+<h3 id="non-functional-requirements">Non-Functional Requirements</h3>
+<ul>
+<li>Contracts-first: when examples differ, the <code>contracts/</code>
+spec is authoritative; behavior and docs reflect the spec.</li>
+<li>Deterministic outputs: preserve stable ordering and exit codes; fail
+with exit 2 on contract violations.</li>
+<li>Backwards compatibility: maintain existing JSON envelopes while
+shifting templates to <code>{{frontmatter}}</code>. {LOC|20}</li>
+</ul>
+<h2 id="implementation-breakdown">Implementation Breakdown</h2>
+<ul>
+<li>Phase 1: Authoring template ingestion
+<ul>
+<li>Lua/TOML precedence for prompt/note; token support
+(<code>{{frontmatter}}</code>); add <code>{{filename}}</code>; enrich
+Lua ctx.</li>
+</ul></li>
+<li>Phase 2: Frontmatter constraints
+<ul>
+<li>enum/globs/integer/float + readonly enforcement; populate
+StartResponse frontmatter constraints.</li>
+</ul></li>
+<li>Phase 3: Body policies
+<ul>
+<li>heading_check, max_count, LOC on validate; headings derive from
+resolved template.</li>
+</ul></li>
+<li>Phase 4: Wikilinks and edges policy
+<ul>
+<li>Parse wikilinks; enforce min_out/min_in; per-edge required/cycle
+overrides; cross-schema targets.</li>
+</ul></li>
+<li>Phase 5: Docs &amp; defaults
+<ul>
+<li>Update README and examples for precedence and <code>RAG/ADR</code>
+defaults; outline operator guidance in <code>info</code>/docs.
+{LOC|25}</li>
+</ul></li>
+</ul>
+
+</body>
+</html>

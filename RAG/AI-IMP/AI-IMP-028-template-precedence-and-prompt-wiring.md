@@ -6,7 +6,7 @@ tags:
   - authoring
   - templates
   - lua
-kanban_status: planned
+kanban_status: in-progress
 depends_on: [AI-EPIC-XXX-cli-v1-authoring-contracts]
 confidence_score: 0.86
 created_date: 2025-10-09
@@ -44,14 +44,14 @@ close_date:
 Before marking an item complete on the checklist MUST **stop** and **think**. Have you validated all aspects are **implemented** and **tested**? 
 </CRITICAL_RULE> 
 
-- [ ] Add `template_prompt`/`template_note` hooks to Lua integration; expose `ctx.util` and `ctx.clock`.
-- [ ] Parse TOML prompt/note templates under `[schema.new.template]` when present.
-- [ ] Compute `filename` in `ai new start`; include as a template variable for body rendering.
-- [ ] Replace `((frontmatter))` support with `{{frontmatter}}`; migrate repo `.md` scaffolds.
-- [ ] Implement precedence resolution for `instructions` and `noteTemplate`.
-- [ ] Extend renderer to handle `{{schema.name}}`, `{{now|date:"..."}}` in body consistently.
-- [ ] Tests: Lua wins over TOML; TOML wins over `.md`; fallback works; `{{filename}}` is populated; token migration validated.
-- [ ] Run `cargo fmt`, `clippy`, full test suite.
+- [x] Add `template_prompt`/`template_note` hooks to Lua integration; expose `ctx.util` and `ctx.clock`.
+- [x] Parse TOML prompt/note templates under `[schema.new.template]` when present.
+- [x] Compute `filename` in `ai new start`; include as a template variable for body rendering.
+- [x] Replace `((frontmatter))` support with `{{frontmatter}}`; migrate repo `.md` scaffolds.
+- [x] Implement precedence resolution for `instructions` and `noteTemplate`.
+- [x] Extend renderer to handle `{{schema.name}}`, `{{now|date:"..."}}` in body consistently.
+- [x] Tests: Lua wins over TOML; TOML wins over `.md`; fallback works; `{{filename}}` is populated; token migration validated.
+- [x] Run `cargo fmt`, `clippy`, full test suite.
 
 ### Acceptance Criteria
 **Scenario:** Lua prompt/body precedence
@@ -75,5 +75,4 @@ WHEN running start
 THEN the rendered frontmatter block is injected; `((frontmatter))` is no longer supported.
 
 ### Issues Encountered 
-{LOC|20}
-
+Lua overlay test initially returned the fallback prompt because the inline Lua string literal was malformed; adjusted fixtures to use Lua long strings so `template_note` loads successfully.

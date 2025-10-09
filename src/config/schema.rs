@@ -22,6 +22,22 @@ pub struct SchemaNewCfg {
     pub lua_generator: Option<String>,
     #[serde(default)]
     pub output_path: Option<Vec<String>>,
+    #[serde(default)]
+    pub template: Option<SchemaTemplateCfg>,
+}
+
+#[derive(Debug, Deserialize, Clone, Default)]
+pub struct SchemaTemplateCfg {
+    #[serde(default)]
+    pub prompt: Option<TemplateStringCfg>,
+    #[serde(default)]
+    pub note: Option<TemplateStringCfg>,
+}
+
+#[derive(Debug, Deserialize, Clone, Default)]
+pub struct TemplateStringCfg {
+    #[serde(default)]
+    pub template: Option<String>,
 }
 
 #[derive(Debug, Clone, Default)]
@@ -69,6 +85,64 @@ pub struct SchemaRule {
     pub severity: Option<String>, // error | warn
     #[serde(default)]
     pub format: Option<String>, // for date parsing
+    #[serde(default, rename = "enum")]
+    pub enum_values: Option<Vec<String>>,
+    #[serde(default)]
+    pub globs: Option<Vec<String>>,
+    #[serde(default)]
+    pub integer: Option<IntegerRule>,
+    #[serde(default)]
+    pub float: Option<FloatRule>,
+}
+
+#[derive(Debug, Deserialize, Clone, Default)]
+pub struct IntegerRule {
+    #[serde(default)]
+    pub min: Option<i64>,
+    #[serde(default)]
+    pub max: Option<i64>,
+}
+
+#[derive(Debug, Deserialize, Clone, Default)]
+pub struct FloatRule {
+    #[serde(default)]
+    pub min: Option<f64>,
+    #[serde(default)]
+    pub max: Option<f64>,
+}
+
+#[derive(Debug, Deserialize, Clone, Default)]
+pub struct SchemaBodyHeadingsCfg {
+    #[serde(default)]
+    pub heading_check: Option<String>,
+    #[serde(default)]
+    pub max_count: Option<usize>,
+    #[serde(default)]
+    pub severity: Option<String>,
+}
+
+#[derive(Debug, Deserialize, Clone, Default)]
+pub struct SchemaBodyLineCountCfg {
+    #[serde(default)]
+    pub scan_policy: Option<String>,
+    #[serde(default)]
+    pub severity: Option<String>,
+}
+
+#[derive(Debug, Deserialize, Clone, Default)]
+pub struct SchemaBodyValidateCfg {
+    #[serde(default)]
+    pub headings: Option<SchemaBodyHeadingsCfg>,
+    #[serde(default)]
+    pub line_count: Option<SchemaBodyLineCountCfg>,
+}
+
+#[derive(Debug, Deserialize, Clone, Default)]
+pub struct SchemaValidateCfg {
+    #[serde(default)]
+    pub severity: Option<String>,
+    #[serde(default)]
+    pub body: Option<SchemaBodyValidateCfg>,
 }
 
 #[derive(Debug, Deserialize, Clone)]
@@ -89,6 +163,8 @@ pub struct SchemaCfg {
     pub allowed_keys: Vec<String>,
     #[serde(default)]
     pub rules: std::collections::BTreeMap<String, SchemaRule>,
+    #[serde(default)]
+    pub validate: Option<SchemaValidateCfg>,
 }
 
 #[derive(Debug, Deserialize, Clone)]

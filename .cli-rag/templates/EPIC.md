@@ -1,5 +1,5 @@
 ---
-((frontmatter))
+{{frontmatter}}
 node_id: {{id}}
 tags:
   - EPIC

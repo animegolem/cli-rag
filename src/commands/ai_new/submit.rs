@@ -8,7 +8,9 @@ use crate::discovery::docs_with_source;
 use crate::model::parse_front_matter_and_title;
 use crate::validate::validate_docs;
 
-use super::payload::{assemble_note, load_submit_payload, validate_sections, SubmitRequest};
+use super::payload::{
+    assemble_note, check_readonly, load_submit_payload, validate_sections, SubmitRequest,
+};
 use super::store::{DraftRecord, SubmitDiagnostic, SubmitFailure, SubmitSuccess};
 use super::utils::{path_relative_to, resolve_project_root};
 use crate::cli::OutputFormat;
@@ -65,6 +67,16 @@ pub fn submit(
     }
 
     let payload = load_submit_payload(&input)?;
+    let readonly_diagnostics = check_readonly(&record, &payload);
+    if !readonly_diagnostics.is_empty() {
+        let failure = SubmitFailure {
+            ok: false,
+            draft_id: record.draft_id.clone(),
+            diagnostics: readonly_diagnostics,
+        };
+        print_json(&failure)?;
+        std::process::exit(2);
+    }
     if !allow_oversize {
         let diagnostics = validate_sections(&record, &payload);
         if !diagnostics.is_empty() {
@@ -86,7 +98,7 @@ pub fn submit(
     let (mut docs, _used_unified) = docs_with_source(cfg, cfg_path)?;
     let temp_doc = parse_front_matter_and_title(&final_note, &target_path);
     docs.push(temp_doc);
-    let report = validate_docs(cfg, &docs);
+    let report = validate_docs(cfg, cfg_path, &docs);
     if !report.ok {
         let diagnostics = report
             .errors

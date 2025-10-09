@@ -1,7 +1,11 @@
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
-use serde_json::{Map as JsonMap, Value as JsonValue};
+use serde_json::{Map as JsonMap, Number as JsonNumber, Value as JsonValue};
+use std::collections::BTreeSet;
 use std::path::{Path, PathBuf};
+
+use crate::commands::ai_new::template_utils::extract_heading_constraints;
+use crate::config::SchemaCfg;
 
 pub const DEFAULT_TTL_SECONDS: u64 = 86_400;
 
@@ -15,9 +19,18 @@ pub struct HeadingConstraint {
 #[derive(Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct FrontmatterConstraint {
+    #[serde(default)]
     pub allowed: Vec<String>,
+    #[serde(default)]
     pub readonly: Vec<String>,
+    #[serde(default)]
     pub enums: JsonMap<String, JsonValue>,
+    #[serde(default)]
+    pub globs: JsonMap<String, JsonValue>,
+    #[serde(default)]
+    pub integers: JsonMap<String, JsonValue>,
+    #[serde(default)]
+    pub floats: JsonMap<String, JsonValue>,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -25,6 +38,14 @@ pub struct FrontmatterConstraint {
 pub struct DraftConstraints {
     pub headings: Vec<HeadingConstraint>,
     pub heading_strictness: String,
+    #[serde(default)]
+    pub heading_severity: String,
+    #[serde(default)]
+    pub max_heading_count: Option<u64>,
+    #[serde(default)]
+    pub line_count_scan_policy: String,
+    #[serde(default)]
+    pub line_count_severity: String,
     pub frontmatter: FrontmatterConstraint,
 }
 
@@ -148,60 +169,147 @@ pub fn extract_frontmatter_json(note: &str) -> Result<JsonValue> {
     Ok(JsonValue::Object(JsonMap::new()))
 }
 
-pub fn build_constraints(template_raw: &str, seed_frontmatter: &JsonValue) -> DraftConstraints {
-    let mut headings: Vec<HeadingConstraint> = Vec::new();
-    let mut current: Option<HeadingConstraint> = None;
-    for line in template_raw.lines() {
-        if let Some(rest) = line.strip_prefix("## ") {
-            if let Some(h) = current.take() {
-                headings.push(h);
-            }
-            current = Some(HeadingConstraint {
-                name: rest.trim().to_string(),
-                max_lines: 0,
-            });
-        } else if let Some(ref mut h) = current {
-            if let Some(loc) = extract_loc(line) {
-                h.max_lines = loc;
+pub fn build_constraints(
+    template_raw: &str,
+    seed_frontmatter: &JsonValue,
+    schema_cfg: Option<&SchemaCfg>,
+) -> DraftConstraints {
+    let headings = extract_heading_constraints(template_raw);
+
+    let mut allowed: BTreeSet<String> = BTreeSet::new();
+    if let Some(obj) = seed_frontmatter.as_object() {
+        allowed.extend(obj.keys().cloned());
+    }
+    let mut heading_strictness = "missing_only".to_string();
+    let mut heading_severity = "error".to_string();
+    let mut max_heading_count: Option<u64> = None;
+    let mut line_count_scan_policy = "on_creation".to_string();
+    let mut line_count_severity = "error".to_string();
+
+    if let Some(schema) = schema_cfg {
+        allowed.extend(schema.required.iter().cloned());
+        allowed.extend(schema.allowed_keys.iter().cloned());
+        allowed.extend(schema.rules.keys().cloned());
+        if let Some(validate) = &schema.validate {
+            if let Some(body) = &validate.body {
+                if let Some(headings_cfg) = &body.headings {
+                    if let Some(check) = &headings_cfg.heading_check {
+                        heading_strictness = check.clone();
+                    }
+                    if let Some(max) = headings_cfg.max_count {
+                        max_heading_count = Some(max as u64);
+                    }
+                    if let Some(sev) = &headings_cfg.severity {
+                        heading_severity = sev.clone();
+                    } else if let Some(sev) = &validate.severity {
+                        heading_severity = sev.clone();
+                    }
+                }
+                if let Some(line_cfg) = &body.line_count {
+                    if let Some(policy) = &line_cfg.scan_policy {
+                        line_count_scan_policy = policy.clone();
+                    }
+                    if let Some(sev) = &line_cfg.severity {
+                        line_count_severity = sev.clone();
+                    } else if let Some(sev) = &validate.severity {
+                        line_count_severity = sev.clone();
+                    }
+                }
             }
         }
     }
-    if let Some(h) = current.take() {
-        headings.push(h);
-    }
-    for h in headings.iter_mut() {
-        if h.max_lines == 0 {
-            h.max_lines = 200;
+    allowed.insert("id".to_string());
+
+    let mut readonly: BTreeSet<String> = ["id", "created_date", "last_modified"]
+        .into_iter()
+        .map(|s| s.to_string())
+        .collect();
+    if let Some(obj) = seed_frontmatter.as_object() {
+        for key in obj.keys() {
+            if key == "created_date" || key == "last_modified" {
+                readonly.insert(key.clone());
+            }
         }
     }
 
-    let mut allowed = Vec::new();
-    if let Some(obj) = seed_frontmatter.as_object() {
-        for key in obj.keys() {
-            allowed.push(key.clone());
+    let mut enums = JsonMap::new();
+    let mut globs = JsonMap::new();
+    let mut integers = JsonMap::new();
+    let mut floats = JsonMap::new();
+    if let Some(schema) = schema_cfg {
+        for (field, rule) in &schema.rules {
+            if let Some(values) = rule.enum_values.as_ref().filter(|v| !v.is_empty()) {
+                let items = values
+                    .iter()
+                    .cloned()
+                    .map(JsonValue::String)
+                    .collect::<Vec<JsonValue>>();
+                enums.insert(field.clone(), JsonValue::Array(items));
+            } else if !rule.allowed.is_empty() {
+                let items = rule
+                    .allowed
+                    .iter()
+                    .cloned()
+                    .map(JsonValue::String)
+                    .collect::<Vec<JsonValue>>();
+                enums.insert(field.clone(), JsonValue::Array(items));
+            }
+            if let Some(patterns) = &rule.globs {
+                if !patterns.is_empty() {
+                    let items = patterns
+                        .iter()
+                        .cloned()
+                        .map(JsonValue::String)
+                        .collect::<Vec<JsonValue>>();
+                    globs.insert(field.clone(), JsonValue::Array(items));
+                }
+            }
+            if let Some(int_rule) = &rule.integer {
+                let mut obj = JsonMap::new();
+                if let Some(min) = int_rule.min {
+                    obj.insert("min".into(), JsonValue::Number(JsonNumber::from(min)));
+                }
+                if let Some(max) = int_rule.max {
+                    obj.insert("max".into(), JsonValue::Number(JsonNumber::from(max)));
+                }
+                if !obj.is_empty() {
+                    integers.insert(field.clone(), JsonValue::Object(obj));
+                }
+            }
+            if let Some(float_rule) = &rule.float {
+                let mut obj = JsonMap::new();
+                if let Some(min) = float_rule.min {
+                    if let Some(num) = JsonNumber::from_f64(min) {
+                        obj.insert("min".into(), JsonValue::Number(num));
+                    }
+                }
+                if let Some(max) = float_rule.max {
+                    if let Some(num) = JsonNumber::from_f64(max) {
+                        obj.insert("max".into(), JsonValue::Number(num));
+                    }
+                }
+                if !obj.is_empty() {
+                    floats.insert(field.clone(), JsonValue::Object(obj));
+                }
+            }
         }
     }
-    if !allowed.contains(&"id".to_string()) {
-        allowed.push("id".to_string());
-    }
+
     let frontmatter = FrontmatterConstraint {
-        allowed,
-        readonly: vec!["id".to_string()],
-        enums: JsonMap::new(),
+        allowed: allowed.into_iter().collect(),
+        readonly: readonly.into_iter().collect(),
+        enums,
+        globs,
+        integers,
+        floats,
     };
     DraftConstraints {
         headings,
-        heading_strictness: "missing_only".into(),
+        heading_strictness,
+        heading_severity,
+        max_heading_count,
+        line_count_scan_policy,
+        line_count_severity,
         frontmatter,
     }
-}
-
-fn extract_loc(line: &str) -> Option<u64> {
-    let trimmed = line.trim();
-    if let Some(stripped) = trimmed.strip_prefix("{{LOC|") {
-        if let Some(end) = stripped.find("}}") {
-            return stripped[..end].parse().ok();
-        }
-    }
-    None
 }

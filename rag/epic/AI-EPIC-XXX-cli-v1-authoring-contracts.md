@@ -25,7 +25,7 @@ The CLI’s AI authoring flow does not yet fully implement the contract features
 ## Proposed Solution(s)
 Implement a contracts-first authoring pipeline with explicit precedence and full validator coverage:
 - Template precedence for instructions and body: Lua (`template_prompt`/`template_note`) → TOML (`[schema.new.template.prompt|note]`) → repo `.md` scaffold → minimal fallback.
-- Canonical template variables use `{{...}}`; keep `((frontmatter))` as a compatibility alias for `{{frontmatter}}`.
+- Canonical template variables use `{{...}}`; tokens such as `{{frontmatter}}` and `{{LOC|N}}` must be supported.
 - Extend variable DSL for body templates: support `{{filename}}`, `{{schema.name}}`, and `{{now | date:"%Y-%m-%d"}}` alongside existing filters.
 - Elevate Lua overlay API to spec: `ctx.util`, `ctx.clock`, `ctx.schema`, `ctx.config`; wire `template_prompt`/`template_note` hooks.
 - Add field-level validators and readonly enforcement in submit; expose the constraints envelope in StartResponse.
@@ -48,7 +48,7 @@ Implement a contracts-first authoring pipeline with explicit precedence and full
 ### Functional Requirements
 - [ ] FR-1 Template precedence (instructions): Lua `template_prompt(ctx)` → TOML `[schema.new.template.prompt].template` → fallback generic.
 - [ ] FR-2 Template precedence (note body): Lua `template_note(ctx)` → TOML `[schema.new.template.note].template` → repo `.cli-rag/templates/{Schema}.md` → minimal fallback.
-- [ ] FR-3 Canonical token support: accept `{{frontmatter}}` and `((frontmatter))` (alias); render `{{id}}`, `{{title}}`, `{{schema.name}}`, `{{now|date:"..."}}`, and `{{filename}}` in body and filename templates.
+- [ ] FR-3 Canonical token support: render `{{frontmatter}}`, `{{id}}`, `{{title}}`, `{{schema.name}}`, `{{now|date:"..."}}`, and `{{filename}}` in body and filename templates.
 - [ ] FR-4 Lua API completeness: provide `ctx.util` (case helpers), `ctx.clock` (`today_iso()`, `now_iso()`), `ctx.schema` (resolved schema table), and `ctx.config` (resolved config subset); keep `ctx.index.next_numeric_id`.
 - [ ] FR-5 Frontmatter constraints: implement per-field `enum`, `globs`, `integer{min,max}`, `float{min,max}` with severity overrides; maintain existing `regex`, `array`, `min_items`, `refers_to_types`.
 - [ ] FR-6 Readonly enforcement: block changes to readonly fields (e.g., `id`, `created_date`) at submit; return structured diagnostics.
@@ -61,11 +61,11 @@ Implement a contracts-first authoring pipeline with explicit precedence and full
 ### Non-Functional Requirements
 - Contracts-first: when examples differ, the `contracts/` spec is authoritative; behavior and docs reflect the spec.
 - Deterministic outputs: preserve stable ordering and exit codes; fail with exit 2 on contract violations.
-- Backwards compatibility: accept `((frontmatter))` without warnings; no breaking changes to existing JSON envelopes. {LOC|20}
+- Backwards compatibility: maintain existing JSON envelopes while shifting templates to `{{frontmatter}}`. {LOC|20}
 
 ## Implementation Breakdown
 - Phase 1: Authoring template ingestion
-  - Lua/TOML precedence for prompt/note; token support (`{{frontmatter}}`/`((frontmatter))`); add `{{filename}}`; enrich Lua ctx.
+  - Lua/TOML precedence for prompt/note; token support (`{{frontmatter}}`); add `{{filename}}`; enrich Lua ctx.
 - Phase 2: Frontmatter constraints
   - enum/globs/integer/float + readonly enforcement; populate StartResponse frontmatter constraints.
 - Phase 3: Body policies
@@ -74,4 +74,3 @@ Implement a contracts-first authoring pipeline with explicit precedence and full
   - Parse wikilinks; enforce min_out/min_in; per-edge required/cycle overrides; cross-schema targets.
 - Phase 5: Docs & defaults
   - Update README and examples for precedence and `RAG/ADR` defaults; outline operator guidance in `info`/docs. {LOC|25}
-

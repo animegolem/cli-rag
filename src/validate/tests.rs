@@ -1,0 +1,217 @@
+use super::*;
+use crate::config::{
+    default_allowed_statuses, default_defaults, default_file_patterns, default_groups_rel,
+    default_ignore_globs, default_index_rel, Config,
+};
+use std::collections::BTreeMap;
+use std::path::PathBuf;
+
+#[test]
+fn test_validate_docs_invalid_status_and_refs_and_duplicates() {
+    let cfg = Config {
+        config_version: Some(crate::config::defaults::default_config_version()),
+        import: Vec::new(),
+        bases: vec![],
+        index_relative: default_index_rel(),
+        groups_relative: default_groups_rel(),
+        file_patterns: default_file_patterns(),
+        ignore_globs: default_ignore_globs(),
+        allowed_statuses: default_allowed_statuses(),
+        defaults: default_defaults(),
+        schema: Vec::new(),
+        authoring: crate::config::schema::AuthoringCfg::default(),
+        overlays: crate::config::schema::OverlayInfo::default(),
+    };
+    let d1 = AdrDoc {
+        file: PathBuf::from("X.md"),
+        id: Some("X".into()),
+        title: "X".into(),
+        tags: vec![],
+        status: Some("weird".into()),
+        groups: vec![],
+        depends_on: vec!["NOPE".into()],
+        supersedes: vec![],
+        superseded_by: vec![],
+        fm: BTreeMap::new(),
+        mtime: None,
+        size: None,
+    };
+    let d2 = AdrDoc {
+        file: PathBuf::from("A1.md"),
+        id: Some("A".into()),
+        title: "A v1".into(),
+        tags: vec![],
+        status: Some("draft".into()),
+        groups: vec![],
+        depends_on: vec![],
+        supersedes: vec![],
+        superseded_by: vec![],
+        fm: BTreeMap::new(),
+        mtime: None,
+        size: None,
+    };
+    let d3 = AdrDoc {
+        file: PathBuf::from("A2.md"),
+        id: Some("A".into()),
+        title: "A v2".into(),
+        tags: vec![],
+        status: Some("draft".into()),
+        groups: vec![],
+        depends_on: vec![],
+        supersedes: vec![],
+        superseded_by: vec![],
+        fm: BTreeMap::new(),
+        mtime: None,
+        size: None,
+    };
+    let docs = vec![d1, d2, d3];
+    let cfg_path: Option<PathBuf> = None;
+    let report = validate_docs(&cfg, &cfg_path, &docs);
+    assert!(!report.ok);
+    let msg = report.errors.join("\n");
+    assert!(msg.contains("invalid status"));
+    assert!(msg.contains("depends_on 'NOPE' not found"));
+    assert!(msg.contains("conflict for id A"));
+}
+
+#[test]
+fn test_schema_required_unknown_and_refers_to_types() {
+    use crate::config::{SchemaCfg, SchemaRule};
+
+    let mut rules: BTreeMap<String, SchemaRule> = BTreeMap::new();
+    rules.insert(
+        "depends_on".into(),
+        SchemaRule {
+            allowed: vec![],
+            r#type: Some("array".into()),
+            min_items: None,
+            regex: None,
+            refers_to_types: Some(vec!["ADR".into()]),
+            severity: Some("error".into()),
+            format: None,
+            enum_values: None,
+            globs: None,
+            integer: None,
+            float: None,
+        },
+    );
+    let sc_adr = SchemaCfg {
+        name: "ADR".into(),
+        file_patterns: vec!["ADR-*.md".into()],
+        required: vec!["id".into(), "tags".into()],
+        unknown_policy: Some("warn".into()),
+        cycle_policy: None,
+        filename_template: None,
+        new: None,
+        allowed_keys: vec![],
+        rules,
+        validate: None,
+    };
+    let sc_imp = SchemaCfg {
+        name: "IMP".into(),
+        file_patterns: vec!["IMP-*.md".into()],
+        required: vec!["id".into()],
+        unknown_policy: Some("ignore".into()),
+        cycle_policy: None,
+        filename_template: None,
+        new: None,
+        allowed_keys: vec![],
+        rules: BTreeMap::new(),
+        validate: None,
+    };
+    let cfg = Config {
+        config_version: Some(crate::config::defaults::default_config_version()),
+        import: Vec::new(),
+        bases: vec![],
+        index_relative: default_index_rel(),
+        groups_relative: default_groups_rel(),
+        file_patterns: default_file_patterns(),
+        ignore_globs: default_ignore_globs(),
+        allowed_statuses: default_allowed_statuses(),
+        defaults: default_defaults(),
+        schema: vec![sc_adr, sc_imp],
+        authoring: crate::config::schema::AuthoringCfg::default(),
+        overlays: crate::config::schema::OverlayInfo::default(),
+    };
+
+    let mut fm = BTreeMap::new();
+    fm.insert("foo".into(), serde_yaml::Value::String("bar".into()));
+    fm.insert(
+        "depends_on".into(),
+        serde_yaml::Value::Sequence(vec![serde_yaml::Value::String("IMP-002".into())]),
+    );
+    let d1 = AdrDoc {
+        file: PathBuf::from("ADR-001.md"),
+        id: Some("ADR-001".into()),
+        title: "ADR-001".into(),
+        tags: vec![],
+        status: Some("draft".into()),
+        groups: vec![],
+        depends_on: vec!["IMP-002".into()],
+        supersedes: vec![],
+        superseded_by: vec![],
+        fm,
+        mtime: None,
+        size: None,
+    };
+    let d2 = AdrDoc {
+        file: PathBuf::from("IMP-002.md"),
+        id: Some("IMP-002".into()),
+        title: "IMP-002".into(),
+        tags: vec![],
+        status: None,
+        groups: vec![],
+        depends_on: vec![],
+        supersedes: vec![],
+        superseded_by: vec![],
+        fm: BTreeMap::new(),
+        mtime: None,
+        size: None,
+    };
+
+    let cfg_path: Option<PathBuf> = None;
+    let report = validate_docs(&cfg, &cfg_path, &vec![d1, d2]);
+    assert!(!report.ok);
+    let errs = report.errors.join("\n");
+    assert!(errs.contains("missing required 'tags'"));
+    assert!(errs.contains("references IMP-002"));
+    let warns = report.warnings.join("\n");
+    assert!(warns.contains("unknown keys: foo"));
+}
+
+#[test]
+fn test_warn_on_isolated_adrs() {
+    let cfg = Config {
+        config_version: Some(crate::config::defaults::default_config_version()),
+        import: Vec::new(),
+        bases: vec![],
+        index_relative: default_index_rel(),
+        groups_relative: default_groups_rel(),
+        file_patterns: default_file_patterns(),
+        ignore_globs: default_ignore_globs(),
+        allowed_statuses: default_allowed_statuses(),
+        defaults: default_defaults(),
+        schema: Vec::new(),
+        authoring: crate::config::schema::AuthoringCfg::default(),
+        overlays: crate::config::schema::OverlayInfo::default(),
+    };
+    let d = AdrDoc {
+        file: PathBuf::from("A.md"),
+        id: Some("A".into()),
+        title: "A".into(),
+        tags: vec![],
+        status: None,
+        groups: vec![],
+        depends_on: vec![],
+        supersedes: vec![],
+        superseded_by: vec![],
+        fm: BTreeMap::new(),
+        mtime: None,
+        size: None,
+    };
+    let cfg_path: Option<PathBuf> = None;
+    let report = validate_docs(&cfg, &cfg_path, &vec![d]);
+    assert!(report.ok);
+    let warns = report.warnings.join("\n");
+    assert!(warns.contains("has no graph connections"));
+}

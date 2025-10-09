@@ -151,13 +151,7 @@ pub enum Commands {
         #[arg(value_name = "SHELL")]
         shell: String,
     },
-    /// Compute AI index plan over the unified graph and write JSON (deprecated alias; use `cli-rag ai index plan`)
-    #[command(about = "DEPRECATED: use `cli-rag ai index plan`")]
-    AiIndexPlan(AiIndexPlanArgs),
-    /// Apply an AI index plan: write cache and optionally add tags (deprecated alias; use `cli-rag ai index apply`)
-    #[command(about = "DEPRECATED: use `cli-rag ai index apply`")]
-    AiIndexApply(AiIndexApplyArgs),
-    /// AI-oriented workflows (authoring, retrieval, etc.)
+    /// AI-oriented workflows (authoring, retrieval, indexing)
     Ai {
         #[command(subcommand)]
         command: AiCommands,
@@ -166,7 +160,7 @@ pub enum Commands {
 
 #[derive(Subcommand, Debug)]
 pub enum AiCommands {
-    /// AI authoring helpers for managed drafts
+    /// AI authoring helpers for managed drafts (start/submit/cancel/list)
     New {
         #[command(subcommand)]
         command: AiNewCommands,
@@ -233,9 +227,9 @@ pub struct AiNewSubmitArgs {
 
 #[derive(Args, Debug)]
 pub struct AiNewCancelArgs {
-    /// Draft identifier to cancel
+    /// Optional draft identifier to cancel (omit to auto-select when only one draft exists)
     #[arg(long)]
-    pub draft: String,
+    pub draft: Option<String>,
 }
 
 #[derive(Args, Debug)]
