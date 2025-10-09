@@ -243,7 +243,7 @@ fn ai_index_apply_hash_mismatch_exits_2() {
 }
 
 #[test]
-fn ai_index_apply_alias_prints_deprecation() {
+fn ai_index_aliases_removed() {
     let temp = assert_fs::TempDir::new().unwrap();
     let base = temp.child("notes");
     base.create_dir_all().unwrap();
@@ -277,7 +277,9 @@ fn ai_index_apply_alias_prints_deprecation() {
         .arg("--output")
         .arg(plan_path.path())
         .assert()
-        .success();
+        .failure()
+        .code(2)
+        .stderr(contains("unrecognized subcommand"));
 
     Command::cargo_bin("cli-rag")
         .unwrap()
@@ -288,8 +290,9 @@ fn ai_index_apply_alias_prints_deprecation() {
         .arg(plan_path.path())
         .arg("--dry-run")
         .assert()
-        .success()
-        .stderr(contains("Deprecated: use `cli-rag ai index apply`"));
+        .failure()
+        .code(2)
+        .stderr(contains("unrecognized subcommand"));
 
     temp.close().unwrap();
 }

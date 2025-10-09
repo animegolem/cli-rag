@@ -94,7 +94,7 @@ fn ai_index_plan_writes_schema_compliant_shape() {
 }
 
 #[test]
-fn ai_index_plan_alias_prints_deprecation() {
+fn ai_index_plan_aliases_removed() {
     let temp = assert_fs::TempDir::new().unwrap();
     let base = temp.child("notes");
     base.create_dir_all().unwrap();
@@ -130,9 +130,10 @@ fn ai_index_plan_alias_prints_deprecation() {
         .arg("--output")
         .arg(plan_path.path())
         .assert()
-        .success()
-        .stderr(contains("Deprecated: use `cli-rag ai index plan`"));
+        .failure()
+        .code(2)
+        .stderr(contains("unrecognized subcommand"));
 
-    assert!(plan_path.path().exists());
+    assert!(!plan_path.path().exists());
     temp.close().unwrap();
 }
