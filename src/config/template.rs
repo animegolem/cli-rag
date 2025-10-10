@@ -14,97 +14,52 @@ pub fn write_template(path: &Path) -> Result<()> {
 
 pub const TEMPLATE: &str = r#"# Repo-local CLI config (cli-rag)
 
-# Version of this configuration. Keep in sync with contracts; defaults to "0.1".
+[config]
+#: =============================================================================
+#:                            # --- Version --- #
+#: =============================================================================
 config_version = "0.1"
 
-# One or more directories to scan or read an index from.
-# Prefer `filepaths`; `bases` is still accepted for backwards-compat.
-filepaths = [
-  "docs/masterplan-v2",
-  # "docs/notes",
-]
+#: =============================================================================
+#:                            # --- SCAN --- #
+#: =============================================================================
+[config.scan]
+#: Project notes live under docs/RAG by default. Adjust as needed.
+filepaths = ["docs/RAG"]
+#: Index lives alongside the repo config.
+index_path = ".cli-rag/index.json"
+hash_mode = "mtime"
+index_strategy = "content"
+ignore_globs = ["**/node_modules/**", "**/dist/**"]
+ignore_symlinks = true
 
-# Where to read/write the unified index (path is relative to each base).
-index_relative = "index/adr-index.json"
+#: =============================================================================
+#:                            # --- AUTHORING --- #
+#: =============================================================================
+[config.authoring]
+editor = "nvim"
+background_watch = true
 
-# Discovery and semantics
-file_patterns = ["ADR-*.md", "ADR-DB-*.md", "IMP-*.md"]
-ignore_globs  = ["**/node_modules/**", "**/.obsidian/**"]
-allowed_statuses = [
-  "draft", "incomplete", "proposed", "accepted",
-  "complete", "design", "legacy-reference", "superseded"
-]
+[config.authoring.destinations]
+ADR = "docs/RAG/ADR"
 
-[defaults]
-depth = 2
+#: =============================================================================
+#:                             # --- GRAPH --- #
+#: =============================================================================
+[config.graph]
+depth = 1
 include_bidirectional = true
-include_content = true
 
-# Note Types (Schema) — Optional, per-type rules and validation
-#
-# Define one or more [[schema]] blocks to validate different note types
-# (e.g., ADR vs IMP). Matching is by file_patterns; first match wins.
-# Unknown keys policy lets you treat unexpected front-matter as ignore|warn|error.
-#
-# [[schema]]
-# name = "ADR"
-# file_patterns = ["ADR-*.md", "ADR-DB-*.md"]
-# required = ["id", "tags", "status", "depends_on"]
-# unknown_policy = "ignore"   # ignore | warn | error (default: ignore)
-# cycle_policy = "warn"        # warn | error | ignore (default: warn)
-# filename_template = "{{id}}-{{title}}.md"  # optional filename pattern
-# allowed_keys = ["produces", "files_touched"]  # optional pass-through keys
-#
-# [schema.rules.status]
-# allowed = [
-#   "draft", "incomplete", "proposed", "accepted",
-#   "complete", "design", "legacy-reference", "superseded"
-# ]
-# severity = "error"          # error | warn
-#
-# [schema.rules.depends_on]
-# type = "array"
-# items = { type = "string", regex = "^(ADR|IMP)-\\d+" }
-# refers_to_types = ["ADR", "IMP"]
-# severity = "error"
-#
-# [[schema]]
-# name = "IMP"
-# file_patterns = ["IMP-*.md"]
-# required = ["id","tags","depends_on","status","completion_date"]
-# unknown_policy = "warn"
-#
-# [schema.rules.status]
-# allowed = ["in-progress","blocked","on-hold","cancelled","done"]
-# severity = "error"
-#
-# [schema.rules.completion_date]
-# type = "date"
-# format = "%Y-%m-%d"
-# severity = "warn"
+[config.graph.ai]
+depth = 1
+default_fanout = 5
+include_bidirectional = true
+neighbor_style = "metadata"
+outline_lines = 2
 
-# Default schemas (enabled): tweak as needed
-
-[[schema]]
-name = "ADR"
-file_patterns = ["ADR-*.md", "ADR-DB-*.md"]
-required = ["id", "tags", "status", "depends_on"]
-unknown_policy = "ignore"
-
-[schema.rules.status]
-allowed = [
-  "draft", "incomplete", "proposed", "accepted",
-  "complete", "design", "legacy-reference", "superseded"
-]
-severity = "error"
-
-[[schema]]
-name = "IMP"
-file_patterns = ["IMP-*.md"]
-required = ["id", "tags", "depends_on", "status"]
-unknown_policy = "ignore"
-
-[schema.rules.status]
-allowed = ["in-progress", "blocked", "on-hold", "cancelled", "done"]
-severity = "error"
+#: =============================================================================
+#:                        # --- TEMPLATE MANAGEMENT --- #
+#: =============================================================================
+[config.templates]
+import = [".cli-rag/templates/ADR.toml"]
 "#;

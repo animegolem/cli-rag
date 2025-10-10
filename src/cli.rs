@@ -61,6 +61,15 @@ pub enum Commands {
         /// Write schema to a separate file under .cli-rag/templates/ and add to import
         #[arg(long, default_value_t = false)]
         separate: bool,
+        /// Choose init preset non-interactively (e.g., project, generic, example)
+        #[arg(long)]
+        preset: Option<String>,
+        /// Preview generated files without writing them
+        #[arg(long, default_value_t = false)]
+        dry_run: bool,
+        /// Emit JSON summary of created/updated files
+        #[arg(long, default_value_t = false)]
+        json: bool,
     },
     /// Inspect resolved config, cache entries, and capabilities
     Info {},

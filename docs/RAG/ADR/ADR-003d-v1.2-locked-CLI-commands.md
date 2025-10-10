@@ -100,6 +100,11 @@ Create a new note (runs Lua hooks for id/frontmatter/template fill). Optionally 
 
 Creates/Updates the unified index. Does not write to a cache. Run validators (TOML + Lua) and exit non-zero on any error.
 
+Validation enforces:
+- Per-edge policies (`required`, `cycle_detection`) with schema-level severity fallbacks.
+- Wikilink thresholds via `schema.validate.edges.wikilinks` (unique outgoing targets per note, unique incoming referrers across notes).
+- Cross-schema allowlists: leaving `allowed_targets` empty allows linking to any schema; populating the list restricts to those schemas.
+
 **Flags**
 - `--dry-run` do not write/update index. print errors. 
 - `--full-rescan` ignore incremental cache/index and rescan everything
@@ -113,8 +118,8 @@ eg
 "diagnostics": [  
 {  
 "severity": "warning",  
-"code": "LINK_MIN",  
-"msg": "Add a wikilink",  
+"code": "LINK_MIN_OUT",  
+"msg": "notes/ADR-002-Visual-Mode-planning.md: wikilinks outgoing unique targets 0 below minimum 1",  
 "path": "notes/ADR-002-Visual-Mode-planning.md",  
 "span": [123,145],  
 "field": null  

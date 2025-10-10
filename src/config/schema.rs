@@ -138,11 +138,49 @@ pub struct SchemaBodyValidateCfg {
 }
 
 #[derive(Debug, Deserialize, Clone, Default)]
+pub struct SchemaWikilinksCfg {
+    #[serde(default)]
+    pub min_outgoing: Option<usize>,
+    #[serde(default)]
+    pub min_incoming: Option<usize>,
+    #[serde(default)]
+    pub severity: Option<String>,
+}
+
+#[derive(Debug, Deserialize, Clone, Default)]
+pub struct EdgeKindPolicy {
+    #[serde(default)]
+    pub weight: Option<f64>,
+    #[serde(default)]
+    pub required: Option<String>,
+    #[serde(default)]
+    pub cycle_detection: Option<String>,
+}
+
+#[derive(Debug, Deserialize, Clone, Default)]
+pub struct CrossSchemaCfg {
+    #[serde(default)]
+    pub allowed_targets: Vec<String>,
+}
+
+#[derive(Debug, Deserialize, Clone, Default)]
+pub struct SchemaEdgesCfg {
+    #[serde(default)]
+    pub cross_schema: Option<CrossSchemaCfg>,
+    #[serde(default)]
+    pub wikilinks: Option<SchemaWikilinksCfg>,
+    #[serde(flatten)]
+    pub kinds: std::collections::BTreeMap<String, EdgeKindPolicy>,
+}
+
+#[derive(Debug, Deserialize, Clone, Default)]
 pub struct SchemaValidateCfg {
     #[serde(default)]
     pub severity: Option<String>,
     #[serde(default)]
     pub body: Option<SchemaBodyValidateCfg>,
+    #[serde(default)]
+    pub edges: Option<SchemaEdgesCfg>,
 }
 
 #[derive(Debug, Deserialize, Clone)]

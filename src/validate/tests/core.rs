@@ -1,10 +1,4 @@
 use super::*;
-use crate::config::{
-    default_allowed_statuses, default_defaults, default_file_patterns, default_groups_rel,
-    default_ignore_globs, default_index_rel, Config,
-};
-use std::collections::BTreeMap;
-use std::path::PathBuf;
 
 #[test]
 fn test_validate_docs_invalid_status_and_refs_and_duplicates() {
@@ -22,6 +16,7 @@ fn test_validate_docs_invalid_status_and_refs_and_duplicates() {
         authoring: crate::config::schema::AuthoringCfg::default(),
         overlays: crate::config::schema::OverlayInfo::default(),
     };
+
     let d1 = AdrDoc {
         file: PathBuf::from("X.md"),
         id: Some("X".into()),

@@ -18,8 +18,21 @@ fn main() -> Result<()> {
             silent,
             schema,
             separate,
+            preset,
+            dry_run,
+            json,
         } => {
-            cli_rag::commands::init::run(path, force, print_template, silent, schema, separate)?;
+            cli_rag::commands::init::run(
+                path,
+                force,
+                print_template,
+                silent,
+                schema,
+                separate,
+                preset,
+                dry_run,
+                json,
+            )?;
         }
         Commands::Info {} => {
             let (cfg, cfg_path) = load_config(&cli.config, &cli.base, cli.no_lua)?;

@@ -1,28 +1,34 @@
 # cli-rag
 
-A CLI based system for creating and managing Obsidian compliant YAML front matter. This creates a simplified DAG that allows a local "region" to be called by an LLM.
+Per‑repo notes graph with schema‑aware authoring, validation, and AI surfaces.
 
-You've found this way too early! Nothing here is ready for production. :) This will all be cleaned up over the next few days. But i would not use this right now.
+cli‑rag manages Obsidian‑style Markdown with YAML frontmatter, builds a unified
+graph (IDs, dependencies, mentions), validates per‑schema rules, and exposes
+structured outputs for human and AI workflows.
 
-## Commands (overview)
+Status: alpha/dogfooding. Contracts live under `contracts/v1/**` and the CLI
+aligns with ADR‑003d (v1.2 locked commands).
+
+## Command Overview
 
 - `init` – scaffold `.cli-rag.toml` and optional schema templates
 - `info` – inspect resolved config, caches, overlays, and capabilities
-- `validate` – rebuild the unified index and surface validation diagnostics
-- `watch` – stream incremental validation/graph updates while editing
-- `search` – fuzzy browse notes with TODO/Kanban emitters
-- `get` – retrieve a note plus its neighbors for AI prompting contexts
-- `graph` / `path` – render dependency graphs or the shortest path between notes
-- `ai` – umbrella for AI-first workflows (`new` and `index` subcommands)
+- `validate` – rebuild the unified index and report diagnostics
+- `watch` – stream incremental index/validation updates (NDJSON option)
+- `search` – fuzzy search notes with filters
+- `get` – retrieve a note plus neighbor metadata for AI contexts
+- `cluster` – explore dependency clusters around a note
+- `graph` / `path` – export graph or compute a shortest path
+- `ai` – AI‑first workflows (`new` and `index` subcommands)
 
 ## Quickstart: AI authoring
 
-1. Make sure your repository has a `.cli-rag.toml` configured (or run `cli-rag init` to scaffold one).
+1. Ensure your repo has a `.cli-rag.toml` (or run `cli-rag init`).
 2. Rebuild the unified index and contracts snapshot:
    ```bash
    cli-rag validate --format json
    ```
-3. Reserve a draft with schema-specific guidance:
+3. Reserve a draft with schema‑specific guidance:
    ```bash
    cli-rag ai new start --schema ADR --title "Circuit Breaker" --format json > start.json
    ```
@@ -30,35 +36,149 @@ You've found this way too early! Nothing here is ready for production. :) This w
    ```bash
    jq -r '.noteTemplate' start.json
    ```
-5. Submit the filled sections/frontmatter to finalize the note:
+5. Submit filled sections/frontmatter to finalize the note:
    ```bash
    cli-rag ai new submit --draft "$(jq -r '.draftId' start.json)" --sections payload.json
    ```
 
 ## CI Contracts Gates
 
-The `contracts` job in `.github/workflows/ci.yml` spins up a nested user config fixture, runs `validate --format json` to assert the resolved snapshot, exercises schema id generators/filename templates through `ai new start`, and checks `ai new start/list/cancel` flows against the schemas in `contracts/v1/cli/*.schema.json`. Extend this job when you add new contract surfaces so the smoke coverage stays representative.
+The CI job validates CLI outputs against schemas in `contracts/v1/**`. It runs
+`validate --format json`, exercises `ai new start|submit|list|cancel`, and
+ensures emitted JSON conforms to the CLI schemas under `contracts/v1/cli/`.
+Extend CI when adding new surfaces so coverage remains representative.
 
 ## Dogfooding
 
-- `.cli-rag.toml` in the repo root defines the nested config (scan bases, graph defaults, template imports).
-- Schemas live under `.cli-rag/templates/{ADR,IMP,EPIC}.toml`; these TOML files define id generators, filename rules, and tracked frontmatter, while their paired Markdown files provide the authored content scaffolds and guidance comments.
-- Authoring linkage: the TOML and Markdown files share the same stem (e.g., `ADR.toml` + `ADR.md`). The schema TOML configures discovery/id/frontmatter/output rules, and `cli-rag ai new start` returns the Markdown scaffold via `.noteTemplate`, injecting frontmatter with `{{frontmatter}}` and respecting `{{LOC|N}}` caps.
-- Configure `[config.authoring.destinations]` in `.cli-rag.toml` so each schema writes to the correct folder (e.g., `ADR = "docs/RAG/ADRs"`), keeping `filename_template` focused on the basename like `{{id}}-{{title|kebab-case}}.md`.
-- Prefer the AI workflow: `cli-rag ai new start --schema ADR --title ...`, edit the generated draft, then `cli-rag ai new submit --draft <id> --sections note.md`.
+- `.cli-rag.toml` at repo root defines scan bases, graph defaults, and template
+  imports. Default index path: `.cli-rag/index.json`.
+- Schemas live under `.cli-rag/templates/*.toml`; paired Markdown files are
+  authoring scaffolds. The TOML configures ids, filename rules, and tracked
+  frontmatter; `ai new start` returns the Markdown scaffold as `.noteTemplate`.
+- Configure `[config.authoring.destinations]` so each schema writes to the
+  correct folder (e.g., `ADR = "docs/RAG/ADR"`). Keep `filename_template`
+  focused on the basename like `{{id}}-{{title|kebab-case}}.md`.
+- Prefer the AI workflow: `ai new start` → edit draft → `ai new submit`.
 
-Preview a schema's scaffold without writing a file:
+Preview a schema scaffold without writing a file:
 
 ```
 cli-rag ai new start --schema ADR --title "Template Parity" --format json \
   | jq -r '.noteTemplate'
 ```
 
-> **Migrating from `cli-rag new`** – The legacy `new` subcommand has been removed. Use `cli-rag ai new start|submit|cancel|list` for all authoring flows. Existing templates, Lua overrides, and filename rules continue to apply through the AI draft surfaces.
+> Migrating from `cli-rag new`: the legacy `new` command has been removed.
+> Use `cli-rag ai new start|submit|cancel|list` for authoring. Existing
+> templates, Lua overlays, and filename rules still apply via AI drafts.
+## Commands
 
-### ai new start / submit / cancel / list
+### Global flags
 
-Manage schema-guided drafts without writing files until you are ready:
+- `--config <path>` choose config (defaults to discovering `.cli-rag.toml`)
+- `--base <p1,p2,...>` additional scan bases (alias: `--filepaths`)
+- `--no-lua` disable Lua overlays entirely
+- `--format {plain,json,ndjson,ai}` output format when supported
+
+### init
+
+Scaffold `.cli-rag.toml` and optional schema templates, then open the config in
+your editor (unless `--silent`). If a parent config exists, `init` warns to
+avoid accidental shadowing.
+
+Flags:
+- `--path <p>` custom config path (default `.cli-rag.toml`)
+- `--force` overwrite if config exists
+- `--print-template` print example config to stdout only
+- `--silent` do not open editor after writing
+- `--schema <NAME>` add a schema to the config
+- `--separate` write schema under `.cli-rag/templates/<NAME>.toml` and import it
+- `--preset <project|generic>` choose preset non‑interactively (`generic` is not
+  yet implemented and returns a JSON warning when `--json` is set)
+- `--dry-run` preview changes; do not write
+- `--json` emit a summary of created/updated files
+
+### info
+
+Show resolved config path/version, index/cache presence, and capability flags.
+Use `--format json` for machine output.
+
+### validate
+
+Rebuild the unified index and run schema validation. Fails on errors.
+
+Flags:
+- `--dry-run` compute but do not write the index
+- `--full-rescan` ignore incrementals and rescan all
+- `--format json` structured report per `contracts/v1/cli/validate*.schema.json`
+
+Validation includes:
+- Edge rules: required edges and cycle detection with severity fallback
+- Wikilinks: unique outgoing/incoming thresholds per schema
+- Cross‑schema: optional allowlists for target schemas
+
+### watch
+
+Watch for file changes, incrementally update index, and emit events.
+
+Flags:
+- `--full-rescan` force a rebuild on first run
+- `--debounce-ms <n>` debounce FS events (default 400)
+- `--dry-run` do not write index
+- `--json` emit NDJSON events (`validated`, `index_written`, etc.)
+
+### search
+
+Fuzzy search with basic filters. Outputs plain lists or JSON envelopes.
+
+Flags:
+- `--query <q>` substring query
+- `--kind <k1,k2>` filter by item kind (e.g., note,todo)
+- `--schema <s1,s2>` filter by schema(s)
+- `--status <st1,st2>` filter by status values
+- `--tag <t1,t2>` filter by tags
+
+### get
+
+Retrieve a note with its neighborhood for AI prompting.
+
+Flags:
+- `--id <ID>` note id to fetch
+- `--include-dependents` include backlinks in neighbors
+- `--neighbor-style <STYLE>` metadata|outline|full (JSON only)
+- `--depth <n>` neighbor depth (JSON only)
+- `--max-fanout <n>` neighbor fanout cap (JSON only)
+
+### cluster
+
+Explore clusters around a note (dependency neighborhoods).
+
+Flags:
+- `--id <ID>`
+- `--depth <n>`
+- `--include-bidirectional <bool>`
+
+### path
+
+Compute a shortest dependency path between notes.
+
+Flags:
+- `--from <ID>`
+- `--to <ID>`
+- `--max-depth <n>` (default 5)
+
+### graph
+
+Export a dependency graph.
+
+Flags:
+- `--id <ID>`
+- `--depth <n>`
+- `--include-bidirectional <bool>`
+- `--graph-format {mermaid,dot,json}`
+
+### ai new (start / submit / cancel / list)
+
+Manage schema‑guided drafts without writing files until you are ready:
 
 ```
 # Reserve an ADR draft and inspect guidance
@@ -139,13 +259,13 @@ Notes:
 - Tag writes: enable with `--write-frontmatter`. Additive and require an existing `tags` field in frontmatter; otherwise exit 4.
 - Apply report matches `contracts/v1/cli/ai_index_apply_report.schema.json`.
 
-## Shell Completions
+### completions
 
-Generate completions to streamline the new command layout:
+Generate shell completions:
 
 ```
 cli-rag completions bash > ~/.local/share/bash-completion/cli-rag
 cli-rag completions zsh  > ~/.zsh/completions/_cli-rag
 ```
 
-Each invocation reflects the latest `ai new` and `ai index` subcommands. Re-run after upgrading the CLI to refresh the definitions.
+Re‑run after upgrading to refresh definitions.

@@ -7,6 +7,7 @@ pub mod get;
 pub mod graph;
 pub mod info;
 pub mod init;
+pub mod init_support;
 pub mod lua_integration;
 pub mod new_helpers;
 pub mod output;

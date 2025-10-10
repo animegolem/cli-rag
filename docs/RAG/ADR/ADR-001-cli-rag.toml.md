@@ -587,6 +587,19 @@ Engine responsibilities
 - Sandboxing: run repo Lua only when not disabled; expose a constrained ctx (no raw os.execute by default).
 - Stability: version the Lua API, e.g., ctx.api_version = 1; reject incompatible hooks.
 
+### Template Precedence & Variables
+
+- Authoring surfaces resolve in this order: Lua `template_prompt` / `template_note` → TOML `[schema.new.template.*]` blocks → repo `.cli-rag/templates/{schema}.md` → builtin fallback.
+- Template DSL tokens now include `{{filename}}`, `{{schema.name}}`, `{{frontmatter}}`, and the usual `{{id}}` / `{{title}}`. `{{now}}` supports filters (`{{now | date:"%Y-%m-%d"}}`), and `{{LOC|N}}` continues to cap per-heading lines.
+- Filename templates support the same token/filter set except `{{frontmatter}}`, which remains body-only.
+
+### Edge & Wikilink Policies
+
+- `schema.validate.edges.{edge}.required` / `cycle_detection` override schema defaults per edge; omit to inherit `schema.validate.severity`.
+- `schema.validate.edges.wikilinks.min_outgoing` counts unique `[[ID]]` targets per note, while `min_incoming` requires unique referrers across the repo. Multiple mentions of the same target within one note count once.
+- `schema.validate.edges.wikilinks.severity` governs LINK_MIN_* diagnostics; fallback is the schema-level severity.
+- Leaving `schema.validate.edges.cross_schema.allowed_targets` empty (or unset) allows linking to any schema. Populating the list creates explicit allowlists.
+
 Baseline Needs
 
 - Loader precedence (defaults → TOML → .cli-rag.lua → user-local Lua).

@@ -1,0 +1,63 @@
+---
+node_id: 
+tags:
+  - 
+status: draft
+depends_on: 
+created_date: {{date}}
+related_files: []
+confidence_score: {0.0-1.0}
+---
+
+<!--
+You are drafting an Architecture Decision Record (schema: AI-ADR).
+
+**Rules**
+
+- Fill the headings exactly as shown (Objective, Decision, Consequences); omit extras unless asked.
+- Keep sections concise; respect any `{LOC|X}` caps when present.
+- Frontmatter: set `status` from [draft, proposed, accepted, superseded, cancelled].
+- Only add `depends_on`/`implements` if you truly reference those IDs (do not invent).
+- Include wikilinks [[SCHEMA-###]] when appropriate.
+
+**Tone**
+  
+Be professional and specific, concise but complete. 
+
+**Directives**
+
+- You SHOULD not create an AI-ADR note without explicit user request.
+- You MUST fill out the frontmatter in full.
+- You SHOULD provide your confidence (0.0–1.0) via `confidence_score`.
+- You SHOULD remove these comments after use and keep the prose concise.
+- {LOC|X} marks max lines per heading (fewer is fine).
+-->
+
+# AI-ADR-XXX-{{title}}
+
+## Objective
+<!-- 
+WHAT is the reason for this choice to be made? What is the intended user story? 
+This MUST be informed by your planning conversations with the user. 
+If you are unclear on the objective or story you MUST pause and raise your concerns with the user.
+-->
+
+ {LOC|15}
+ 
+
+## Decision
+<!-- 
+You MUST document the change that has been decided upon with the user. 
+You SHOULD provide a high level of planning and detail to capture the agreed understanding. 
+You MAY review and examine the codebase as you plan the detailed steps. 
+-->
+
+ {LOC|150}
+ 
+## Consequences
+<!--
+What becomes easier or more difficult to do because of this change? 
+You SHOULD document any blockers or items this choice is expected to unlock if present.  
+ -->
+ 
+ {LOC|10}

@@ -45,6 +45,7 @@ pub fn apply_schema_validation(
             warnings,
         };
         validate_field_rules(ctx);
+        validate_edge_policies(doc, &schema_cfg, doc_schema, id_to_docs, errors, warnings);
     }
 }
 
@@ -119,5 +120,137 @@ fn validate_unknown_keys(
             unknown.join(", ")
         )),
         _ => {}
+    }
+}
+
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug)]
+enum Severity {
+    Ignore = 0,
+    Warning = 1,
+    Error = 2,
+}
+
+impl Severity {
+    fn from_str(value: Option<&str>, default: Severity) -> Severity {
+        match value.map(|s| s.to_ascii_lowercase()) {
+            Some(ref s) if s.trim() == "error" => Severity::Error,
+            Some(ref s)
+                if {
+                    let v = s.trim();
+                    v == "warning" || v == "warn"
+                } =>
+            {
+                Severity::Warning
+            }
+            Some(ref s) if s.trim() == "ignore" => Severity::Ignore,
+            _ => default,
+        }
+    }
+
+    fn emit(self, message: String, errors: &mut Vec<String>, warnings: &mut Vec<String>) {
+        match self {
+            Severity::Error => errors.push(message),
+            Severity::Warning => warnings.push(message),
+            Severity::Ignore => {}
+        }
+    }
+}
+
+fn normalize_edge_values(value: &serde_yaml::Value) -> Vec<String> {
+    match value {
+        serde_yaml::Value::String(s) => {
+            let trimmed = s.trim();
+            if trimmed.is_empty() {
+                Vec::new()
+            } else {
+                vec![trimmed.to_string()]
+            }
+        }
+        serde_yaml::Value::Sequence(seq) => seq
+            .iter()
+            .filter_map(|v| v.as_str().map(|s| s.trim().to_string()))
+            .filter(|s| !s.is_empty())
+            .collect(),
+        _ => Vec::new(),
+    }
+}
+
+pub(crate) fn validate_edge_policies(
+    doc: &AdrDoc,
+    schema_cfg: &SchemaCfg,
+    doc_schema: &HashMap<String, String>,
+    id_to_docs: &HashMap<String, Vec<AdrDoc>>,
+    errors: &mut Vec<String>,
+    warnings: &mut Vec<String>,
+) {
+    let validate_cfg = match schema_cfg.validate.as_ref() {
+        Some(v) => v,
+        None => return,
+    };
+    let edges_cfg = match validate_cfg.edges.as_ref() {
+        Some(cfg) => cfg,
+        None => return,
+    };
+    let default_severity = Severity::from_str(validate_cfg.severity.as_deref(), Severity::Error);
+
+    for (edge_kind, policy) in &edges_cfg.kinds {
+        let required_severity = Severity::from_str(policy.required.as_deref(), Severity::Ignore);
+        let fm_value = doc.fm.get(edge_kind);
+        let values = fm_value.map(normalize_edge_values).unwrap_or_default();
+
+        if required_severity != Severity::Ignore && (fm_value.is_none() || values.is_empty()) {
+            let msg = format!(
+                "{}: edge '{}' missing required references",
+                doc.file.display(),
+                edge_kind
+            );
+            required_severity.emit(msg, errors, warnings);
+            continue;
+        }
+
+        if values.is_empty() {
+            continue;
+        }
+
+        let id_severity = if required_severity != Severity::Ignore {
+            required_severity
+        } else {
+            default_severity
+        };
+
+        if edge_kind != "depends_on" {
+            for target in &values {
+                if !id_to_docs.contains_key(target) {
+                    let msg = format!(
+                        "{}: edge '{}' references unknown id '{}'",
+                        doc.file.display(),
+                        edge_kind,
+                        target
+                    );
+                    id_severity.emit(msg, errors, warnings);
+                }
+            }
+        }
+
+        if let Some(cross) = edges_cfg.cross_schema.as_ref() {
+            if cross.allowed_targets.is_empty() {
+                continue;
+            }
+            for target in &values {
+                let target_schema = doc_schema.get(target);
+                if let Some(schema_name) = target_schema {
+                    if !cross.allowed_targets.contains(schema_name) {
+                        let msg = format!(
+                            "{}: edge '{}' references disallowed schema '{}' via '{}'",
+                            doc.file.display(),
+                            edge_kind,
+                            schema_name,
+                            target
+                        );
+                        default_severity.emit(msg, errors, warnings);
+                    }
+                }
+            }
+        }
     }
 }

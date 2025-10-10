@@ -74,9 +74,6 @@ pub fn run(
         if m.contains("multiple schema matches") {
             return Some("E200".into());
         }
-        if m.contains("missing required") || m.contains("required '") {
-            return Some("E220".into());
-        }
         if m.contains("invalid status") {
             return Some("E212".into());
         }
@@ -110,6 +107,24 @@ pub fn run(
         }
         if m.contains("has no graph connections") {
             return Some("W250".into());
+        }
+        if m.contains("edge '") && m.contains("missing required references") {
+            return Some("EDGE_REQUIRED_MISSING".into());
+        }
+        if m.contains("edge '") && m.contains("references unknown id") {
+            return Some("EDGE_ID_NOT_FOUND".into());
+        }
+        if m.contains("edge '") && m.contains("references disallowed schema") {
+            return Some("EDGE_CROSS_SCHEMA_DISALLOWED".into());
+        }
+        if m.contains("missing required") || m.contains("required '") {
+            return Some("E220".into());
+        }
+        if m.contains("wikilinks outgoing unique targets") {
+            return Some("LINK_MIN_OUT".into());
+        }
+        if m.contains("wikilinks incoming unique referrers") {
+            return Some("LINK_MIN_IN".into());
         }
         None
     }

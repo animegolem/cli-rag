@@ -9,7 +9,7 @@
 #: 6. Define the custom and system frontmatter if present.
 #: 7. Define custom validation rules using `schema.validate`.
 [[schema]]
-name = "ADR"
+name = "AI-ADR"
 
 #: =============================================================================
 #:                            # --- Version --- #
@@ -20,7 +20,7 @@ config_version = "0.1"
 #: =============================================================================
 #: Set discovery rules for notes types. Accepts globs/regex.
 #: Notes must be under your defined filepaths in `.cli-rag.toml` to be discovered.
-file_patterns = [ "ADR-*.md" ]
+file_patterns = [ "AI-ADR-*.md" ]
 
 #: =============================================================================
 #:                     # --- TEMPLATES & GENERATION --- #
@@ -35,7 +35,7 @@ file_patterns = [ "ADR-*.md" ]
 #:   2. TOML blocks `[schema.new.template.prompt|note]`
 #:   3. `.cli-rag/templates/{Schema}.md`
 #:   4. Minimal builtin fallback
-#: 
+#:
 #:                    #--- FILENAME TEMPLATE BUILDER --- #
 #:   Advanced rules for creating custom titles when using the 'new' command
 #: +-------------------+-------------------------------------------------------+
@@ -70,13 +70,13 @@ file_patterns = [ "ADR-*.md" ]
 #: +-----------------------+--------------------------------------------------+
 [schema.new]
 #: Define the name template for the `new` command. unset = filename
-id_generator = { strategy = "increment", prefix = "ADR-", padding = 3 }
+id_generator = { strategy = "increment", prefix = "AI-ADR-", padding = 3 }
 #: Options are ["increment", "datetime", "uuid"]
 #: Prefix is not mandatory if using the later two options
 filename_template = "{{id}}-{{title|kebab-case}}.md"
 #: Define the default write path for notes in this schema. Overides settings in
 #: .cli-rag.toml.
-output_path = [ "docs/RAG/ADR" ]
+output_path = [ "docs/RAG/AI-ADR" ]
 #: =============================================================================
 #:                           # --- TEMPLATES --- #
 #: =============================================================================
@@ -109,9 +109,27 @@ output_path = [ "docs/RAG/ADR" ]
 [schema.new.template]
 [schema.new.template.prompt]
 template = """
-# Instructions
+You are drafting an Architecture Decision Record (schema: AI-ADR).
 
-This is a HUMAN note Schema. For an AI created note you SHOULD cancel this draft and utilize `AI-ADR`.
+**Rules**
+
+- Fill the headings exactly as shown (Objective, Decision, Consequences); omit extras unless asked.
+- Keep sections concise; respect any `{LOC|X}` caps when present.
+- Frontmatter: set `status` from [draft, proposed, accepted, superseded, cancelled].
+- Only add `depends_on`/`implements` if you truly reference those IDs (do not invent).
+- Include wikilinks [[SCHEMA-###]] when appropriate.
+
+**Tone**
+
+Be professional and specific, concise but complete.
+
+**Directives**
+
+- You SHOULD not create an AI-ADR note without explicit user request.
+- You MUST fill out the frontmatter in full.
+- You SHOULD provide your confidence (0.0–1.0) via `confidence_score`.
+- You SHOULD remove these comments after use and keep the prose concise.
+- {LOC|X} marks max lines per heading (fewer is fine).
 """
 
 [schema.new.template.note]
@@ -120,25 +138,33 @@ template = """
 
 # {{title}}
 
-## Objective
-<!-- A concise statement explaining the goal of this decision. -->
-{{LOC|50}}
 
-## Context
-<!-- What is the issue that we're seeing that is motivating this decision or change? -->
-{{LOC|300}}
+## Objective
+<!--
+WHAT is the reason for this choice to be made? What is the intended user story?
+This MUST be informed by your planning conversations with the user.
+If you are unclear on the objective or story you MUST pause and raise your concerns with the user.
+-->
+
+ {LOC|15}
+
 
 ## Decision
-<!-- What is the change that we're proposing and/or doing? -->
-{{LOC|50}}
+<!--
+You MUST document the change that has been decided upon with the user.
+You SHOULD provide a high level of planning and detail to capture the agreed understanding.
+You MAY review and examine the codebase as you plan the detailed steps.
+-->
+
+ {LOC|150}
 
 ## Consequences
-<!-- What becomes easier or more difficult to do because of this change? -->
-{{LOC|50}}
+<!--
+What becomes easier or more difficult to do because of this change?
+You SHOULD document any blockers or items this choice is expected to unlock if present.
+ -->
 
-## Updates
-<!-- Changes that happened when the rubber met the road -->
-{{LOC|100}}
+ {LOC|10}
 """
 
 #: =============================================================================
@@ -173,7 +199,6 @@ template = """
 # Regular user defined fields. Cannot use `system_frontmatter` namespace.
 user_frontmatter = [
   "tags",
-  "priority",
   "confidence_score"
   ]
 
@@ -191,7 +216,6 @@ user_frontmatter = [
 system_frontmatter = [
  "node_id",
  "created_date",
- "last_modified",
  ]
 
 #: =============================================================================
@@ -205,9 +229,6 @@ system_frontmatter = [
 #: ensure linked ID's exist.
 graph_edges = [
   "depends_on",
-  "blocked_by",
-  "supersedes",
-  "implements",
   # Additional edges can be defined freely.
   ]
 
@@ -223,15 +244,15 @@ graph_edges = [
 #: | `due_date`      | Set a due date. Appears on neovim agenda x days prior.  |
 #: |                 | true or false to enable.                                |
 #: +-----------------+---------------------------------------------------------+
-[schema.frontmatter.gtd]
-kanban_status = [
-  "backlog",
-  "planned",
-  "in-progress",
-  "completed",
-  "cancelled"
-  ]
-kanban_statusline = true
+# [schema.frontmatter.gtd]
+# kanban_status = [
+#   "backlog",
+#   "planned",
+#   "in-progress",
+#   "completed",
+#   "cancelled"
+#   ]
+# kanban_statusline = true
 
 
 #: =============================================================================
@@ -298,10 +319,8 @@ allow_unknown = true
 severity = "warning" # Overrides default
 #:  --- Field-specific Rules ---  :#
 [schema.validate.frontmatter.fields]
-node_id     = { regex = "^ADR-\\d{3}$" }
+node_id     = { regex = "^AI-ADR-\\d{3}$" }
 tags   = { regex = "^[^\\n]*$", severity = "warning" }
-related_files = {  globs = ["*.exs","*.py","*.js","*.md","*.toml"] }
-priority = { integer = { min = 0, max = 100 } }
 confidence_score = { float = { min = 0.0, max = 1.0 }, severity = "ignore" }
 
 #: =============================================================================
@@ -375,9 +394,6 @@ scan_policy = "on_creation"
 #: Required fields will throw errors in `validate` if no value is set.
 #: accepts error|warn|ignore
 depends_on = { weight = 1.0, cycle_detection = "error", required = "error" }
-blocked_by = { weight = 0.9, cycle_detection = "ignore", required = "ignore" }
-supersedes = { weight = 0.7, cycle_detection = "ignore", required = "ignore" }
-implements = { weight = 0.5, cycle_detection = "ignore", required = "ignore" }
 
 # [schema.validate.edges.wikilinks]
 # min_outgoing = 1
@@ -386,7 +402,7 @@ implements = { weight = 0.5, cycle_detection = "ignore", required = "ignore" }
 
 [schema.validate.edges.cross_schema]
 # Define schema's that may be be set as a DAG edge.
-allowed_targets = ["ADR", "IMP-AI", "ADR-AI", "LOG-AI" ]
+allowed_targets = ["ADR", "IMP-AI", "AI-EPIC", "LOG-AI" ]
 
 #: =============================================================================
 #:                          # --- VALIDATOR: GTD --- #
@@ -415,11 +431,11 @@ allowed_targets = ["ADR", "IMP-AI", "ADR-AI", "LOG-AI" ]
 #: +----------------------------------------------------------------------------+
 [schema.validate.gtd]
 # Determine if {TODO@high}: note content is tracked and added to the agenda
-enable_TODO = true
+enable_TODO = false
 # Determine if the kanban yaml is tracked and added to the agenda
-enable_kanban = true
+enable_kanban = false
 # Determine if statusline is added to agenda, if present.
-enable_kanban_statusline = true
+enable_kanban_statusline = false
 # Items will be added to the agenda when due in X days. Accepts ints.
 due_date_warning = 5
 severity = "warning"
