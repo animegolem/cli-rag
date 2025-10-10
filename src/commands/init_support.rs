@@ -75,8 +75,10 @@ outline_lines = 2
 import = [".cli-rag/templates/ADR.toml"]
 "#;
 
-pub const ADR_TEMPLATE: &str =
-    include_str!("../../contracts/v1/config/user_config/templates/ADR.toml");
+pub const ADR_TEMPLATE: &str = include_str!(concat!(
+    env!("CARGO_MANIFEST_DIR"),
+    "/contracts/v1/config/user_config/templates/ADR.toml"
+));
 
 #[derive(Clone, Copy)]
 pub enum FileStatus {
