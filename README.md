@@ -6,8 +6,11 @@ cli‑rag manages Obsidian‑style Markdown with YAML frontmatter, builds a unif
 graph (IDs, dependencies, mentions), validates per‑schema rules, and exposes
 structured outputs for human and AI workflows.
 
-Status: alpha/dogfooding. Contracts live under `contracts/v1/**` and the CLI
-aligns with ADR‑003d (v1.2 locked commands).
+**Status**:  
+
+The Default preset is being dogfooded and implemented but basic api hooks are all functional and in-place. 
+
+Post 1.0 will be focused on a TUI implementation and adding GITD hooks. 
 
 ## Command Overview
 
