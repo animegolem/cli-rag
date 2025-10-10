@@ -1,5 +1,5 @@
 ---
-{{frontmatter}}---
+{{frontmatter}}
 
 <!-- Keep this record concise and professional. Use short paragraphs. -->
 

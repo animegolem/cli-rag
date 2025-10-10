@@ -1,5 +1,5 @@
 ---
-{{frontmatter}}---
+{{frontmatter}}
 
 <!-- Fill out the YAML frontmatter above. Keep this epic focused. -->
 

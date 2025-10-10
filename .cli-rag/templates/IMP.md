@@ -1,5 +1,5 @@
 ---
-{{frontmatter}}---
+{{frontmatter}}
 
 <!-- Fill out the YAML frontmatter in full before drafting sections. -->
 # {{title}}
