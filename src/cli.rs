@@ -43,8 +43,18 @@ pub struct Cli {
 
 #[derive(Subcommand, Debug)]
 pub enum Commands {
-    /// Deprecated legacy alias; prints migration help and exits 0
-    New {},
+    /// Deprecated legacy alias; accepts legacy flags and creates a note
+    New {
+        #[arg(long)]
+        schema: String,
+        #[arg(long)]
+        title: Option<String>,
+        #[arg(long)]
+        id: Option<String>,
+        /// Optional filename template override (legacy flag)
+        #[arg(long, value_name = "TPL")]
+        filename_template: Option<String>,
+    },
     /// Scaffold a project config and optional schema templates
     Init {
         /// Optional path to write config (defaults to ./.cli-rag.toml)

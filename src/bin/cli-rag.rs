@@ -11,11 +11,22 @@ use cli_rag::config::load_config;
 fn main() -> Result<()> {
     let cli = Cli::parse();
     match cli.command {
-        Commands::New {} => {
-            eprintln!(
-                "'cli-rag new' is deprecated. Use 'cli-rag ai new start|submit|cancel|list'."
-            );
-            return Ok(());
+        Commands::New {
+            schema,
+            title,
+            id,
+            filename_template,
+        } => {
+            let (cfg, cfg_path) = load_config(&cli.config, &cli.base, cli.no_lua)?;
+            cli_rag::commands::new_legacy::run(
+                &cfg,
+                &cfg_path,
+                schema,
+                title,
+                id,
+                filename_template,
+                &cli.format,
+            )?;
         }
         Commands::Init {
             path,

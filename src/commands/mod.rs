@@ -10,6 +10,7 @@ pub mod init;
 pub mod init_support;
 pub mod lua_integration;
 pub mod new_helpers;
+pub mod new_legacy;
 pub mod output;
 pub mod path;
 pub mod search;
