@@ -51,16 +51,11 @@ fn init_project_emits_json() {
     let payload: Value = serde_json::from_slice(&output).unwrap();
     assert_eq!(payload["preset"], "project");
     assert_eq!(payload["dryRun"], false);
-    assert!(payload["created"]
-        .as_array()
-        .unwrap()
-        .iter()
-        .any(|v| v.as_str().unwrap().ends_with(".cli-rag.toml")));
-    assert!(payload["created"]
-        .as_array()
-        .unwrap()
-        .iter()
-        .any(|v| v.as_str().unwrap().ends_with(".cli-rag/templates/ADR.toml")));
+    assert!(payload["created"].as_array().unwrap().iter().any(|v| {
+        let s = v.as_str().unwrap();
+        let s_norm = s.replace('\\', "/");
+        s.ends_with(".cli-rag.toml") || s_norm.ends_with(".cli-rag/templates/ADR.toml")
+    }));
 
     temp.close().unwrap();
 }
