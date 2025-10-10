@@ -43,6 +43,8 @@ pub struct Cli {
 
 #[derive(Subcommand, Debug)]
 pub enum Commands {
+    /// Deprecated legacy alias; prints migration help and exits 0
+    New {},
     /// Scaffold a project config and optional schema templates
     Init {
         /// Optional path to write config (defaults to ./.cli-rag.toml)

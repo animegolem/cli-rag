@@ -8,77 +8,58 @@ use toml::{map::Map as TomlMap, Value as TomlValue};
 pub const PROJECT_PRESET_CONFIG: &str = r#"# Repo-local CLI config (cli-rag)
 
 [config]
-#: =============================================================================
-#:                            # --- Version --- #
-#: =============================================================================
-#: Sets the config version for all top level rules.
 config_version = "0.1"
 
-#: =============================================================================
-#:                            # --- SCAN --- #
-#: =============================================================================
 [config.scan]
-#: The root directories that cli-rag will scan for notes.
-#: All paths must be relative to the location of this `.cli-rag.toml` file.
 filepaths = ["docs/RAG"]
-#: By default, an index will be created at `.cli-rag/index.json`.
-#: File paths are relative to the location of this `.cli-rag.toml` file.
 index_path = ".cli-rag/index.json"
-#: `hash_mode` controls how file changes are detected. `mtime` is fast; `content` is exact.
 hash_mode = "mtime"
-#: `index_strategy` controls what is stored in the index (metadata-only vs full content).
 index_strategy = "content"
-#: Remove directories or patterns from scanning to improve speed.
 ignore_globs = ["**/node_modules/**", "**/dist/**"]
-#: Default true; set to false if your repo relies on symlinks.
 ignore_symlinks = true
 
-#: =============================================================================
-#:                            # --- AUTHORING --- #
-#: =============================================================================
 [config.authoring]
-#: Editor invoked by `cli-rag new` and friends. Falls back to $EDITOR/$VISUAL.
 editor = "nvim"
-#: When true, `cli-rag watch` will run in the background to keep indexes fresh.
 background_watch = true
 
 [config.authoring.destinations]
-#: Map schema names to write paths relative to this config (created if missing).
 ADR = "docs/RAG/ADR"
 
-#: =============================================================================
-#:                             # --- GRAPH --- #
-#: =============================================================================
 [config.graph]
-#: Default depth for graph/path commands. 1 = note + immediate neighbors.
 depth = 1
-#: Whether to include dependents (backlinks) in traversals. default = true.
 include_bidirectional = true
 
 [config.graph.ai]
-#: Defaults for `cli-rag ai get` style commands.
 depth = 1
-#: Maximum neighbors shown per node (metadata mode).
 default_fanout = 5
-#: Include backlinks when walking neighbors.
 include_bidirectional = true
-#: Output style for neighbors (metadata|outline|full). Default metadata.
 neighbor_style = "metadata"
-#: Number of lines per heading when neighbor_style = outline.
 outline_lines = 2
 
-#: =============================================================================
-#:                        # --- TEMPLATE MANAGEMENT --- #
-#: =============================================================================
 [config.templates]
-#: Load schema definitions from external files. Add more entries as needed.
 import = [".cli-rag/templates/ADR.toml"]
 "#;
 
-pub const ADR_TEMPLATE: &str = include_str!(concat!(
-    env!("CARGO_MANIFEST_DIR"),
-    "/contracts/v1/config/user_config/templates/ADR.toml"
-));
+// Embedded minimal ADR schema template to avoid CI path coupling.
+// This is intentionally small; full examples live under contracts/.
+pub const ADR_TEMPLATE: &str = r#"# ADR preset (minimal)
+[[schema]]
+name = "ADR"
+file_patterns = ["ADR-*.md"]
+required = ["id"]
+allowed_keys = ["depends_on","supersedes","superseded_by","tags","status"]
+[schema.new]
+filename_template = "{{id}}-{{title|kebab-case}}.md"
+[schema.new.template]
+[schema.new.template.prompt]
+template = """This is a HUMAN note Schema. For an AI created note you SHOULD cancel this draft and utilize `AI-ADR`."""
+[schema.new.template.note]
+template = """{{frontmatter}}\n\n# {{title}}\n\n## Objective\n{{LOC|50}}\n\n## Context\n{{LOC|100}}\n\n## Decision\n{{LOC|50}}\n\n## Consequences\n{{LOC|50}}\n\n## Updates\n{{LOC|100}}\n"""
+[schema.validate]
+severity = "error"
+[schema.validate.edges]
+depends_on = { required = "error", cycle_detection = "error" }
+"#;
 
 #[derive(Clone, Copy)]
 pub enum FileStatus {

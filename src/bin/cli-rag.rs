@@ -11,6 +11,12 @@ use cli_rag::config::load_config;
 fn main() -> Result<()> {
     let cli = Cli::parse();
     match cli.command {
+        Commands::New {} => {
+            eprintln!(
+                "'cli-rag new' is deprecated. Use 'cli-rag ai new start|submit|cancel|list'."
+            );
+            return Ok(());
+        }
         Commands::Init {
             path,
             force,
