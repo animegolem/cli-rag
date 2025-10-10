@@ -51,7 +51,7 @@ fn validate_enforces_enum_globs_and_numeric_bounds() {
 
     let cfg = temp.child(".cli-rag.toml");
     cfg.write_str(&format!(
-        r#"bases = ["{base}"]
+        r#"bases = ['{base}']
 
 [[schema]]
 name = "ADR"
@@ -136,7 +136,7 @@ fn validate_enforces_exact_heading_policy() {
 
     let cfg = temp.child(".cli-rag.toml");
     cfg.write_str(&format!(
-        r#"bases = ["{base}"]
+        r#"bases = ['{base}']
 
 [[schema]]
 name = "ADR"
@@ -179,7 +179,7 @@ fn validate_enforces_missing_only_heading_policy() {
 
     let cfg = temp.child(".cli-rag.toml");
     cfg.write_str(&format!(
-        r#"bases = ["{base}"]
+        r#"bases = ['{base}']
 
 [[schema]]
 name = "ADR"
@@ -222,7 +222,7 @@ fn validate_enforces_max_count_and_loc_on_validate() {
 
     let cfg = temp.child(".cli-rag.toml");
     cfg.write_str(&format!(
-        r#"bases = ["{base}"]
+        r#"bases = ['{base}']
 
 [[schema]]
 name = "ADR"
