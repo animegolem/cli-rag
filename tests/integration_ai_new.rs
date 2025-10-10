@@ -3,7 +3,6 @@ use assert_fs::prelude::*;
 use predicates::prelude::*;
 use serde_json::{json, Map as JsonMap, Value};
 use std::io::Write;
-use std::path::PathBuf;
 use std::process::Command;
 
 fn write_basic_config(temp: &assert_fs::TempDir) {
@@ -24,14 +23,8 @@ unknown_policy = "ignore"
     .unwrap();
 }
 
-fn copy_repo_template(temp: &assert_fs::TempDir, schema: &str) {
-    let repo_template = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-        .join(".cli-rag/templates")
-        .join(format!("{}.md", schema));
-    let dest_dir = temp.path().join(".cli-rag/templates");
-    std::fs::create_dir_all(&dest_dir).unwrap();
-    std::fs::copy(repo_template, dest_dir.join(format!("{}.md", schema))).unwrap();
-}
+// Legacy repo templates have been removed; tests seed schema templates via TOML
+// in the temporary config instead of copying Markdown from the repository.
 
 #[test]
 fn ai_new_start_submit_flow() {
@@ -567,21 +560,32 @@ fn ai_new_note_template_includes_contract_guidance() {
 [[schema]]
 name = "ADR"
 file_patterns = ["ADR-*.md"]
+[schema.new.template]
+[schema.new.template.prompt]
+template = "Contract-guided authoring for ADRs."
+[schema.new.template.note]
+template = "---\n{{frontmatter}}---\n\n<!-- Keep this record concise and professional. Use short paragraphs. -->\n\n# {{title}}\n\n## Objective\n{{LOC|1}}\n"
 
 [[schema]]
 name = "IMP"
 file_patterns = ["AI-IMP-*.md"]
+[schema.new.template]
+[schema.new.template.prompt]
+template = "IMP guidance."
+[schema.new.template.note]
+template = "---\n{{frontmatter}}---\n\n<!-- Fill out the YAML frontmatter in full before drafting sections. -->\n# {{title}}\n\n## Summary of Issue #1\n{{LOC|1}}\n"
 
 [[schema]]
 name = "EPIC"
 file_patterns = ["AI-EPIC-*.md"]
+[schema.new.template]
+[schema.new.template.prompt]
+template = "EPIC guidance."
+[schema.new.template.note]
+template = "---\n{{frontmatter}}\ntags:\n  - EPIC\n---\n\n<!-- Fill out the YAML frontmatter above. Keep this epic focused. -->\n\n# {{title}}\n\n## Problem Statement/Feature Scope\n{{LOC|1}}\n"
 "#,
         )
         .unwrap();
-
-    for schema in ["ADR", "IMP", "EPIC"] {
-        copy_repo_template(&temp, schema);
-    }
 
     let expectations = [
         (
@@ -821,7 +825,6 @@ fn ai_new_start_includes_frontmatter_constraints_metadata() {
     let temp = assert_fs::TempDir::new().unwrap();
     let notes = temp.child("notes");
     notes.create_dir_all().unwrap();
-    copy_repo_template(&temp, "ADR");
 
     let cfg_path = temp.child(".cli-rag.toml");
     cfg_path
@@ -928,7 +931,6 @@ fn ai_new_submit_blocks_readonly_frontmatter_override() {
     let temp = assert_fs::TempDir::new().unwrap();
     let notes = temp.child("notes");
     notes.create_dir_all().unwrap();
-    copy_repo_template(&temp, "ADR");
 
     let cfg_path = temp.child(".cli-rag.toml");
     cfg_path
@@ -939,6 +941,11 @@ fn ai_new_submit_blocks_readonly_frontmatter_override() {
 name = "ADR"
 file_patterns = ["ADR-*.md"]
 unknown_policy = "ignore"
+[schema.new.template]
+[schema.new.template.prompt]
+template = "ADR guidance."
+[schema.new.template.note]
+template = "---\n{{frontmatter}}---\n\n<!-- Keep this record concise and professional. Use short paragraphs. -->\n\n# {{title}}\n\n## Objective\n{{LOC|1}}\n"
 "#,
         )
         .unwrap();
