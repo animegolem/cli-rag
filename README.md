@@ -44,35 +44,6 @@ Post 1.0 will be focused on a TUI implementation and adding GITD hooks.
    cli-rag ai new submit --draft "$(jq -r '.draftId' start.json)" --sections payload.json
    ```
 
-## CI Contracts Gates
-
-The CI job validates CLI outputs against schemas in `contracts/v1/**`. It runs
-`validate --format json`, exercises `ai new start|submit|list|cancel`, and
-ensures emitted JSON conforms to the CLI schemas under `contracts/v1/cli/`.
-Extend CI when adding new surfaces so coverage remains representative.
-
-## Dogfooding
-
-- `.cli-rag.toml` at repo root defines scan bases, graph defaults, and template
-  imports. Default index path: `.cli-rag/index.json`.
-- Schemas live under `.cli-rag/templates/*.toml`; paired Markdown files are
-  authoring scaffolds. The TOML configures ids, filename rules, and tracked
-  frontmatter; `ai new start` returns the Markdown scaffold as `.noteTemplate`.
-- Configure `[config.authoring.destinations]` so each schema writes to the
-  correct folder (e.g., `ADR = "docs/RAG/ADR"`). Keep `filename_template`
-  focused on the basename like `{{id}}-{{title|kebab-case}}.md`.
-- Prefer the AI workflow: `ai new start` → edit draft → `ai new submit`.
-
-Preview a schema scaffold without writing a file:
-
-```
-cli-rag ai new start --schema ADR --title "Template Parity" --format json \
-  | jq -r '.noteTemplate'
-```
-
-> Migrating from `cli-rag new`: the legacy `new` command has been removed.
-> Use `cli-rag ai new start|submit|cancel|list` for authoring. Existing
-> templates, Lua overlays, and filename rules still apply via AI drafts.
 ## Commands
 
 ### Global flags
@@ -92,7 +63,7 @@ Flags:
 - `--path <p>` custom config path (default `.cli-rag.toml`)
 - `--force` overwrite if config exists
 - `--print-template` print example config to stdout only
-- `--silent` do not open editor after writing
+- `--silent` do not open editor af OS/2.ter writing
 - `--schema <NAME>` add a schema to the config
 - `--separate` write schema under `.cli-rag/templates/<NAME>.toml` and import it
 - `--preset <project|generic>` choose preset non‑interactively (`generic` is not
