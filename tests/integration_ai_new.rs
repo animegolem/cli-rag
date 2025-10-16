@@ -326,7 +326,7 @@ fn ai_new_destination_mapping_routes_notes() {
     let cfg_path = temp.child(".cli-rag.toml");
     cfg_path
         .write_str(
-            r#"bases = ["notes"]
+            r#"bases = ['notes']
 
 [authoring.destinations]
 ADR = "notes/adr"
@@ -418,7 +418,7 @@ fn ai_new_schema_output_path_overrides_global() {
     let cfg_path = temp.child(".cli-rag.toml");
     cfg_path
         .write_str(
-            r#"bases = ["notes"]
+            r#"bases = ['notes']
 
 [authoring.destinations]
 ADR = "notes/adr"
@@ -510,7 +510,7 @@ fn ai_new_rejects_destination_outside_base() {
     let cfg_path = temp.child(".cli-rag.toml");
     cfg_path
         .write_str(
-            r#"bases = ["notes"]
+            r#"bases = ['notes']
 
 [[schema]]
 name = "ADR"
@@ -555,7 +555,7 @@ fn ai_new_note_template_includes_contract_guidance() {
     let cfg_path = temp.child(".cli-rag.toml");
     cfg_path
         .write_str(
-            r#"bases = ["notes"]
+            r#"bases = ['notes']
 
 [[schema]]
 name = "ADR"
@@ -691,7 +691,7 @@ fn ai_new_template_precedence_prefers_lua() {
     let cfg_path = temp.child(".cli-rag.toml");
     cfg_path
         .write_str(
-            r#"bases = ["notes"]
+            r#"bases = ['notes']
 
 [[schema]]
 name = "ADR"
@@ -765,7 +765,7 @@ fn ai_new_template_precedence_prefers_toml_when_no_lua() {
     let cfg_path = temp.child(".cli-rag.toml");
     cfg_path
         .write_str(
-            r#"bases = ["notes"]
+            r#"bases = ['notes']
 
 [[schema]]
 name = "ADR"
@@ -829,7 +829,7 @@ fn ai_new_start_includes_frontmatter_constraints_metadata() {
     let cfg_path = temp.child(".cli-rag.toml");
     cfg_path
         .write_str(
-            r#"bases = ["notes"]
+            r#"bases = ['notes']
 
 [[schema]]
 name = "ADR"
@@ -935,7 +935,7 @@ fn ai_new_submit_blocks_readonly_frontmatter_override() {
     let cfg_path = temp.child(".cli-rag.toml");
     cfg_path
         .write_str(
-            r#"bases = ["notes"]
+            r#"bases = ['notes']
 
 [[schema]]
 name = "ADR"

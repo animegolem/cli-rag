@@ -356,7 +356,7 @@ fn validate_emits_stable_codes_for_edges_and_wikilinks() {
 
     let cfg = temp.child(".cli-rag.toml");
     cfg.write_str(&format!(
-        r#"bases = ["{base}"]
+        r#"bases = ['{base}']
 
 [[schema]]
 name = "IMP"
