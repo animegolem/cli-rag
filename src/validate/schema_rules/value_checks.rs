@@ -11,6 +11,7 @@ pub fn check_enum_values(
     errors: &mut Vec<String>,
     warnings: &mut Vec<String>,
 ) {
+    let doc_path = doc.display_path();
     let values = match value {
         serde_yaml::Value::String(s) => vec![s.to_string()],
         serde_yaml::Value::Sequence(seq) => seq
@@ -27,10 +28,7 @@ pub fn check_enum_values(
                 sev_err,
                 format!(
                     "{}: '{}' value '{}' not in {:?}",
-                    doc.file.display(),
-                    field,
-                    val,
-                    allowed
+                    doc_path, field, val, allowed
                 ),
             );
         }
@@ -46,6 +44,7 @@ pub fn check_globs(
     errors: &mut Vec<String>,
     warnings: &mut Vec<String>,
 ) {
+    let doc_path = doc.display_path();
     let mut builder = GlobSetBuilder::new();
     for pattern in globs {
         if let Ok(glob) = Glob::new(pattern) {
@@ -78,10 +77,7 @@ pub fn check_globs(
                 sev_err,
                 format!(
                     "{}: '{}' value '{}' does not match glob patterns {:?}",
-                    doc.file.display(),
-                    field,
-                    val,
-                    globs
+                    doc_path, field, val, globs
                 ),
             );
         }
@@ -100,6 +96,7 @@ pub fn check_numeric_bounds(
     errors: &mut Vec<String>,
     warnings: &mut Vec<String>,
 ) {
+    let doc_path = doc.display_path();
     let numbers = match value {
         serde_yaml::Value::Number(num) => num.as_f64().map(|v| vec![cast_num(v, cast_int)]),
         serde_yaml::Value::String(s) => s
@@ -127,7 +124,7 @@ pub fn check_numeric_bounds(
                 errors,
                 warnings,
                 sev_err,
-                format!("{}: '{}' must be number", doc.file.display(), field),
+                format!("{}: '{}' must be number", doc_path, field),
             );
             return;
         }
@@ -142,10 +139,7 @@ pub fn check_numeric_bounds(
                     sev_err,
                     format!(
                         "{}: '{}' value {} below minimum {}",
-                        doc.file.display(),
-                        field,
-                        value,
-                        min
+                        doc_path, field, value, min
                     ),
                 );
             }
@@ -158,10 +152,7 @@ pub fn check_numeric_bounds(
                     sev_err,
                     format!(
                         "{}: '{}' value {} above maximum {}",
-                        doc.file.display(),
-                        field,
-                        value,
-                        max
+                        doc_path, field, value, max
                     ),
                 );
             }
@@ -181,6 +172,7 @@ pub fn check_reference_types(
     errors: &mut Vec<String>,
     warnings: &mut Vec<String>,
 ) {
+    let doc_path = doc.display_path();
     let arr = match value.as_sequence() {
         Some(seq) => seq,
         None => return,
@@ -198,11 +190,7 @@ pub fn check_reference_types(
                                     sev_err,
                                     format!(
                                         "{}: '{}' references {} of type '{}' not in {:?}",
-                                        doc.file.display(),
-                                        field,
-                                        dep_id,
-                                        dep_type,
-                                        allowed_types
+                                        doc_path, field, dep_id, dep_type, allowed_types
                                     ),
                                 );
                             }

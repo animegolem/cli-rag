@@ -135,10 +135,11 @@ pub fn validate_docs(
 
             if let Some(first) = cyc.first() {
                 if let Some(doc) = id_to_docs.get(first).and_then(|v| v.first()) {
+                    let doc_path = doc.display_path();
                     if target_errors {
-                        errors.push(format!("{}: {}", doc.file.display(), msg));
+                        errors.push(format!("{}: {}", doc_path, msg));
                     } else if target_warnings {
-                        warnings.push(format!("{}: {}", doc.file.display(), msg));
+                        warnings.push(format!("{}: {}", doc_path, msg));
                     }
                 } else if target_errors {
                     errors.push(msg.clone());

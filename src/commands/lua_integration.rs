@@ -40,7 +40,7 @@ pub fn lua_validate_augment(
                     }
                     let _ = note.set("title", d.title.clone());
                     let _ = note.set("schema", infer_schema(&d.file));
-                    let _ = note.set("path", d.file.display().to_string());
+                    let _ = note.set("path", d.display_path());
                     if let Ok(body) = std::fs::read_to_string(&d.file) {
                         let _ = note.set("body", body);
                     }

@@ -74,13 +74,14 @@ pub fn apply_body_validation(
         let expected_names: Vec<String> =
             expected_headings.iter().map(|h| h.name.clone()).collect();
 
+        let doc_path = doc.display_path();
         let content = match fs::read_to_string(&doc.file) {
             Ok(c) => c,
             Err(err) => {
                 push_with_severity(
                     format!(
                         "{}: unable to read file for body validation: {}",
-                        doc.file.display(),
+                        doc_path,
                         err
                     ),
                     "warning",
@@ -99,7 +100,7 @@ pub fn apply_body_validation(
                     push_with_severity(
                         format!(
                             "{}: headings do not match template (expected {:?}, found {:?})",
-                            doc.file.display(),
+                            doc_path,
                             expected_names,
                             actual_names
                         ),
@@ -119,7 +120,7 @@ pub fn apply_body_validation(
                     push_with_severity(
                         format!(
                             "{}: missing required headings: {}",
-                            doc.file.display(),
+                            doc_path,
                             missing
                                 .iter()
                                 .map(|s| s.as_str())
@@ -138,11 +139,11 @@ pub fn apply_body_validation(
         if let Some(max_allowed) = max_heading_count {
             if actual_names.len() > max_allowed {
                 push_with_severity(
-                    format!(
-                        "{}: heading count {} exceeds max {}",
-                        doc.file.display(),
-                        actual_names.len(),
-                        max_allowed
+                        format!(
+                            "{}: heading count {} exceeds max {}",
+                            doc_path,
+                            actual_names.len(),
+                            max_allowed
                     ),
                     heading_severity,
                     errors,
@@ -163,11 +164,11 @@ pub fn apply_body_validation(
                 if let Some(actual) = section_map.get(heading.name.as_str()) {
                     if *actual as u64 > heading.max_lines {
                         push_with_severity(
-                            format!(
-                                "{}: heading '{}' exceeds max lines ({} > {})",
-                                doc.file.display(),
-                                heading.name,
-                                actual,
+                        format!(
+                            "{}: heading '{}' exceeds max lines ({} > {})",
+                            doc_path,
+                            heading.name,
+                            actual,
                                 heading.max_lines
                             ),
                             line_severity,

@@ -26,7 +26,7 @@ pub fn warn_isolated(
             if depends && depended {
                 warnings.push(format!(
                     "{}: '{}' has no graph connections (valid, but isolated)",
-                    d.file.display(),
+                    d.display_path(),
                     id
                 ));
             }

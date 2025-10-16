@@ -62,7 +62,7 @@ pub fn run(
     for d in hits {
         let Some(id) = d.id.as_ref() else { continue };
         let schema = infer_schema(&d.file);
-        let path_str = d.file.display().to_string();
+        let path_str = d.display_path();
         let last_modified = std::fs::metadata(&d.file)
             .and_then(|md| md.modified())
             .ok()

@@ -7,6 +7,7 @@ use crate::config::Config;
 use crate::discovery::incremental_collect_docs;
 use crate::index::write_indexes;
 use crate::protocol::{ToolCallLocation, ValidateHeader, ValidateIssue};
+use crate::util::normalize_display_path;
 use crate::validate::validate_docs;
 
 pub fn run(
@@ -28,20 +29,18 @@ pub fn run(
     // Helper to derive location from message when possible
     fn derive_location(message: &str) -> Option<(String, ToolCallLocation)> {
         // Expected leading pattern: "/path/to/file.md: ..."
-        let mut parts = message.splitn(2, ':');
-        let file = parts.next()?.to_string();
-        if file.is_empty() {
+        let (raw_file, rest) = message.split_once(": ")?;
+        if raw_file.is_empty() {
             return None;
         }
+        if !raw_file.contains('/') && !raw_file.contains('\\') {
+            return None;
+        }
+        let file = normalize_display_path(raw_file);
         // Try to infer a needle to search for a line number
-        let needle = if let Some(rest) = parts.next() {
-            // depends_on 'ID' not found
-            if let Some(idx) = rest.find("'") {
-                let rest2 = &rest[idx + 1..];
-                rest2.find("'").map(|end| rest2[..end].to_string())
-            } else {
-                None
-            }
+        let needle = if let Some(idx) = rest.find('\'') {
+            let rest2 = &rest[idx + 1..];
+            rest2.find('\'').map(|end| rest2[..end].to_string())
         } else {
             None
         };

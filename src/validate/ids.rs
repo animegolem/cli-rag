@@ -9,7 +9,7 @@ pub fn build_id_map(docs: &Vec<AdrDoc>, errors: &mut Vec<String>) -> HashMap<Str
         if let Some(ref id) = d.id {
             id_to_docs.entry(id.clone()).or_default().push(d.clone());
         } else {
-            errors.push(format!("{}: missing id", d.file.display()));
+            errors.push(format!("{}: missing id", d.display_path()));
         }
     }
     id_to_docs
@@ -29,7 +29,7 @@ pub fn detect_dups_conflicts(id_to_docs: &HashMap<String, Vec<AdrDoc>>, errors: 
             }
             let files = lst
                 .iter()
-                .map(|d| d.file.display().to_string())
+                .map(|d| d.display_path())
                 .collect::<Vec<_>>()
                 .join(", ");
             if titles.len() > 1 || statuses.len() > 1 {

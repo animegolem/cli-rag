@@ -60,6 +60,7 @@ fn resolve_schema(
 }
 
 fn validate_required_keys(doc: &AdrDoc, schema: &SchemaCfg, errors: &mut Vec<String>) {
+    let doc_path = doc.display_path();
     for key in &schema.required {
         match doc.fm.get(key) {
             Some(value) => {
@@ -70,16 +71,12 @@ fn validate_required_keys(doc: &AdrDoc, schema: &SchemaCfg, errors: &mut Vec<Str
                     _ => false,
                 };
                 if empty {
-                    errors.push(format!(
-                        "{}: required '{}' is empty",
-                        doc.file.display(),
-                        key
-                    ));
+                    errors.push(format!("{}: required '{}' is empty", doc_path, key));
                 }
             }
             None => errors.push(format!(
                 "{}: missing required '{}'",
-                doc.file.display(),
+                doc_path,
                 key
             )),
         }
@@ -93,6 +90,7 @@ fn validate_unknown_keys(
     warnings: &mut Vec<String>,
     errors: &mut Vec<String>,
 ) {
+    let doc_path = doc.display_path();
     let present: BTreeSet<String> = doc.fm.keys().cloned().collect();
     let rule_keys: BTreeSet<String> = schema.rules.keys().cloned().collect();
     let mut known: BTreeSet<String> = reserved.union(&rule_keys).cloned().collect();
@@ -109,16 +107,8 @@ fn validate_unknown_keys(
         return;
     }
     match schema.unknown_policy.as_deref().unwrap_or("ignore") {
-        "warn" => warnings.push(format!(
-            "{}: unknown keys: {}",
-            doc.file.display(),
-            unknown.join(", ")
-        )),
-        "error" => errors.push(format!(
-            "{}: unknown keys: {}",
-            doc.file.display(),
-            unknown.join(", ")
-        )),
+        "warn" => warnings.push(format!("{}: unknown keys: {}", doc_path, unknown.join(", "))),
+        "error" => errors.push(format!("{}: unknown keys: {}", doc_path, unknown.join(", "))),
         _ => {}
     }
 }
@@ -192,6 +182,7 @@ pub(crate) fn validate_edge_policies(
         None => return,
     };
     let default_severity = Severity::from_str(validate_cfg.severity.as_deref(), Severity::Error);
+    let doc_path = doc.display_path();
 
     for (edge_kind, policy) in &edges_cfg.kinds {
         let required_severity = Severity::from_str(policy.required.as_deref(), Severity::Ignore);
@@ -199,11 +190,7 @@ pub(crate) fn validate_edge_policies(
         let values = fm_value.map(normalize_edge_values).unwrap_or_default();
 
         if required_severity != Severity::Ignore && (fm_value.is_none() || values.is_empty()) {
-            let msg = format!(
-                "{}: edge '{}' missing required references",
-                doc.file.display(),
-                edge_kind
-            );
+            let msg = format!("{}: edge '{}' missing required references", doc_path, edge_kind);
             required_severity.emit(msg, errors, warnings);
             continue;
         }
@@ -221,12 +208,7 @@ pub(crate) fn validate_edge_policies(
         if edge_kind != "depends_on" {
             for target in &values {
                 if !id_to_docs.contains_key(target) {
-                    let msg = format!(
-                        "{}: edge '{}' references unknown id '{}'",
-                        doc.file.display(),
-                        edge_kind,
-                        target
-                    );
+                    let msg = format!("{}: edge '{}' references unknown id '{}'", doc_path, edge_kind, target);
                     id_severity.emit(msg, errors, warnings);
                 }
             }
@@ -242,10 +224,7 @@ pub(crate) fn validate_edge_policies(
                     if !cross.allowed_targets.contains(schema_name) {
                         let msg = format!(
                             "{}: edge '{}' references disallowed schema '{}' via '{}'",
-                            doc.file.display(),
-                            edge_kind,
-                            schema_name,
-                            target
+                            doc_path, edge_kind, schema_name, target
                         );
                         default_severity.emit(msg, errors, warnings);
                     }

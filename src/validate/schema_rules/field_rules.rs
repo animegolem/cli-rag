@@ -122,12 +122,13 @@ fn enforce_type(
     errors: &mut Vec<String>,
     warnings: &mut Vec<String>,
 ) {
+    let doc_path = doc.display_path();
     match expected {
         "array" if !value.is_sequence() => push_rule_diagnostic(
             errors,
             warnings,
             sev_err,
-            format!("{}: '{}' should be array", doc.file.display(), field),
+            format!("{}: '{}' should be array", doc_path, field),
         ),
         "date" => {
             if let Some(fmt) = value_format(value) {
@@ -138,7 +139,7 @@ fn enforce_type(
                         sev_err,
                         format!(
                             "{}: '{}' not a valid date '{}', format {}",
-                            doc.file.display(),
+                            doc_path,
                             field,
                             fmt.value,
                             fmt.format

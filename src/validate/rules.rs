@@ -21,11 +21,7 @@ pub fn check_statuses(
                 }
             }
             if !has_schema_status_rule && !cfg.allowed_statuses.iter().any(|s| s == status) {
-                errors.push(format!(
-                    "{}: invalid status '{}'",
-                    doc.file.display(),
-                    status
-                ));
+                errors.push(format!("{}: invalid status '{}'", doc.display_path(), status));
             }
         }
     }

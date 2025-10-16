@@ -40,6 +40,12 @@ pub struct AdrDoc {
     pub size: Option<u64>,
 }
 
+impl AdrDoc {
+    pub fn display_path(&self) -> String {
+        crate::util::normalize_display_path(&self.file)
+    }
+}
+
 pub fn parse_front_matter_and_title(content: &str, path: &Path) -> AdrDoc {
     let mut fm: FrontMatter = FrontMatter::default();
     let mut fm_map: BTreeMap<String, serde_yaml::Value> = BTreeMap::new();

@@ -40,12 +40,13 @@ pub fn apply_wikilink_policy(
             Some(id) => id.clone(),
             None => continue,
         };
+        let doc_path = doc.display_path();
         let content = match fs::read_to_string(&doc.file) {
             Ok(c) => c,
             Err(err) => {
                 warnings.push(format!(
                     "{}: unable to read file for wikilink scan: {}",
-                    doc.file.display(),
+                    doc_path,
                     err
                 ));
                 outgoing.insert(doc_id.clone(), BTreeSet::new());
@@ -87,6 +88,7 @@ pub fn apply_wikilink_policy(
             Some(cfg) => cfg,
             None => continue,
         };
+        let doc_path = doc.display_path();
 
         let severity = resolve_severity(
             wikilinks_cfg.severity.as_deref(),
@@ -107,7 +109,7 @@ pub fn apply_wikilink_policy(
                         &severity,
                         format!(
                             "{}: wikilinks outgoing unique targets {} below minimum {}",
-                            doc.file.display(),
+                            doc_path,
                             count,
                             min_outgoing
                         ),
@@ -129,7 +131,7 @@ pub fn apply_wikilink_policy(
                         &severity,
                         format!(
                             "{}: wikilinks incoming unique referrers {} below minimum {}",
-                            doc.file.display(),
+                            doc_path,
                             count,
                             min_incoming
                         ),
